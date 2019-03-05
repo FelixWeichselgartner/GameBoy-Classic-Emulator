@@ -44,7 +44,7 @@ public:
     byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, byte);
 
-
+    void compare(byte, byte);
 
     void executeInstruction(byte);
 

@@ -5,17 +5,44 @@
 #include <cstddef>
 using namespace std;
 
+//----------------------------------------------------------------------------------------------
+// Flags
+// Z = this->registers.F (byte 7)
+// N = this->registers.F (byte 6)
+// H = this->registers.F (byte 5)
+// C = this->registers.F (byte 4)
+// byte 3 = byte 2 = byte 1 = byte 0 = not used
+//----------------------------------------------------------------------------------------------
+
 CPU::CPU() {
 
 }
 
-byte CPU::ReadByte(unsigned short address) {
+byte CPU::ReadByte(unsigned short address) const {
     return this->ram.getByte(address);
 }
 
 void CPU::WriteByte(unsigned short address, byte value) {
     this->ram.setByte(address, value);
     return;
+}
+
+void CPU::compare(byte A, byte X) {
+    if (A > X) {
+        // both Z and C are set
+        this->registers.setF(this->registers.getF() | 0b10000000);
+        this->registers.setF(this->registers.getF() | 0b00010000);
+    } else if (A < X) {
+        // C is set
+        this->registers.setF(this->registers.getF() | 0b00010000);
+        // Z is reset
+        this->registers.setF(this->registers.getF() & 0b01111111);
+    } else if (A == X) {
+        // C flag is reset
+        this->registers.setF(this->registers.getF() & 0b11101111);
+        // Z is set
+        this->registers.setF(this->registers.getF() | 0b10000000);
+    }
 }
 
 void CPU::executeInstruction(byte opcode) {
@@ -25,6 +52,7 @@ void CPU::executeInstruction(byte opcode) {
         case  0x1: // LD (BC), nn   load 16-bit immediate into BC.
             break;
         case  0x2: // LD (BC), A    saves A to address pointed by BC.
+            this->ram.setMemory(this->registers.getBC(), this->registers.getA());
             break;
         case  0x3: // INC BC        increment 16-bit BC.
             this->registers.setBC(this->registers.getBC() + 1);
@@ -44,7 +72,8 @@ void CPU::executeInstruction(byte opcode) {
         case  0x9: // ADD HL, BC    add 16-bit BC to HL.
             this->registers.setHL(this->registers.getHL() + this->registers.getBC());
             break;
-        case  0xA: // LD A, (BC)    load A from address pointed by BC.
+        case  0xA: // LD A, (BC)    load A from address pointed by BC.  
+            this->registers.setA(this->ram.getMemory(this->registers.getBC()));
             break;
         case  0xB: // DEC BC        decrement 16-bit BC.
             this->registers.setBC(this->registers.getBC() - 1);
@@ -64,6 +93,7 @@ void CPU::executeInstruction(byte opcode) {
         case 0x11: // LD DE, nn     load 16-bit immediate into DE.
             break;
         case 0x12: // LD (DE), A    save A to address pointed by DE.
+            this->ram.setMemory(this->registers.getDE(), this->registers.getA());
             break;
         case 0x13: // INC DE        increment 16-bit DE.
             this->registers.setDE(this->registers.getDE() + 1);
@@ -77,12 +107,20 @@ void CPU::executeInstruction(byte opcode) {
         case 0x16: // LD D, n       load 8-bit immediate into D.
             break;
         case 0x17: // RL A          rotate A left.
+            /*
+            9-bit rotation to the left. 
+            The bit leaving on the left is copied into the carry, 
+            while the old value of the carry appears in bit 0 of the operand. 
+            The H and N flags are reset, P/V is parity, 
+            S and Z are modified by definition.
+            */
             break;
         case 0x18: // JR n          relative jump by signed immediate.
             break;
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
             break;
         case 0x1A: // LD A, (DE)    load A from address pointed to by DE.
+            this->registers.setA(this->registers.getDE());
             break;
         case 0x1B: // DEC DE        decrement 16-bit DE.
             this->registers.setDE(this->registers.getDE() - 1);
@@ -157,6 +195,7 @@ void CPU::executeInstruction(byte opcode) {
         case 0x38: // JR C, n       relative jump by signed immediate if last result caused carry.
             break;
         case 0x39: // ADD HL, SP    add 16-bit SP to HL.
+            this->registers.setHL(this->registers.getHL() + this->registers.getSP());
             break;
         case 0x3A: // LDD A, (HL)   load A from address pointed to by HL, and decrement HL.
             break;
@@ -405,20 +444,28 @@ void CPU::executeInstruction(byte opcode) {
         case 0x8F: // ADC A, A      add A and carry flag to A.
             break;
         case 0x90: // SUB A, B      subtract B from A.
+            this->registers.setA(this->registers.getA() - this->registers.getB());
             break;
         case 0x91: // SUB A, C      subtract C from A.
+            this->registers.setA(this->registers.getA() - this->registers.getC());
             break;
         case 0x92: // SUB A, D      subtract D from A.
+            this->registers.setA(this->registers.getA() - this->registers.getD());
             break;
         case 0x93: // SUB A, E      subtract E from A.
+            this->registers.setA(this->registers.getA() - this->registers.getE());
             break;
         case 0x94: // SUB A, H      subtract H from A.
+            this->registers.setA(this->registers.getA() - this->registers.getH());
             break;
         case 0x95: // SUB A, L      subtract L from A.
+            this->registers.setA(this->registers.getA() - this->registers.getL());
             break;
         case 0x96: // SUB A, (HL)   subtract value pointed by HL from A.
+            this->registers.setA(this->registers.getA() - this->ram.getMemory(this->registers.getB()));
             break; 
         case 0x97: // SUB A, A      subtract A from A.
+            this->registers.setA(this->registers.getA() - this->registers.getA());
             break;
         case 0x98: // SBC A, B      subtract B and carry flag from A.
             break;
@@ -437,68 +484,100 @@ void CPU::executeInstruction(byte opcode) {
         case 0x9F: // SBC A, A      subtract A and carry flag from A.
             break; 
         case 0xA0: // AND B         logical AND B against A.
+            this->registers.setA(this->registers.getA() & this->registers.getB());
             break;
         case 0xA1: // AND C         logical AND C against A.
+            this->registers.setA(this->registers.getA() & this->registers.getC());
             break;
         case 0xA2: // AND D         logical AND D against A.
+            this->registers.setA(this->registers.getA() & this->registers.getD());
             break;
         case 0xA3: // AND E         logical AND E against A.
+            this->registers.setA(this->registers.getA() & this->registers.getE());
             break;
         case 0xA4: // AND H         logical AND H against A.
+            this->registers.setA(this->registers.getA() & this->registers.getH());
             break;
         case 0xA5: // AND L         logical AND L against A.
+            this->registers.setA(this->registers.getA() & this->registers.getL());
             break; 
         case 0xA6: // AND (HL)      logical AND value pointed by HL against A.
+            this->registers.setA(this->registers.getA() & this->ram.getMemory(this->registers.getHL()));
             break;
         case 0xA7: // AND A         logical AND A against A.
+            this->registers.setA(this->registers.getA() & this->registers.getA());
             break;
         case 0xA8: // XOR B         logical XOR B against A.
+            this->registers.setA(this->registers.getA() ^ this->registers.getB());
             break;
         case 0xA9: // XOR C         logical XOR C against A.
+            this->registers.setA(this->registers.getA() ^ this->registers.getC());
             break;
         case 0xAA: // XOR D         logical XOR D against A.
+            this->registers.setA(this->registers.getA() ^ this->registers.getD());
             break;
         case 0xAB: // XOR E         logical XOR E against A.
+            this->registers.setA(this->registers.getA() ^ this->registers.getE());
             break;
         case 0xAC: // XOR H         logical XOR H against A.
+            this->registers.setA(this->registers.getA() ^ this->registers.getH());
             break;
         case 0xAD: // XOR L         logical XOR L against A.
+            this->registers.setA(this->registers.getA() ^ this->registers.getL());
             break;
         case 0xAE: // XOR (HL)      logical XOR value pointed by HL against A.
+            this->registers.setA(this->registers.getA() ^ this->ram.getMemory(this->registers.getHL()));
             break;
         case 0xAF: // XOR A         logical XOR A against A.
+            this->registers.setA(this->registers.getA() ^ this->registers.getA());
             break;
         case 0xB0: // OR B          logical OR B against A.
+            this->registers.setA(this->registers.getA() | this->registers.getB());
             break;
         case 0xB1: // OR C          logical OR C against A.
+            this->registers.setA(this->registers.getA() | this->registers.getC());
             break;
         case 0xB2: // OR D          logical OR D against A.
+            this->registers.setA(this->registers.getA() | this->registers.getD());
             break;
         case 0xB3: // OR E          logical OR E against A.
+            this->registers.setA(this->registers.getA() | this->registers.getE());
             break;
         case 0xB4: // OR H          logical OR H against A.
+            this->registers.setA(this->registers.getA() | this->registers.getH());
             break;
         case 0xB5: // OR L          logical OR L against A. 
+            this->registers.setA(this->registers.getA() | this->registers.getL());
             break;
         case 0xB6: // OR (HL)       logical OR value pointed by HL against A.
+            this->registers.setA(this->registers.getA() | this->ram.getMemory(this->registers.getHL()));
             break;
         case 0xB7: // OR A          logical OR A against A.
+            this->registers.setA(this->registers.getA() | this->registers.getA());
             break;
         case 0xB8: // CP B          compare B against A.
+            compare(this->registers.getA(), this->registers.getB());
             break;
         case 0xB9: // CP C          compare C against A.
+            compare(this->registers.getA(), this->registers.getC());
             break;
         case 0xBA: // CP D          compare D against A.
+            compare(this->registers.getA(), this->registers.getD());
             break;
         case 0xBB: // CP E          compare E against A.
+            compare(this->registers.getA(), this->registers.getE());
             break;
         case 0xBC: // CP H          compare H against A.
+            compare(this->registers.getA(), this->registers.getH());
             break;
         case 0xBD: // CP L          compare L against A.
+            compare(this->registers.getA(), this->registers.getL());
             break;
         case 0xBE: // CP (HL)       compare value pointed by HL against A.
+            compare(this->registers.getA(), this->ram.getMemory(this->registers.getHL()));
             break;
         case 0xBF: // CP A          compare A against A.
+            compare(this->registers.getA(), this->registers.getA());
             break;
         case 0xC0: // RET NZ        return if last result was not zero.
             break;
