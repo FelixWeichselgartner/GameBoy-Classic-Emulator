@@ -10,7 +10,7 @@ private:
 
 public:
 
-    void setByte(unsigned short, byte);
-    byte getByte(unsigned short);
+    void setMemory(unsigned short, byte);
+    byte getMemory(unsigned short);
 
 };

@@ -41,8 +41,11 @@ public:
 
     CPU();
 
-    byte ReadByte(unsigned short);
+    byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, byte);
+
+
+
     void executeInstruction(byte);
 
 };

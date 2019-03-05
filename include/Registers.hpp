@@ -1,12 +1,12 @@
-#ifndef REGISTER_HPP_
-#define REGISTER_HPP_
+#ifndef REGISTERS_HPP_
+#define REGISTERS_HPP_
 
 // this includes the datatype byte - which is basically an unsigned char
 #include <cstddef>
 using namespace std;
 
 //----------------------------------------------------------------------------------------------
-class Register {
+class Registers {
 
 private:
     union {
@@ -48,52 +48,53 @@ private:
 
   public:
 
-    Register();
-    // A register
+    Registers();
+
+    // A Register
     byte getA() const;
     void setA(byte);
-    // F register
+    // F Register
     byte getF() const;
     void setF(byte);
-    // AF register
+    // AF Register
     unsigned short getAF() const;
     void setAF(unsigned short);
 
-    // B register
+    // B Register
     byte getB() const;
     void setB(byte);
-    // C register
+    // C Register
     byte getC() const;
     void setC(byte);
-    // BC register
+    // BC Register
     unsigned short getBC() const;
     void setBC(unsigned short);
 
-    // D register
+    // D Register
     byte getA() const;
     void setA(byte);
-    // E register
+    // E Register
     byte getA() const;
     void setA(byte);
-    // DE register
+    // DE Register
     unsigned short getDE() const;
     void setDE(unsigned short);
 
-    // H register
+    // H Register
     byte getA() const;
     void setA(byte);
-    // L register
+    // L Register
     byte getA() const;
     void setA(byte);
-    // BC register
+    // BC Register
     unsigned short getBC() const;
     void setBC(unsigned short);
 
-    // PC register
+    // PC Register
     unsigned short getPC() const;
     void setPC(unsigned short);
 
-    // SP register
+    // SP Register
     unsigned short getSP() const;
     void setSP(unsigned short);
 };
