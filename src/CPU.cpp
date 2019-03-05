@@ -6,7 +6,7 @@
 using namespace std;
 
 //----------------------------------------------------------------------------------------------
-// Flags
+// Flags - F register is the flag register
 // Z = this->registers.F (byte 7)
 // N = this->registers.F (byte 6)
 // H = this->registers.F (byte 5)
@@ -15,7 +15,7 @@ using namespace std;
 //----------------------------------------------------------------------------------------------
 
 CPU::CPU() {
-
+    this->registers.setF((byte) 0);
 }
 
 byte CPU::ReadByte(unsigned short address) const {
