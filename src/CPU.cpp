@@ -19,517 +19,517 @@ void CPU::WriteByte(unsigned short address, byte value) {
 
 void CPU::executeInstruction(byte opcode) {
     switch((int)opcode) {
-        case 0x0: // NOP            no operation
+        case  0x0: // NOP           no operation.
             break;
-        case 0x1: // LD (BC), nn    load 16-bit immediate into BC
+        case  0x1: // LD (BC), nn   load 16-bit immediate into BC.
             break;
-        case 0x2: // LD (BC), A     saves A to address pointed by BC
+        case  0x2: // LD (BC), A    saves A to address pointed by BC.
             break;
-        case 0x3: // INC BC         increment 16-bit BC
+        case  0x3: // INC BC        increment 16-bit BC.
             break;
-        case 0x4: // INC BC         increment B
+        case  0x4: // INC BC        increment 8-bit B.
             break;
-        case 0x5: // DEC B          decrement B
+        case  0x5: // DEC B         decrement 8-bit B.
             break;
-        case 0x6: // LD B, n        load 8 bit immediate into B
+        case  0x6: // LD B, n       load 8 bit immediate into B.
             break;
-        case 0x7: // RLC A          Rotate A left with carry
+        case  0x7: // RLC A         rotate A left with carry.
             break;
-        case 0x8:
+        case  0x8: // LD (nn), SP   save SP to a given address.
             break;
-        case 0x9:
+        case  0x9: // ADD HL, BC    add 16-bit BC to HL.
             break;
-        case 0xA:
+        case  0xA: // LD A, (BC)    load A from address pointed by BC.
             break;
-        case 0xB:
+        case  0xB: // DEC BC        decrement 16-bit BC.
             break;
-        case 0xC:
+        case  0xC: // INC C         increment 8-bit C.
             break;
-        case 0xD:
+        case  0xD: // DEC C         decrement 8-bit C.
             break;
-        case 0xE:
+        case  0xE: // LD C, n       load 8-bit immediate to C.
             break;
-        case 0xF:
+        case  0xF: // RRC A         rotate A right with carry.
             break;
-        case 0x10:
+        case 0x10: // STOP          stop processor.
             break;
-        case 0x11:
+        case 0x11: // LD DE, nn     load 16-bit immediate into DE.
             break;
-        case 0x12:
+        case 0x12: // LD (DE), A    save A to address pointed by DE.
             break;
-        case 0x13:
+        case 0x13: // INC DE        increment 16-bit DE.
             break;
-        case 0x14:
+        case 0x14: // INC D         increment 8-bit D.
             break;
-        case 0x15:
+        case 0x15: // DEC D         decrement 8-bit D.
             break;
-        case 0x16:
+        case 0x16: // LD D, n       load 8-bit immediate into D.
             break;
-        case 0x17:
+        case 0x17: // RL A          rotate A left.
             break;
-        case 0x18:
+        case 0x18: // JR n          relative jump by signed immediate.
             break;
-        case 0x19:
+        case 0x19: // ADD HL, DE    add 16-bit DE to HL.
             break;
-        case 0x1A:
+        case 0x1A: // LD A, (DE)    load A from address pointed to by DE.
             break;
-        case 0x1B:
+        case 0x1B: // DEC DE        decrement 16-bit DE.
             break;
-        case 0x1C:
+        case 0x1C: // INC E         increment 8-bit E.
             break;
-        case 0x1D:
+        case 0x1D: // DEC E         decrement 8-bit E.
             break;
-        case 0x1E:
+        case 0x1E: // LD E, n       Load 8-bit immediate into E.
             break;
-        case 0x1F:
+        case 0x1F: // RR A          rotate A right.
             break;
-        case 0x20:
+        case 0x20: // JR NC, n      relative jump by signed immediate if last result was not zero.
             break;
-        case 0x21:
+        case 0x21: // LD HL, nn     load 16-bit immediate into HL.
             break;
-        case 0x22:
+        case 0x22: // LDI (HL), A   save A to address pointed by HL, and increment HL.
             break;
-        case 0x23:
+        case 0x23: // INC HL        increment 16-bit HL.
             break;
-        case 0x24:
+        case 0x24: // INC H         increment 8-bit H.
             break;
-        case 0x25:
+        case 0x25: // DEC H         decrement 8-bit H.
             break;
-        case 0x26:
+        case 0x26: // LD H, n       load 8-bit immediate into H.
             break;
-        case 0x27:
+        case 0x27: // DAA           adjust A for BCD addition.
             break;
-        case 0x28:
+        case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
             break;
-        case 0x29:
+        case 0x29: // ADD HL, HL    add 16-bit HL to HL.
             break;
-        case 0x2A:
+        case 0x2A: // LDI A, (HL)   load A from address pointed to by HL, and increment HL.
             break;
-        case 0x2B:
+        case 0x2B: // DEC HL        decrement 16-bit HL.
             break;
-        case 0x2C:
+        case 0x2C: // INC L         increment 8-bit L.
             break;
-        case 0x2D:
+        case 0x2D: // DEC L         decrement 8-bit L.
             break;
-        case 0x2E:
+        case 0x2E: // LD L, n       load 8-bit immediate into L.
             break;
-        case 0x2F:
+        case 0x2F: // CPL           complement (logical NOT) on A.
             break;
-        case 0x30:
+        case 0x30: // JR NC, n      relative jump by signed immediate if last result caused no carry.
             break;
-        case 0x31:
+        case 0x31: // LD SP, nn     load 16-bit immediate into SP.
             break;
-        case 0x32:
+        case 0x32: // LDD (HL), A   save A to address pointed by HL, and decrement HL.
             break;
-        case 0x33:
+        case 0x33: // INC SP        increment 16-bit SP.
             break;
-        case 0x34:
+        case 0x34: // INC (HL)      increment value pointed by HL.
             break;
-        case 0x35:
+        case 0x35: // DEC (HL)      decrement value pointed by HL.
             break;
-        case 0x36:
+        case 0x36: // LD (HL), n    load 8-bit immediate into address pointed by HL.
             break;
-        case 0x37:
+        case 0x37: // SCF           set carry flag.
             break;
-        case 0x38:
+        case 0x38: // JR C, n       relative jump by signed immediate if last result caused carry.
             break;
-        case 0x39:
+        case 0x39: // ADD HL, SP    add 16-bit SP to HL.
             break;
-        case 0x3A:
+        case 0x3A: // LDD A, (HL)   load A from address pointed to by HL, and decrement HL.
             break;
-        case 0x3B:
+        case 0x3B: // DEC SP        decrement 16-bit SP.
             break;
-        case 0x3C:
+        case 0x3C: // INC A         increment 8-bit A.
             break;
-        case 0x3D:
+        case 0x3D: // DEC A         decrement 8-bit A.
             break;
-        case 0x3E:
+        case 0x3E: // LD A, n       load 8-bit immediate into A.
             break;
-        case 0x3F:
+        case 0x3F: // CCF           clear carry flag.
             break;
-        case 0x40:
+        case 0x40: // LD B, B       copy B to B.
             break;
-        case 0x41:
+        case 0x41: // LD B, C       copy C to B. 
             break;
-        case 0x42:
+        case 0x42: // LD B, D       copy D to B.
             break;
-        case 0x43:
+        case 0x43: // LD B, E       copy E to B.
             break;
-        case 0x44:
+        case 0x44: // LD B, H       copy H to B.
             break;
-        case 0x45:
+        case 0x45: // LD B, L       copy L to B.
             break;
-        case 0x46:
+        case 0x46: // LD B, (HL)    copy value pointed by HL to B.
             break;
-        case 0x47:
+        case 0x47: // LD B, A       copy A to B.
             break;
-        case 0x48:
+        case 0x48: // LD C, B       copy B to C.
             break;
-        case 0x49:
+        case 0x49: // LD C, C       copy C to C.
             break;
-        case 0x4A:
+        case 0x4A: // LD C, D       copy D to C.
             break;
-        case 0x4B:
+        case 0x4B: // LD C, E       copy E to C.
             break;
-        case 0x4C:
+        case 0x4C: // LD C, H       copy H to C.
             break;
-        case 0x4D:
+        case 0x4D: // LD C, L       copy L to C.
             break;
-        case 0x4E:
+        case 0x4E: // LD C, (HL)    copy value pointed by HL to C.
             break;
-        case 0x4F:
+        case 0x4F: // LD C, A       copy A to C.
             break;
-        case 0x50:
+        case 0x50: // LD D, B       copy B to D.
             break;
-        case 0x51:
+        case 0x51: // LD D, C       copy C to D.
             break;
-        case 0x52:
+        case 0x52: // LD D, D       copy D to D.
             break;
-        case 0x53:
+        case 0x53: // LD D, E       copy E to D.
             break;
-        case 0x54:
+        case 0x54: // LD D, H       copy H to D.
             break;
-        case 0x55:
+        case 0x55: // LD D, L       copy L to D.
             break;
-        case 0x56:
+        case 0x56: // LD D, (HL)    copy value pointed by HL to D.
             break;
-        case 0x57:
+        case 0x57: // LD D, A       copy A to D.
             break;
-        case 0x58:
+        case 0x58: // LD E, B       copy B to E.
             break;
-        case 0x59:
+        case 0x59: // LD E, C       copy C to E.
             break;
-        case 0x5A:
+        case 0x5A: // LD E, D       copy D to E.
             break;
-        case 0x5B:
+        case 0x5B: // LD E, E       copy E to E.
             break;
-        case 0x5C:
+        case 0x5C: // LD E, H       copy H to E. 
             break;
-        case 0x5D:
+        case 0x5D: // LD E, L       copy L to E. 
             break;
-        case 0x5E:
+        case 0x5E: // LD E, (HL)    copy value pointed by HL to E.
             break;
-        case 0x5F:
+        case 0x5F: // LD E, A       copy A to E.
             break;
-        case 0x60:
+        case 0x60: // LD H, B       copy B to H.
             break;
-        case 0x61:
+        case 0x61: // LD H, C       copy C to H.
             break;
-        case 0x62:
+        case 0x62: // LD H, D       copy D to H.
             break;
-        case 0x63:
+        case 0x63: // LD H, E       copy E to H. 
             break;
-        case 0x64:
+        case 0x64: // LD H, H       copy H to H.
             break;
-        case 0x65:
+        case 0x65: // LD H, L       copy L to H. 
             break;
-        case 0x66:
+        case 0x66: // LD H, (HL)    copy value pointed by HL to H.
             break;
-        case 0x67:
+        case 0x67: // LD H, A       copy A to H.
             break;
-        case 0x68:
+        case 0x68: // LD L, B       copy B to L.
             break;
-        case 0x69:
+        case 0x69: // LD L, C       copy C to L.
+            break; 
+        case 0x6A: // LD L, D       copy D to L.
             break;
-        case 0x6A:
+        case 0x6B: // LD L, E       copy E to L. 
             break;
-        case 0x6B:
+        case 0x6C: // LD L, H       copy H to L.
             break;
-        case 0x6C:
+        case 0x6D: // LD L, L       copy L to L.
             break;
-        case 0x6D:
+        case 0x6E: // LD L, (HL)    copy value pointed by HL to L.
             break;
-        case 0x6E:
+        case 0x6F: // LD L, A       copy A to L.
             break;
-        case 0x6F:
+        case 0x70: // LD (HL), B    copy B to address pointed by HL.
             break;
-        case 0x70:
+        case 0x71: // LD (HL), C    copy C to address pointed by HL.
             break;
-        case 0x71:
+        case 0x72: // LD (HL), D    copy D to address pointed by HL.
             break;
-        case 0x72:
+        case 0x73: // LD (HL), E    copy E to address pointed by HL.
             break;
-        case 0x73:
+        case 0x74: // LD (HL), H    copy H to address pointed by HL.
             break;
-        case 0x74:
+        case 0x75: // LD (HL), L    copy L to address pointed by HL.
             break;
-        case 0x75:
+        case 0x76: // HALT          halt processor.
             break;
-        case 0x76:
+        case 0x77: // LD (HL), A    copy A to address pointed by HL.
             break;
-        case 0x77:
+        case 0x78: // LD A, B       copy B to A.
             break;
-        case 0x78:
+        case 0x79: // LD A, C       copy C to A.
             break;
-        case 0x79:
+        case 0x7A: // LD A, D       copy D to A.
             break;
-        case 0x7A:
+        case 0x7B: // LD A, E       copy E to A.
             break;
-        case 0x7B:
+        case 0x7C: // LD A, H       copy H to A.
             break;
-        case 0x7C:
+        case 0x7D: // LD A, L       copy L to A.
             break;
-        case 0x7D:
+        case 0x7E: // LD A, (HL)    copy value pointed by HL to A.
             break;
-        case 0x7E:
+        case 0x7F: // LD A, A       copy A to A.
             break;
-        case 0x7F:
+        case 0x80: // ADD A, B      add B to A.
             break;
-        case 0x80:
+        case 0x81: // ADD A, C      add C to A.
             break;
-        case 0x81:
+        case 0x82: // ADD A, D      add D to A.
             break;
-        case 0x82:
+        case 0x83: // ADD A, E      add E to A.
             break;
-        case 0x83:
+        case 0x84: // ADD A, H      add H to A.
             break;
-        case 0x84:
+        case 0x85: // ADD A, L      add L to A.
             break;
-        case 0x85:
+        case 0x86: // ADD A, (HL)   add value pointed by HL to A.
             break;
-        case 0x86:
+        case 0x87: // ADD A, A      add A to A.
             break;
-        case 0x87:
+        case 0x88: // ADC A, B      add B and carry flag to A.
             break;
-        case 0x88:
+        case 0x89: // ADC A, C      add C and carry flag to A.
             break;
-        case 0x89:
+        case 0x8A: // ADC A, D      add D and carry flag to A.
             break;
-        case 0x8A:
+        case 0x8B: // ADC A, E      add E and carry flag to A.
             break;
-        case 0x8B:
+        case 0x8C: // ADC A, H      add H and carry flag to A.
             break;
-        case 0x8C:
+        case 0x8D: // ADC A, L      add L and carry flag to A.
             break;
-        case 0x8D:
+        case 0x8E: // ADC A, (HL)   add value pointed by HL and carry flag to A.
             break;
-        case 0x8E:
+        case 0x8F: // ADC A, A      add A and carry flag to A.
             break;
-        case 0x8F:
+        case 0x90: // SUB A, B      subtract B from A.
             break;
-        case 0x90:
+        case 0x91: // SUB A, C      subtract C from A.
             break;
-        case 0x91:
+        case 0x92: // SUB A, D      subtract D from A.
             break;
-        case 0x92:
+        case 0x93: // SUB A, E      subtract E from A.
             break;
-        case 0x93:
+        case 0x94: // SUB A, H      subtract H from A.
             break;
-        case 0x94:
+        case 0x95: // SUB A, L      subtract L from A.
             break;
-        case 0x95:
+        case 0x96: // SUB A, (HL)   subtract value pointed by HL from A.
+            break; 
+        case 0x97: // SUB A, A      subtract A from A.
             break;
-        case 0x96:
+        case 0x98: // SBC A, B      subtract B and carry flag from A.
             break;
-        case 0x97:
+        case 0x99: // SBC A, C      subtract C and carry flag from A.
             break;
-        case 0x98:
+        case 0x9A: // SBC A, D      subtract D and carry flag from A.
             break;
-        case 0x99:
+        case 0x9B: // SBC A, E      subtract E and carry flag from A.
             break;
-        case 0x9A:
+        case 0x9C: // SBC A, H      subtract H and carry flag from A.
             break;
-        case 0x9B:
+        case 0x9D: // SBC A, L      subtract L and carry flag from A.
             break;
-        case 0x9C:
+        case 0x9E: // SBC A, (HL)   subtract value pointed by HL and carry flag from A.
             break;
-        case 0x9D:
+        case 0x9F: // SBC A, A      subtract A and carry flag from A.
+            break; 
+        case 0xA0: // AND B         logical AND B against A.
             break;
-        case 0x9E:
+        case 0xA1: // AND C         logical AND C against A.
             break;
-        case 0x9F:
+        case 0xA2: // AND D         logical AND D against A.
             break;
-        case 0xA0:
+        case 0xA3: // AND E         logical AND E against A.
             break;
-        case 0xA1:
+        case 0xA4: // AND H         logical AND H against A.
             break;
-        case 0xA2:
+        case 0xA5: // AND L         logical AND L against A.
+            break; 
+        case 0xA6: // AND (HL)      logical AND value pointed by HL against A.
             break;
-        case 0xA3:
+        case 0xA7: // AND A         logical AND A against A.
             break;
-        case 0xA4:
+        case 0xA8: // XOR B         logical XOR B against A.
             break;
-        case 0xA5:
+        case 0xA9: // XOR C         logical XOR C against A.
             break;
-        case 0xA6:
+        case 0xAA: // XOR D         logical XOR D against A.
             break;
-        case 0xA7:
+        case 0xAB: // XOR E         logical XOR E against A.
             break;
-        case 0xA8:
+        case 0xAC: // XOR H         logical XOR H against A.
             break;
-        case 0xA9:
+        case 0xAD: // XOR L         logical XOR L against A.
             break;
-        case 0xAA:
+        case 0xAE: // XOR (HL)      logical XOR value pointed by HL against A.
             break;
-        case 0xAB:
+        case 0xAF: // XOR A         logical XOR A against A.
             break;
-        case 0xAC:
+        case 0xB0: // OR B          logical OR B against A.
             break;
-        case 0xAD:
+        case 0xB1: // OR C          logical OR C against A.
             break;
-        case 0xAE:
+        case 0xB2: // OR D          logical OR D against A.
             break;
-        case 0xAF:
+        case 0xB3: // OR E          logical OR E against A.
             break;
-        case 0xB0:
+        case 0xB4: // OR H          logical OR H against A.
             break;
-        case 0xB1:
+        case 0xB5: // OR L          logical OR L against A. 
             break;
-        case 0xB2:
+        case 0xB6: // OR (HL)       logical OR value pointed by HL against A.
             break;
-        case 0xB3:
+        case 0xB7: // OR A          logical OR A against A.
             break;
-        case 0xB4:
+        case 0xB8: // CP B          compare B against A.
             break;
-        case 0xB5:
+        case 0xB9: // CP C          compare C against A.
             break;
-        case 0xB6:
+        case 0xBA: // CP D          compare D against A.
             break;
-        case 0xB7:
+        case 0xBB: // CP E          compare E against A.
             break;
-        case 0xB8:
+        case 0xBC: // CP H          compare H against A.
             break;
-        case 0xB9:
+        case 0xBD: // CP L          compare L against A.
             break;
-        case 0xBA:
+        case 0xBE: // CP (HL)       compare value pointed by HL against A.
             break;
-        case 0xBB:
+        case 0xBF: // CP A          compare A against A.
             break;
-        case 0xBC:
+        case 0xC0: // RET NZ        return if last result was not zero.
             break;
-        case 0xBD:
+        case 0xC1: // POP BC        pop 16-bit value from stack into BC.
             break;
-        case 0xBE:
+        case 0xC2: // JP NZ, nn     absolute jump to 16-bit location if last result was not zero.
             break;
-        case 0xBF:
+        case 0xC3: // JP nn         absolute jump to 16-bit location.
             break;
-        case 0xC0:
+        case 0xC4: // CALL NZ, nn   call routine at 16-bit location if last result was not zero.
             break;
-        case 0xC1:
+        case 0xC5: // PUSH BC       push 16-bit BC onto stack.
             break;
-        case 0xC2:
+        case 0xC6: // ADD A, n      add 8-bit immediate to A. 
             break;
-        case 0xC3:
+        case 0xC7: // RST 0         call routine at address 0000h
             break;
-        case 0xC4:
+        case 0xC8: // RET Z         return if last result was zero.
             break;
-        case 0xC5:
+        case 0xC9: // RET           return to calling routine.
             break;
-        case 0xC6:
+        case 0xCA: // JP Z, nn      absolute jump to 16-bit location if last result was zero.
             break;
-        case 0xC7:
+        case 0xCB: // Ext ops       extended operations (two-byte instruction code).
             break;
-        case 0xC8:
+        case 0xCC: // CALL Z, nn    call routine at 16-bit location if last result was zero.
             break;
-        case 0xC9:
+        case 0xCD: // CALL nn       call routine at 16-bit location.
             break;
-        case 0xCA:
+        case 0xCE: // ADC A, n      add 8-bit immediate and carry to A.
             break;
-        case 0xCB:
+        case 0xCF: // RST 8         call routine at adress 0008h.
             break;
-        case 0xCC:
+        case 0xD0: // RET NC        return if last result caused no carry.
             break;
-        case 0xCD:
+        case 0xD1: // POP DE        pop 16-bit value from stack into DE.
             break;
-        case 0xCE:
+        case 0xD2: // JP NC, nn     absolute jump to 16-bit location if last result caused no carry.
             break;
-        case 0xCF:
+        case 0xD3: // XX            operation removed in this CPU.
             break;
-        case 0xD0:
+        case 0xD4: // CALL NC, nn   call routine at 16-bit location if last result caused no carry.
             break;
-        case 0xD1:
+        case 0xD5: // PUST DE       push 16-bit DE onto stack.
             break;
-        case 0xD2:
+        case 0xD6: // SUB A, n      subtract 8-bit immediate from A. 
             break;
-        case 0xD3:
+        case 0xD7: // RST 10        call routine at address 0010h.
             break;
-        case 0xD4:
+        case 0xD8: // RET C         return if last result caused carry.
             break;
-        case 0xD5:
+        case 0xD9: // RETI          enable interrupts and return to calling routine.
+            break; 
+        case 0xDA: //JP C, nn       absolute jump to 16-bit location if last result caused carry.
             break;
-        case 0xD6:
+        case 0xDB: // XX            operation removed in this CPU. 
             break;
-        case 0xD7:
+        case 0xDC: // CALL C, nn    call routine at 16-bit location if last result caused no carry.
             break;
-        case 0xD8:
+        case 0xDD: // XX            operation removed in this CPU.
             break;
-        case 0xD9:
+        case 0xDE: // SBC A, n      subtract 8-bit immediate and carry from A. 
             break;
-        case 0xDA:
+        case 0xDF: // RST 18        call routine at address 0018h.
             break;
-        case 0xDB:
+        case 0xE0: // LDH (n), A    save A at address pointed to by (FF00h + 8-bit immediate)
             break;
-        case 0xDC:
+        case 0xE1: // POP HL        pop 16-bit value from stack into HL.
             break;
-        case 0xDD:
+        case 0xE2: // LDH (C), A    save A at address pointed to by (FF00h + C)
             break;
-        case 0xDE:
+        case 0xE3: // XX            operation removed in this CPU.
             break;
-        case 0xDF:
+        case 0xE4: // XX            operation removed in this CPU.
             break;
-        case 0xE0:
+        case 0xE5: // PUSH HL       Push 16-bit HL onto stack.
             break;
-        case 0xE1:
+        case 0xE6: // AND n         logical AND 8-bit immediate against A.
             break;
-        case 0xE2:
+        case 0xE7: // RST 20        call routine at address 0020h.
             break;
-        case 0xE3:
+        case 0xE8: // ADD SP, d     add signed 8-bit immediate to SP.
             break;
-        case 0xE4:
+        case 0xE9: // JP (HL)       jump to 16-bit value pointed by HL.
             break;
-        case 0xE5:
+        case 0xEA: // LD (nn), A    save A at given 16-bit address.
             break;
-        case 0xE6:
+        case 0xEB: // XX            operation removed in this CPU.
             break;
-        case 0xE7:
+        case 0xEC: // XX            operation removed in this CPU.
             break;
-        case 0xE8:
+        case 0xED: // XX            operation removed in this CPU.
             break;
-        case 0xE9:
+        case 0xEE: // XOR n         logical XOR 8-bit immediate against A.
             break;
-        case 0xEA:
+        case 0xEF: // RST 28        call routine at address 0028h.
             break;
-        case 0xEB:
+        case 0xF0: // LDH A, (n)    load a from address pointed to by (FF00h + 8-bit immediate).
             break;
-        case 0xEC:
+        case 0xF1: // POP AF        pop 16-bit value from stack into AF.
             break;
-        case 0xED:
+        case 0xF2: // XX            operation removed in this CPU.
             break;
-        case 0xEE:
+        case 0xF3: // DI            disable interrupts
             break;
-        case 0xEF:
+        case 0xF4: // XX            operation removed in this CPU.
             break;
-        case 0xF0:
+        case 0xF5: // PUSH AF       push 16-bit AF onto stack.
             break;
-        case 0xF1:
+        case 0xF6: // OR n          logical OR 8-bit immediate against A.
             break;
-        case 0xF2:
+        case 0xF7: // RST 30        call routine at address 0030h.
             break;
-        case 0xF3:
+        case 0xF8: // LDHL SP, d    add signed 8-bit immediate to SP and save result in HL.
             break;
-        case 0xF4:
+        case 0xF9: // LD SP, HL     copy HL to SP.
             break;
-        case 0xF5:
+        case 0xFA: // LD A, (nn)    load A from given 16-bit address.
             break;
-        case 0xF6:
+        case 0xFB: // EI            enable interrupts.
             break;
-        case 0xF7:
+        case 0xFC: // XX            operation removed in this CPU.
             break;
-        case 0xF8:
+        case 0xFD: // XX            operation removed in this CPU.
             break;
-        case 0xF9:
+        case 0xFE: // CP n          compare 8-bit immediate against A.
             break;
-        case 0xFA:
-            break;
-        case 0xFB:
-            break;
-        case 0xFC:
-            break;
-        case 0xFD:
-            break;
-        case 0xFE:
-            break;
-        case 0xFF:
+        case 0xFF: //RST 38         call routine at address 0038h.
             break;
     }
 }
