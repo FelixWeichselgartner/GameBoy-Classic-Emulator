@@ -1,24 +1,49 @@
+//----------------------------------------------------------------------------------------------
+#include <iostream>
+#include <iomanip>
+
 #include "../include/Registers.hpp"
 
-// this includes the datatype byte - which is basically an unsigned char
-#include <cstddef>
-using namespace std;
+typedef unsigned char Byte;
+//----------------------------------------------------------------------------------------------
+
+std::string toBinary(int n) {
+	std::string r;
+	while (n != 0) { r = (n % 2 == 0 ? "0" : "1") + r; n /= 2; }
+	while (r.length() < 8) {
+		r = "0" + r;
+	}
+	return r;
+}
 
 Registers::Registers() {
-
+    this->A = this->B = this->C = this->D = this->E = this->F = this->H = this->L = 0x00;
+    this->PC = this-> SP = 0;
 }
+
+
+void Registers::printFlags() {
+    std::cout << "the flags: " << std::endl;
+    for (int i = 7; i >= 0; i--) {
+        std::cout << i;
+    }
+    std::cout << std::endl;
+    std::cout << "ZNHC0000" << std::endl;
+    std::cout << toBinary((int) this->F) << std::endl;
+}
+
     
-byte Registers::getA() const {
+Byte Registers::getA() const {
     return this->A;
 }
-void Registers::setA(byte value) {
+void Registers::setA(Byte value) {
     this->A = value;
 }
 
-byte Registers::getF() const {
+Byte Registers::getF() const {
     return this->F;
 }
-void Registers::setF(byte value) {
+void Registers::setF(Byte value) {
     this->F = value;
 }
 
@@ -30,18 +55,18 @@ void Registers::setAF(unsigned short value) {
     this->AF = value;
 }
 
-byte Registers::getB() const {
+Byte Registers::getB() const {
     return this->B;
 }
 
-void Registers::setB(byte value) {
+void Registers::setB(Byte value) {
     this->B = value;
 }
 
-byte Registers::getC() const {
+Byte Registers::getC() const {
     return this->C;
 }
-void Registers::setC(byte value) {
+void Registers::setC(Byte value) {
     this-> C = value;
 }
 
@@ -53,18 +78,18 @@ void Registers::setBC(unsigned short value) {
     this->BC = value;
 }
 
-byte Registers::getD() const {
+Byte Registers::getD() const {
     return this->A;
 }
-void Registers::setD(byte value) {
+void Registers::setD(Byte value) {
     this->A = value;
 }
 
-byte Registers::getE() const {
+Byte Registers::getE() const {
     return this->E;
 }
 
-void Registers::setE(byte value) {
+void Registers::setE(Byte value) {
     this->E = value;
 }
 
@@ -75,17 +100,17 @@ void Registers::setDE(unsigned short value) {
     this->DE = value;
 }
 
-byte Registers::getH() const {
+Byte Registers::getH() const {
     return this->H;
 }
-void Registers::setH(byte value) {
+void Registers::setH(Byte value) {
     this->H = value;
 }
 
-byte Registers::getL() const {
+Byte Registers::getL() const {
     return this->L;
 }
-void Registers::setL(byte value) {
+void Registers::setL(Byte value) {
     this->L = value;
 }
 

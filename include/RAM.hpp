@@ -1,16 +1,24 @@
-// this includes the datatype byte - which is basically an unsigned char
-#include <cstddef>
-using namespace std;
+#ifndef RAM_HPP_
+#define RAM_HPP_
+
+//----------------------------------------------------------------------------------------------
+typedef unsigned char Byte;
+//----------------------------------------------------------------------------------------------
 
 class RAM {
 
 private:
 
-    byte memory[65536];
+    Byte memory[65536];
 
 public:
 
-    void setMemory(unsigned short, byte);
-    byte getMemory(unsigned short);
+    RAM();
+
+    void setMemory(unsigned short, Byte);
+    Byte getMemory(unsigned short) const;
 
 };
+//----------------------------------------------------------------------------------------------
+
+#endif

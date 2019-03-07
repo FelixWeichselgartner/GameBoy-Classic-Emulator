@@ -1,9 +1,9 @@
 #ifndef REGISTERS_HPP_
 #define REGISTERS_HPP_
 
-// this includes the datatype byte - which is basically an unsigned char
-#include <cstddef>
-using namespace std;
+//----------------------------------------------------------------------------------------------
+typedef unsigned char Byte;
+//----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
 class Registers {
@@ -11,32 +11,32 @@ class Registers {
 private:
     union {
         struct {
-            byte A;
-            byte F;
+            Byte A;
+            Byte F;
         };
         unsigned short AF;
     };
 
     union {
         struct {
-            byte B;
-            byte C;
+            Byte B;
+            Byte C;
         };
         unsigned short BC;
     };
 
     union {
         struct {
-            byte D;
-            byte E;
+            Byte D;
+            Byte E;
         };
         unsigned short DE;
     };
 
     union {
         struct {
-            byte H;
-            byte L;
+            Byte H;
+            Byte L;
         };
         unsigned short HL;
     };
@@ -50,45 +50,59 @@ private:
 
     Registers();
 
+    void printFlags();
+
     // A Register
-    byte getA() const;
-    void setA(byte);
+    Byte getA() const;
+    void setA(Byte);
+
     // F Register
-    byte getF() const;
-    void setF(byte);
+    Byte getF() const;
+    void setF(Byte);
+
     // AF Register
     unsigned short getAF() const;
     void setAF(unsigned short);
 
+
     // B Register
-    byte getB() const;
-    void setB(byte);
+    Byte getB() const;
+    void setB(Byte);
+
     // C Register
-    byte getC() const;
-    void setC(byte);
+    Byte getC() const;
+    void setC(Byte);
+
     // BC Register
     unsigned short getBC() const;
     void setBC(unsigned short);
 
+
     // D Register
-    byte getA() const;
-    void setA(byte);
+    Byte getD() const;
+    void setD(Byte);
+
     // E Register
-    byte getA() const;
-    void setA(byte);
+    Byte getE() const;
+    void setE(Byte);
+
     // DE Register
     unsigned short getDE() const;
     void setDE(unsigned short);
 
+
     // H Register
-    byte getA() const;
-    void setA(byte);
+    Byte getH() const;
+    void setH(Byte);
+
     // L Register
-    byte getA() const;
-    void setA(byte);
-    // BC Register
-    unsigned short getBC() const;
-    void setBC(unsigned short);
+    Byte getL() const;
+    void setL(Byte);
+
+    // HL Register
+    unsigned short getHL() const;
+    void setHL(unsigned short);
+
 
     // PC Register
     unsigned short getPC() const;

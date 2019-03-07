@@ -1,33 +1,33 @@
+//----------------------------------------------------------------------------------------------
 #include "../include/CPU.hpp"
 #include "../include/Registers.hpp"
 
-// this includes the datatype byte - which is basically an unsigned char
-#include <cstddef>
-using namespace std;
+typedef unsigned char Byte;
+//----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
 // Flags - F register is the flag register
-// Z = this->registers.F (byte 7)
-// N = this->registers.F (byte 6)
-// H = this->registers.F (byte 5)
-// C = this->registers.F (byte 4)
-// byte 3 = byte 2 = byte 1 = byte 0 = not used
+// Z = this->registers.F (Byte 7)
+// N = this->registers.F (Byte 6)
+// H = this->registers.F (Byte 5)
+// C = this->registers.F (Byte 4)
+// Byte 3 = Byte 2 = Byte 1 = Byte 0 = not used
 //----------------------------------------------------------------------------------------------
 
 CPU::CPU() {
-    this->registers.setF((byte) 0);
+    this->registers.setF(0);
 }
 
-byte CPU::ReadByte(unsigned short address) const {
-    return this->ram.getByte(address);
+Byte CPU::ReadByte(unsigned short address) const {
+    return this->ram.getMemory(address);
 }
 
-void CPU::WriteByte(unsigned short address, byte value) {
-    this->ram.setByte(address, value);
+void CPU::WriteByte(unsigned short address, Byte value) {
+    this->ram.setMemory(address, value);
     return;
 }
 
-void CPU::compare(byte A, byte X) {
+void CPU::compare(Byte A, Byte X) {
     if (A > X) {
         // both Z and C are set
         this->registers.setF(this->registers.getF() | 0b10000000);
@@ -45,7 +45,27 @@ void CPU::compare(byte A, byte X) {
     }
 }
 
-void CPU::executeInstruction(byte opcode) {
+void CPU::add(Byte a, Byte b) {
+    // Z is set if result is zero
+    if (a & 0x00 == 0x00) {
+        this->registers.setF(this->registers.getF() | 0b10000000);
+    }
+
+    // N is set to zero
+    this->registers.setF(this->registers.getF() & 0b10111111);
+
+    // H is set if overflow from bit 3
+    if ((((a & 0xf) + (b & 0xf)) & 0x10) == 0x10) {
+        this->registers.setF(this->registers.getF() | 0b00100000);
+    }
+
+    // C is set if overflow from bit 7
+    if ((((a & 0xff) + (b & 0xff)) & 0b1000000) == 0b1000000) {
+        this->registers.setF(this->registers.getF() | 0b00010000);
+    }
+}
+
+void CPU::executeInstruction(Byte opcode) {
     switch((int)opcode) {
         case  0x0: // NOP           no operation.
             break;
@@ -120,7 +140,7 @@ void CPU::executeInstruction(byte opcode) {
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
             break;
         case 0x1A: // LD A, (DE)    load A from address pointed to by DE.
-            this->registers.setA(this->registers.getDE());
+            this->registers.setA(this->ram.getMemory(this->registers.getDE()));
             break;
         case 0x1B: // DEC DE        decrement 16-bit DE.
             this->registers.setDE(this->registers.getDE() - 1);
@@ -404,27 +424,35 @@ void CPU::executeInstruction(byte opcode) {
             this->registers.setA(this->registers.getA());
             break;
         case 0x80: // ADD A, B      add B to A.
+            add(this->registers.getA(), this->registers.getB());
             this->registers.setA(this->registers.getA() + this->registers.getB());
             break;
         case 0x81: // ADD A, C      add C to A.
+            add(this->registers.getA(), this->registers.getC());
             this->registers.setA(this->registers.getA() + this->registers.getC());
             break;
         case 0x82: // ADD A, D      add D to A.
+            add(this->registers.getA(), this->registers.getD());
             this->registers.setA(this->registers.getA() + this->registers.getD());
             break;
         case 0x83: // ADD A, E      add E to A.
+            add(this->registers.getA(), this->registers.getE());
             this->registers.setA(this->registers.getA() + this->registers.getE());
             break;
         case 0x84: // ADD A, H      add H to A.
+            add(this->registers.getA(), this->registers.getH());
             this->registers.setA(this->registers.getA() + this->registers.getH());
             break;
         case 0x85: // ADD A, L      add L to A.
+            add(this->registers.getA(), this->registers.getL());
             this->registers.setA(this->registers.getA() + this->registers.getL());
             break;
         case 0x86: // ADD A, (HL)   add value pointed by HL to A.
+            add(this->registers.getA(), this->ram.getMemory(this->registers.getHL()));
             this->registers.setA(this->registers.getA() + this->ram.getMemory(this->registers.getHL()));
             break;
         case 0x87: // ADD A, A      add A to A.
+            add(this->registers.getA(), this->registers.getA());
             this->registers.setA(this->registers.getA() + this->registers.getA());
             break;
         case 0x88: // ADC A, B      add B and carry flag to A.
@@ -601,7 +629,7 @@ void CPU::executeInstruction(byte opcode) {
             break;
         case 0xCA: // JP Z, nn      absolute jump to 16-bit location if last result was zero.
             break;
-        case 0xCB: // Ext ops       extended operations (two-byte instruction code).
+        case 0xCB: // Ext ops       extended operations (two-Byte instruction code).
             break;
         case 0xCC: // CALL Z, nn    call routine at 16-bit location if last result was zero.
             break;
