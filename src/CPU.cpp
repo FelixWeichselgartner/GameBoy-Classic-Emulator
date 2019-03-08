@@ -15,7 +15,7 @@ typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
 
 CPU::CPU() {
-    this->registers.setF(0);
+    
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
@@ -27,42 +27,171 @@ void CPU::WriteByte(unsigned short address, Byte value) {
     return;
 }
 
-void CPU::compare(Byte A, Byte X) {
-    if (A > X) {
-        // both Z and C are set
-        this->registers.setF(this->registers.getF() | 0b10000000);
-        this->registers.setF(this->registers.getF() | 0b00010000);
-    } else if (A < X) {
-        // C is set
-        this->registers.setF(this->registers.getF() | 0b00010000);
-        // Z is reset
-        this->registers.setF(this->registers.getF() & 0b01111111);
-    } else if (A == X) {
-        // C flag is reset
-        this->registers.setF(this->registers.getF() & 0b11101111);
-        // Z is set
-        this->registers.setF(this->registers.getF() | 0b10000000);
-    }
-}
+Byte CPU::add(Byte a, Byte b) {
+	Byte retval = a + b;
 
-void CPU::add(Byte a, Byte b) {
-    // Z is set if result is zero
-    if (a & 0x00 == 0x00) {
+	// Z is set if result is zero, else reset
+    if (retval == (Byte) 0x00) {
         this->registers.setF(this->registers.getF() | 0b10000000);
-    }
+	} else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
 
     // N is set to zero
     this->registers.setF(this->registers.getF() & 0b10111111);
 
-    // H is set if overflow from bit 3
+    // H is set if overflow from bit 3, else reset
     if ((((a & 0xf) + (b & 0xf)) & 0x10) == 0x10) {
         this->registers.setF(this->registers.getF() | 0b00100000);
-    }
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11011111);
+	}
 
-    // C is set if overflow from bit 7
-    if ((((a & 0xff) + (b & 0xff)) & 0b1000000) == 0b1000000) {
+    // C is set if overflow from bit 7, else reset
+    if (((int) a + (int) b) > (Byte) 255) {
         this->registers.setF(this->registers.getF() | 0b00010000);
-    }
+    } else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
+
+	return retval;
+}
+
+Byte CPU::adc(Byte a, Byte b) {
+	Byte c;
+
+	if ((this->registers.getF() & 0b00010000) == 0b00010000) {
+		c = 0b00000001;
+	} else {
+		c = 0x00;
+	}
+
+	Byte retval = a + b + c;
+
+	// Z is set if result is zero, else reset
+	if (retval == (Byte)0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N is set to zero
+	this->registers.setF(this->registers.getF() & 0b10111111);
+
+	// H is set if overflow from bit 3, else reset
+	if ((((a & 0xf) + (b & 0xf)) & 0x10) == 0x10) {
+		this->registers.setF(this->registers.getF() | 0b00100000);
+	}
+	else {
+		this->registers.setF(this->registers.getF() & 0b11011111);
+	}
+
+	// C is set if overflow from bit 7, else reset
+	if (((int)a + (int)b) > (Byte)255) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	}
+	else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
+
+	return retval;
+}
+
+Byte CPU::land(Byte a, Byte b) {
+	Byte retval = a & b;
+
+	// Z is set if result is zero, else reset
+	if (retval == (Byte)0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	}
+	else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N is reset
+	this->registers.setF(this->registers.getF() & 0b10111111);
+
+	// H is set
+	this->registers.setF(this->registers.getF() | 0b00100000);
+
+	// C is reset
+	this->registers.setF(this->registers.getF() & 0b11101111);
+
+	return retval;
+}
+
+Byte CPU::lxor(Byte a, Byte b) {
+	Byte retval = a ^ b;
+
+	// Z is set if result is zero, else reset
+	if (retval == (Byte)0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	}
+	else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N is reset
+	this->registers.setF(this->registers.getF() & 0b10111111);
+
+	// H is reset
+	this->registers.setF(this->registers.getF() & 0b11011111);
+
+	// C is reset
+	this->registers.setF(this->registers.getF() & 0b11101111);
+
+	return retval;
+}
+
+Byte CPU::lor(Byte a, Byte b) {
+	Byte retval = a | b;
+
+	// Z is set if result is zero, else reset
+	if (retval == (Byte)0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	}
+	else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N is reset
+	this->registers.setF(this->registers.getF() & 0b10111111);
+
+	// H is reset
+	this->registers.setF(this->registers.getF() & 0b11011111);
+
+	// C is reset
+	this->registers.setF(this->registers.getF() & 0b11101111);
+
+	return retval;
+}
+
+void CPU::compare(Byte A, Byte X) {
+	Byte sub = A - X;
+
+	// Z is set if result is zero, else reset
+	if (sub == (Byte)0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N is set
+	this->registers.setF(this->registers.getF() | 0b01000000);
+
+	// H is set if no borrow from bit 4, else reset
+	if (((A ^ X ^ sub) & 0x10) == 0x01) {
+		this->registers.setF(this->registers.getF() | 0b00100000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11011111);
+	}
+
+	// C is set if no borrow from bit 7, else reset
+	if (X > A) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
 }
 
 void CPU::executeInstruction(Byte opcode) {
@@ -424,52 +553,52 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(this->registers.getA());
             break;
         case 0x80: // ADD A, B      add B to A.
-            add(this->registers.getA(), this->registers.getB());
-            this->registers.setA(this->registers.getA() + this->registers.getB());
+            this->registers.setA(add(this->registers.getA(), this->registers.getB()));
             break;
         case 0x81: // ADD A, C      add C to A.
-            add(this->registers.getA(), this->registers.getC());
-            this->registers.setA(this->registers.getA() + this->registers.getC());
+            this->registers.setA(add(this->registers.getA(), this->registers.getC()));
             break;
         case 0x82: // ADD A, D      add D to A.
-            add(this->registers.getA(), this->registers.getD());
-            this->registers.setA(this->registers.getA() + this->registers.getD());
+            this->registers.setA(add(this->registers.getA(), this->registers.getD()));
             break;
         case 0x83: // ADD A, E      add E to A.
-            add(this->registers.getA(), this->registers.getE());
-            this->registers.setA(this->registers.getA() + this->registers.getE());
+            this->registers.setA(add(this->registers.getA(), this->registers.getE()));
             break;
         case 0x84: // ADD A, H      add H to A.
-            add(this->registers.getA(), this->registers.getH());
-            this->registers.setA(this->registers.getA() + this->registers.getH());
+            this->registers.setA(add(this->registers.getA(), this->registers.getH()));
             break;
         case 0x85: // ADD A, L      add L to A.
-            add(this->registers.getA(), this->registers.getL());
-            this->registers.setA(this->registers.getA() + this->registers.getL());
+            this->registers.setA(add(this->registers.getA(), this->registers.getL()));
             break;
         case 0x86: // ADD A, (HL)   add value pointed by HL to A.
-            add(this->registers.getA(), this->ram.getMemory(this->registers.getHL()));
-            this->registers.setA(this->registers.getA() + this->ram.getMemory(this->registers.getHL()));
+            this->registers.setA(add(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
             break;
         case 0x87: // ADD A, A      add A to A.
-            add(this->registers.getA(), this->registers.getA());
-            this->registers.setA(this->registers.getA() + this->registers.getA());
+            this->registers.setA(add(this->registers.getA(), this->registers.getA()));
             break;
         case 0x88: // ADC A, B      add B and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->registers.getB()));
             break;
         case 0x89: // ADC A, C      add C and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->registers.getC()));
             break;
         case 0x8A: // ADC A, D      add D and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->registers.getD()));
             break;
         case 0x8B: // ADC A, E      add E and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->registers.getE()));
             break;
         case 0x8C: // ADC A, H      add H and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->registers.getH()));
             break;
         case 0x8D: // ADC A, L      add L and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->registers.getL()));
             break;
         case 0x8E: // ADC A, (HL)   add value pointed by HL and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
             break;
         case 0x8F: // ADC A, A      add A and carry flag to A.
+			this->registers.setA(adc(this->registers.getA(), this->registers.getA()));
             break;
         case 0x90: // SUB A, B      subtract B from A.
             this->registers.setA(this->registers.getA() - this->registers.getB());
@@ -512,76 +641,76 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x9F: // SBC A, A      subtract A and carry flag from A.
             break; 
         case 0xA0: // AND B         logical AND B against A.
-            this->registers.setA(this->registers.getA() & this->registers.getB());
+            this->registers.setA(land(this->registers.getA(), this->registers.getB()));
             break;
         case 0xA1: // AND C         logical AND C against A.
-            this->registers.setA(this->registers.getA() & this->registers.getC());
+            this->registers.setA(land(this->registers.getA(), this->registers.getC()));
             break;
         case 0xA2: // AND D         logical AND D against A.
-            this->registers.setA(this->registers.getA() & this->registers.getD());
+            this->registers.setA(land(this->registers.getA(), this->registers.getD()));
             break;
         case 0xA3: // AND E         logical AND E against A.
-            this->registers.setA(this->registers.getA() & this->registers.getE());
+            this->registers.setA(land(this->registers.getA(), this->registers.getE()));
             break;
         case 0xA4: // AND H         logical AND H against A.
-            this->registers.setA(this->registers.getA() & this->registers.getH());
+            this->registers.setA(land(this->registers.getA(), this->registers.getH()));
             break;
         case 0xA5: // AND L         logical AND L against A.
-            this->registers.setA(this->registers.getA() & this->registers.getL());
+            this->registers.setA(land(this->registers.getA(), this->registers.getL()));
             break; 
         case 0xA6: // AND (HL)      logical AND value pointed by HL against A.
-            this->registers.setA(this->registers.getA() & this->ram.getMemory(this->registers.getHL()));
+            this->registers.setA(land(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
             break;
         case 0xA7: // AND A         logical AND A against A.
-            this->registers.setA(this->registers.getA() & this->registers.getA());
+            this->registers.setA(land(this->registers.getA(), this->registers.getA()));
             break;
         case 0xA8: // XOR B         logical XOR B against A.
-            this->registers.setA(this->registers.getA() ^ this->registers.getB());
+            this->registers.setA(lxor(this->registers.getA(), this->registers.getB()));
             break;
         case 0xA9: // XOR C         logical XOR C against A.
-            this->registers.setA(this->registers.getA() ^ this->registers.getC());
+            this->registers.setA(lxor(this->registers.getA(), this->registers.getC()));
             break;
         case 0xAA: // XOR D         logical XOR D against A.
-            this->registers.setA(this->registers.getA() ^ this->registers.getD());
+            this->registers.setA(lxor(this->registers.getA(), this->registers.getD()));
             break;
         case 0xAB: // XOR E         logical XOR E against A.
-            this->registers.setA(this->registers.getA() ^ this->registers.getE());
+            this->registers.setA(lxor(this->registers.getA(), this->registers.getE()));
             break;
         case 0xAC: // XOR H         logical XOR H against A.
-            this->registers.setA(this->registers.getA() ^ this->registers.getH());
+            this->registers.setA(lxor(this->registers.getA(), this->registers.getH()));
             break;
         case 0xAD: // XOR L         logical XOR L against A.
-            this->registers.setA(this->registers.getA() ^ this->registers.getL());
+            this->registers.setA(lxor(this->registers.getA(), this->registers.getL()));
             break;
         case 0xAE: // XOR (HL)      logical XOR value pointed by HL against A.
-            this->registers.setA(this->registers.getA() ^ this->ram.getMemory(this->registers.getHL()));
+            this->registers.setA(lxor(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
             break;
         case 0xAF: // XOR A         logical XOR A against A.
-            this->registers.setA(this->registers.getA() ^ this->registers.getA());
+            this->registers.setA(lxor(this->registers.getA(), this->registers.getA()));
             break;
         case 0xB0: // OR B          logical OR B against A.
-            this->registers.setA(this->registers.getA() | this->registers.getB());
+            this->registers.setA(lor(this->registers.getA(), this->registers.getB()));
             break;
         case 0xB1: // OR C          logical OR C against A.
-            this->registers.setA(this->registers.getA() | this->registers.getC());
+            this->registers.setA(lor(this->registers.getA(), this->registers.getC()));
             break;
         case 0xB2: // OR D          logical OR D against A.
-            this->registers.setA(this->registers.getA() | this->registers.getD());
+            this->registers.setA(lor(this->registers.getA(), this->registers.getD()));
             break;
         case 0xB3: // OR E          logical OR E against A.
-            this->registers.setA(this->registers.getA() | this->registers.getE());
+            this->registers.setA(lor(this->registers.getA(), this->registers.getE()));
             break;
         case 0xB4: // OR H          logical OR H against A.
-            this->registers.setA(this->registers.getA() | this->registers.getH());
+            this->registers.setA(lor(this->registers.getA(), this->registers.getH()));
             break;
         case 0xB5: // OR L          logical OR L against A. 
-            this->registers.setA(this->registers.getA() | this->registers.getL());
+            this->registers.setA(lor(this->registers.getA(), this->registers.getL()));
             break;
         case 0xB6: // OR (HL)       logical OR value pointed by HL against A.
-            this->registers.setA(this->registers.getA() | this->ram.getMemory(this->registers.getHL()));
+            this->registers.setA(lor(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
             break;
         case 0xB7: // OR A          logical OR A against A.
-            this->registers.setA(this->registers.getA() | this->registers.getA());
+            this->registers.setA(lor(this->registers.getA(), this->registers.getA()));
             break;
         case 0xB8: // CP B          compare B against A.
             compare(this->registers.getA(), this->registers.getB());
