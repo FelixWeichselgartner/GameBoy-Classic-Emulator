@@ -5,6 +5,7 @@
 #include <math.h>
 #include "Registers.hpp"
 #include "RAM.hpp"
+#include "ROM.hpp"
 
 typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
@@ -20,8 +21,8 @@ public:
 
     // general purpose registersm + stack pointer & program counter.
     class Registers registers;
-
     class RAM ram;
+	class ROM rom;
 
 public:
 

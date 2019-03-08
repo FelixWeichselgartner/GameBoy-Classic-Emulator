@@ -8,8 +8,6 @@
 #include <iostream>
 using namespace std;
 #include <iomanip>
-
-typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
 
 GameBoy::GameBoy() {
@@ -46,9 +44,18 @@ void GameBoy::AdditionTest() {
 	this->cpu.executeInstruction(0x10);
 }
 
+void GameBoy::RomTest() {
+	this->cpu.rom.load(&this->cpu.ram);
+	this->cpu.rom.print(&this->cpu.ram);
+}
+
 void GameBoy::run() {
 	while (this->cpu.getRunning()) {
-		AdditionTest();
+		//AdditionTest();
+
+		RomTest();
+
+		cpu.setRunning(0);
 	}
 }
 

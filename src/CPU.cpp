@@ -1,8 +1,6 @@
 //----------------------------------------------------------------------------------------------
 #include "../include/CPU.hpp"
 #include "../include/Registers.hpp"
-
-typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
@@ -16,6 +14,7 @@ typedef unsigned char Byte;
 
 CPU::CPU() {
 	this->running = 0x01;
+	rom.load(&ram);
 }
 
 Byte CPU::getRunning() {
@@ -221,6 +220,8 @@ Byte CPU::sub(Byte a, Byte b) {
 	} else {
 		this->registers.setF(this->registers.getF() & 0b11101111);
 	}
+
+	return retval;
 }
 
 Byte CPU::sbc(Byte a, Byte b) {
@@ -257,6 +258,8 @@ Byte CPU::sbc(Byte a, Byte b) {
 	} else {
 		this->registers.setF(this->registers.getF() & 0b11101111);
 	}
+
+	return retval;
 }
 
 Byte CPU::land(Byte a, Byte b) {

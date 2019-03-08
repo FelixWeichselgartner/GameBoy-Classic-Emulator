@@ -23,6 +23,8 @@ public:
 
 	void AdditionTest();
 
+	void RomTest();
+
     void run();
 
 };

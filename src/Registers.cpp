@@ -3,8 +3,6 @@
 #include <iomanip>
 
 #include "../include/Registers.hpp"
-
-typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
 
 std::string toBinary(int n) {
