@@ -15,7 +15,15 @@ typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
 
 CPU::CPU() {
-    
+	this->running = 0x01;
+}
+
+Byte CPU::getRunning() {
+	return this->running;
+}
+
+void CPU::setRunning(Byte running) {
+	this->running = running;
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
@@ -25,6 +33,96 @@ Byte CPU::ReadByte(unsigned short address) const {
 void CPU::WriteByte(unsigned short address, Byte value) {
     this->ram.setMemory(address, value);
     return;
+}
+
+Byte CPU::rlc(Byte a) {
+	Byte retval = this->registers.getA() << 1 | this->registers.getA() >> 7;
+
+	// Z, N, H are reset
+	this->registers.setF(this->registers.getF() & 0b00011111);
+
+	// C is set if bit 0 is 1, else reset
+	if (this->registers.getA() & 0x01) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
+
+	return retval;
+}
+
+Byte CPU::rrc(Byte a) {
+	Byte retval = this->registers.getA() >> 1 | this->registers.getA() << 7;
+
+	// Z, N, H are reset
+	this->registers.setF(this->registers.getF() & 0b00011111);
+
+	// C is set if bit 0 is 1, else reset
+	if (this->registers.getA() & 0x01) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
+
+	return retval;
+}
+
+Byte CPU::rr(Byte a) {
+	Byte retval = this->registers.getA() >> 1 | this->registers.getA() << 7;
+
+	// Z is set if result is zero, else reset
+	if (retval == (Byte)0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N, H are reset
+	this->registers.setF(this->registers.getF() & 0b10011111);
+
+	// C is set if bit 0 is 1, else reset
+	if (this->registers.getA() & 0x01) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
+
+	return retval;
+}
+
+Byte CPU::rl(Byte a) {
+	Byte retval = this->registers.getA() << 1 | this->registers.getA() >> 7;
+
+	// Z is set if result is zero, else reset
+	if (retval == (Byte)0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	}
+	else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N, H are reset
+	this->registers.setF(this->registers.getF() & 0b10011111);
+
+	// C is set if bit 0 is 1, else reset
+	if (this->registers.getA() & 0x01) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	}
+	else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
+
+	return retval;
+}
+
+Byte CPU::cpl(Byte a) {
+	// N is set
+	this->registers.setF(this->registers.getF() | 0b01000000);
+
+	// H is set
+	this->registers.setF(this->registers.getF() | 0b00100000);
+
+	return !a;
 }
 
 Byte CPU::add(Byte a, Byte b) {
@@ -95,6 +193,70 @@ Byte CPU::adc(Byte a, Byte b) {
 	}
 
 	return retval;
+}
+
+Byte CPU::sub(Byte a, Byte b) {
+	Byte retval = a - b;
+
+	// Z is set if result is zero, else reset
+	if (retval == 0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N is set
+	this->registers.setF(this->registers.getF() | 0b01000000);
+
+	// H is set if no borrow from bit 4, else reset
+	if (((a ^ b ^ retval) & 0x10) == 0x01) {
+		this->registers.setF(this->registers.getF() | 0b00100000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11011111);
+	}
+
+	// C is set if no borrow from bit 7, else reset
+	if (b > a) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
+}
+
+Byte CPU::sbc(Byte a, Byte b) {
+	Byte c;
+
+	if ((this->registers.getF() & 0b00010000) == 0b00010000) {
+		c = 0b00000001;
+	} else {
+		c = 0x00;
+	}
+
+	Byte retval = a - b - c;
+
+	// Z is set if result is zero, else reset
+	if (retval == 0x00) {
+		this->registers.setF(this->registers.getF() | 0b10000000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b01111111);
+	}
+
+	// N is set
+	this->registers.setF(this->registers.getF() | 0b01000000);
+
+	// H is set if no borrow from bit 4, else reset
+	if (((a ^ b ^ retval) & 0x10) == 0x01) {
+		this->registers.setF(this->registers.getF() | 0b00100000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11011111);
+	}
+
+	// C is set if no borrow from bit 7, else reset
+	if (b > a) {
+		this->registers.setF(this->registers.getF() | 0b00010000);
+	} else {
+		this->registers.setF(this->registers.getF() & 0b11101111);
+	}
 }
 
 Byte CPU::land(Byte a, Byte b) {
@@ -215,6 +377,7 @@ void CPU::executeInstruction(Byte opcode) {
         case  0x6: // LD B, n       load 8 bit immediate into B.
             break;
         case  0x7: // RLC A         rotate A left with carry.
+			this->registers.setA(rlc(this->registers.getA()));
             break;
         case  0x8: // LD (nn), SP   save SP to a given address.
             break;
@@ -236,8 +399,10 @@ void CPU::executeInstruction(Byte opcode) {
         case  0xE: // LD C, n       load 8-bit immediate to C.
             break;
         case  0xF: // RRC A         rotate A right with carry.
+			this->registers.setA(rrc(this->registers.getA()));
             break;
         case 0x10: // STOP          stop processor.
+			this->gb_stop = 0x01;
             break;
         case 0x11: // LD DE, nn     load 16-bit immediate into DE.
             break;
@@ -256,13 +421,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x16: // LD D, n       load 8-bit immediate into D.
             break;
         case 0x17: // RL A          rotate A left.
-            /*
-            9-bit rotation to the left. 
-            The bit leaving on the left is copied into the carry, 
-            while the old value of the carry appears in bit 0 of the operand. 
-            The H and N flags are reset, P/V is parity, 
-            S and Z are modified by definition.
-            */
+			this->registers.setA(rl(this->registers.getA()));
             break;
         case 0x18: // JR n          relative jump by signed immediate.
             break;
@@ -283,6 +442,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x1E: // LD E, n       Load 8-bit immediate into E.
             break;
         case 0x1F: // RR A          rotate A right.
+			this->registers.setA(rr(this->registers.getA()));
             break;
         case 0x20: // JR NC, n      relative jump by signed immediate if last result was not zero.
             break;
@@ -306,6 +466,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
+			this->registers.setHL(this->registers.getHL() + this->registers.getHL());
             break;
         case 0x2A: // LDI A, (HL)   load A from address pointed to by HL, and increment HL.
             break;
@@ -321,6 +482,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x2E: // LD L, n       load 8-bit immediate into L.
             break;
         case 0x2F: // CPL           complement (logical NOT) on A.
+			this->registers.setA(cpl(this->registers.getA()));
             break;
         case 0x30: // JR NC, n      relative jump by signed immediate if last result caused no carry.
             break;
@@ -524,6 +686,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->ram.setMemory(this->registers.getHL(), this->registers.getL());
             break;
         case 0x76: // HALT          halt processor.
+			this->gb_halt = 0x01;
             break;
         case 0x77: // LD (HL), A    copy A to address pointed by HL.
             this->ram.setMemory(this->registers.getHL(), this->registers.getA());
@@ -601,44 +764,52 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(adc(this->registers.getA(), this->registers.getA()));
             break;
         case 0x90: // SUB A, B      subtract B from A.
-            this->registers.setA(this->registers.getA() - this->registers.getB());
+            this->registers.setA(sub(this->registers.getA(), this->registers.getB()));
             break;
         case 0x91: // SUB A, C      subtract C from A.
-            this->registers.setA(this->registers.getA() - this->registers.getC());
+            this->registers.setA(sub(this->registers.getA(), this->registers.getC()));
             break;
         case 0x92: // SUB A, D      subtract D from A.
-            this->registers.setA(this->registers.getA() - this->registers.getD());
+            this->registers.setA(sub(this->registers.getA(), this->registers.getD()));
             break;
         case 0x93: // SUB A, E      subtract E from A.
-            this->registers.setA(this->registers.getA() - this->registers.getE());
+            this->registers.setA(sub(this->registers.getA(), this->registers.getE()));
             break;
         case 0x94: // SUB A, H      subtract H from A.
-            this->registers.setA(this->registers.getA() - this->registers.getH());
+            this->registers.setA(sub(this->registers.getA(), this->registers.getH()));
             break;
         case 0x95: // SUB A, L      subtract L from A.
-            this->registers.setA(this->registers.getA() - this->registers.getL());
+            this->registers.setA(sub(this->registers.getA(), this->registers.getL()));
             break;
         case 0x96: // SUB A, (HL)   subtract value pointed by HL from A.
-            this->registers.setA(this->registers.getA() - this->ram.getMemory(this->registers.getB()));
+            this->registers.setA(sub(this->registers.getA(), this->ram.getMemory(this->registers.getB())));
             break; 
         case 0x97: // SUB A, A      subtract A from A.
-            this->registers.setA(this->registers.getA() - this->registers.getA());
+            this->registers.setA(sub(this->registers.getA(), this->registers.getA()));
             break;
         case 0x98: // SBC A, B      subtract B and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->registers.getB()));
             break;
         case 0x99: // SBC A, C      subtract C and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->registers.getC()));
             break;
         case 0x9A: // SBC A, D      subtract D and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->registers.getD()));
             break;
         case 0x9B: // SBC A, E      subtract E and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->registers.getE()));
             break;
         case 0x9C: // SBC A, H      subtract H and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->registers.getH()));
             break;
         case 0x9D: // SBC A, L      subtract L and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->registers.getL()));
             break;
         case 0x9E: // SBC A, (HL)   subtract value pointed by HL and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
             break;
         case 0x9F: // SBC A, A      subtract A and carry flag from A.
+			this->registers.setA(sbc(this->registers.getA(), this->registers.getA()));
             break; 
         case 0xA0: // AND B         logical AND B against A.
             this->registers.setA(land(this->registers.getA(), this->registers.getB()));
@@ -788,7 +959,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
             break; 
-        case 0xDA: //JP C, nn       absolute jump to 16-bit location if last result caused carry.
+        case 0xDA: // JP C, nn       absolute jump to 16-bit location if last result caused carry.
             break;
         case 0xDB: // XX            operation removed in this CPU. 
             break;

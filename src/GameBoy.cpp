@@ -16,6 +16,7 @@ GameBoy::GameBoy() {
     
 }
 
+// seems to be working
 void GameBoy::AdditionTest() {
 	Byte a = 0b00001010, b = 0b00001100;
 	this->cpu.registers.setA(a);
@@ -41,10 +42,14 @@ void GameBoy::AdditionTest() {
 	this->cpu.executeInstruction(0x80);
 	cout << "result: " << dec << (int)this->cpu.registers.getA() << endl;
 	this->cpu.registers.printFlags();
+
+	this->cpu.executeInstruction(0x10);
 }
 
 void GameBoy::run() {
-	AdditionTest();
+	while (this->cpu.getRunning()) {
+		AdditionTest();
+	}
 }
 
 int main() {
