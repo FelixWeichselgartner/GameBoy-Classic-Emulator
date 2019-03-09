@@ -46,16 +46,22 @@ void GameBoy::AdditionTest() {
 
 void GameBoy::RomTest() {
 	this->cpu.rom.load(&this->cpu.ram);
-	this->cpu.rom.print(&this->cpu.ram);
+	// Entry point to start of game code
+	this->cpu.rom.print(&this->cpu.ram, 0x100, 0x14F);
 }
 
 void GameBoy::run() {
+	//AdditionTest();
+	//RomTest();
+	int count = 0;
 	while (this->cpu.getRunning()) {
-		//AdditionTest();
-
-		RomTest();
-
-		cpu.setRunning(0);
+		this->cpu.executeInstruction(this->cpu.ram.getMemory(this->cpu.registers.getPC()));
+		this->cpu.registers.setPC(this->cpu.registers.getPC() + 1);
+		count++;
+		if (count == 256) {
+			cpu.setRunning(0);
+			break;
+		}
 	}
 }
 

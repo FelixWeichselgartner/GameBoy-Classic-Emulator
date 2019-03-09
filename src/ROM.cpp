@@ -4,6 +4,7 @@
 #include <iostream>
 using namespace std;
 #include <iomanip>
+#include <string>
 #include <fstream>
 #include <math.h>
 //----------------------------------------------------------------------------------------------
@@ -33,7 +34,16 @@ void ROM::load(class RAM* ram) {
 	}
 }
 
-void ROM::print(class RAM* ram) {
+string ROM::getGameName(class RAM* ram) {
+	string name;
+	for (int n = 0x134; n < 0x0142; n++) {
+		name = name + (char) ram->getMemory(n);
+	}
+	return name;
+}
+
+void ROM::print(class RAM* ram, unsigned short start, unsigned short end) {
+	cout << "Name: " << getGameName(ram) << endl;
 	cout << "File Hexdump: " << endl << endl;
 	cout << "          ";
 	for (int i = 0; i < 16; i++) {
@@ -41,7 +51,7 @@ void ROM::print(class RAM* ram) {
 	}
 	cout << endl;
 
-	for (int i = 0; i < 16; i++) {
+	for (int i = start; i < end; i++) {
 		cout << setw(8) << hex << setfill('0') << i * 16 << ": ";
 		for (int k = 0; k < 16; k++) {
 			cout << setw(2) << hex << (int)ram->getMemory(i * 16 + k) << " ";

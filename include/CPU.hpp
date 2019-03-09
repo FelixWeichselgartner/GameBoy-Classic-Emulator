@@ -34,6 +34,12 @@ public:
     Byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, Byte);
 
+	// load 8 bit value in register.
+	Byte load8bit();
+	// load 16 bit value in register.
+	unsigned short load16bit();
+	// save 16 bit value to memory.
+	void save16bitToAddress(unsigned short, unsigned short);
 	// rotate left carry.
 	Byte rlc(Byte);
 	// rotate right carry.
@@ -46,6 +52,8 @@ public:
 	Byte cpl(Byte);
 	// add two Byte values.
     Byte add(Byte, Byte);
+	// add two 16-bit values.
+	unsigned short add16bit(unsigned short, unsigned short);
 	// add two Byte values + carry.
 	Byte adc(Byte, Byte);
 	// sub two Byte values.
@@ -63,6 +71,8 @@ public:
 	
 	// execute instructions according to opcode.
     void executeInstruction(Byte);
+
+	void CPUstep();
 
 };
 //----------------------------------------------------------------------------------------------
