@@ -8,6 +8,9 @@
 #include <iostream>
 using namespace std;
 #include <iomanip>
+#include <thread>
+
+#include <time.h>
 //----------------------------------------------------------------------------------------------
 
 GameBoy::GameBoy() {
@@ -57,21 +60,34 @@ void GameBoy::tests() {
 	RomTest();
 }
 
+void delay(int micro_seconds) {
+	clock_t start_time = clock();
+	while (clock() < start_time + micro_seconds/1000)
+		;
+}
+
 void GameBoy::run() {
+
+	// this is not final
+	int delaytime = 1000 * 1000 / this->cpu.getClockSpeed();
+	//
+
 	int count = 0;
 	while (this->cpu.getRunning()) {
-		this->cpu.executeInstruction(this->cpu.ram.getMemory(this->cpu.registers.getPC()));
-		if (!this->cpu.getJump()) {
-			this->cpu.registers.setPC(this->cpu.registers.getPC() + 1);
-		} else {
-			this->cpu.setJump(0x00);
-		}
+		cpu.CPUstep();
+
+		/*
 		count++;
 		if (count % 10000 == 0) {
 			cout << count << endl;
 			//cpu.setRunning(0);
 			//break;
 		}
+		*/
+
+		// this is not final
+		delay(delaytime);
+		//
 	}
 }
 

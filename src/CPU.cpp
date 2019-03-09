@@ -18,20 +18,16 @@ CPU::CPU() {
 	rom.load(&ram);
 }
 
-void CPU::setJump(Byte jump) {
-	this->jump = jump;
-}
-
-Byte CPU::getJump() const {
-	return this->jump;
-}
-
 Byte CPU::getRunning() {
 	return this->running;
 }
 
 void CPU::setRunning(Byte running) {
 	this->running = running;
+}
+
+int CPU::getClockSpeed() const {
+	return this->clockSpeed;
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
@@ -74,7 +70,7 @@ void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
 }
 
 Byte CPU::rlc(Byte a) {
-	Byte retval = this->registers.getA() << 1 | this->registers.getA() >> 7;
+	Byte retval = a << 1 | a >> 7;
 
 	// Z, N, H are reset
 	this->registers.setF(this->registers.getF() & 0b00011111);
@@ -90,7 +86,7 @@ Byte CPU::rlc(Byte a) {
 }
 
 Byte CPU::rrc(Byte a) {
-	Byte retval = this->registers.getA() >> 1 | this->registers.getA() << 7;
+	Byte retval = a >> 1 | a << 7;
 
 	// Z, N, H are reset
 	this->registers.setF(this->registers.getF() & 0b00011111);
@@ -106,7 +102,7 @@ Byte CPU::rrc(Byte a) {
 }
 
 Byte CPU::rr(Byte a) {
-	Byte retval = this->registers.getA() >> 1 | this->registers.getA() << 7;
+	Byte retval = a >> 1 | a << 7;
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
@@ -129,7 +125,7 @@ Byte CPU::rr(Byte a) {
 }
 
 Byte CPU::rl(Byte a) {
-	Byte retval = this->registers.getA() << 1 | this->registers.getA() >> 7;
+	Byte retval = a << 1 | a >> 7;
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
@@ -199,8 +195,28 @@ Byte CPU::add(Byte a, Byte b, char type) {
 	return retval;
 }
 
-unsigned short CPU::add16bit(unsigned short a, unsigned short b) {
-	unsigned short retval = a + b;
+unsigned short signed8to16(Byte n) {
+	unsigned short retval = n & 0b01111111;;
+
+	// check if minus or plus.
+	if ((n & 0b10000000) == 0b10000000) { // minus
+		retval |= 0x8000;
+	} else { // plus
+		retval &= 0x7fff;
+	}
+
+	return retval;
+}
+
+unsigned short CPU::add16bit(unsigned short a, unsigned short b, char type) {
+	unsigned short retval;
+
+
+	if (type == 'u') { //unsigned
+		retval = a + b;
+	} else if (type == 's') { //signed
+		retval = a + (signed char)b;
+	}
 
 	// Z is set if result is zero, else reset
 	if (retval == (unsigned short)0x0000) {
@@ -407,7 +423,7 @@ Byte CPU::lor(Byte a, Byte b) {
 	return retval;
 }
 
-void CPU::compare(Byte A, Byte X) {
+void CPU::cp(Byte A, Byte X) {
 	Byte sub = A - X;
 
 	// Z is set if result is zero, else reset
@@ -462,12 +478,17 @@ unsigned short CPU::pop16bit() {
 	return retval;
 }
 
+void CPU::call(unsigned short address) {
+	push16bit(this->registers.getPC());
+	this->registers.setPC(address);
+}
+
 void CPU::executeInstruction(Byte opcode) {
     switch((int)opcode) {
         case  0x0: // NOP           no operation.
             break;
         case  0x1: // LD (BC), nn   load 16-bit immediate into BC.
-			this->ram.setMemory(this->registers.getBC(), load16bit());
+			save16bitToAddress(this->registers.getBC(), load16bit());
             break;
         case  0x2: // LD (BC), A    saves A to address pointed by BC.
             this->ram.setMemory(this->registers.getBC(), this->registers.getA());
@@ -539,7 +560,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
             break;
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
-			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE()));
+			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE(), 'u'));
             break;
         case 0x1A: // LD A, (DE)    load A from address pointed to by DE.
             this->registers.setA(this->ram.getMemory(this->registers.getDE()));
@@ -560,7 +581,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(rr(this->registers.getA()));
             break;
         case 0x20: // JR NC, n      relative jump by signed immediate if last result was not zero.
-			if (this->registers.getF() & 0b10000000 != 0b1000000) {
+			if ((this->registers.getF() & 0b10000000) != 0b1000000) {
 				this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
 			}
             break;
@@ -586,8 +607,8 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x27: // DAA           adjust A for BCD addition.
             break;
         case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
-			if (this->registers.getF() & 0b10000000 == 0b1000000) {
-				this->registers.setPC(add(this->registers.getPC(), load8bit(), 's'));
+			if ((this->registers.getF() & 0b10000000) == 0b1000000) {
+				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
 			}
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
@@ -613,8 +634,8 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(cpl(this->registers.getA()));
             break;
         case 0x30: // JR NC, n      relative jump by signed immediate if last result caused no carry.
-			if (this->registers.getF() & 0b00010000 != 0b00010000) {
-				this->registers.setPC(add(this->registers.getPC(), load8bit(), 's'));
+			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
 			}
             break;
         case 0x31: // LD SP, nn     load 16-bit immediate into SP.
@@ -640,8 +661,8 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setF(this->registers.getF() | 0b00010000);
             break;
         case 0x38: // JR C, n       relative jump by signed immediate if last result caused carry.
-			if (this->registers.getF() & 0b00010000 == 0b00010000) {
-				this->registers.setPC(add(this->registers.getPC(), load8bit(), 's'));
+			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
+				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
 			}
             break;
         case 0x39: // ADD HL, SP    add 16-bit SP to HL.
@@ -664,7 +685,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(load8bit());
             break;
         case 0x3F: // CCF           complement carry flag.
-			if (this->registers.getF() & 0b00010000 == 0b00010000) {
+			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
 				this->registers.setF(this->registers.getF() & 0b11101111);
 			} else {
 				this->registers.setF(this->registers.getF() | 0b00010000);
@@ -1031,31 +1052,31 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(lor(this->registers.getA(), this->registers.getA()));
             break;
         case 0xB8: // CP B          compare B against A.
-            compare(this->registers.getA(), this->registers.getB());
+            cp(this->registers.getA(), this->registers.getB());
             break;
         case 0xB9: // CP C          compare C against A.
-            compare(this->registers.getA(), this->registers.getC());
+            cp(this->registers.getA(), this->registers.getC());
             break;
         case 0xBA: // CP D          compare D against A.
-            compare(this->registers.getA(), this->registers.getD());
+            cp(this->registers.getA(), this->registers.getD());
             break;
         case 0xBB: // CP E          compare E against A.
-            compare(this->registers.getA(), this->registers.getE());
+            cp(this->registers.getA(), this->registers.getE());
             break;
         case 0xBC: // CP H          compare H against A.
-            compare(this->registers.getA(), this->registers.getH());
+            cp(this->registers.getA(), this->registers.getH());
             break;
         case 0xBD: // CP L          compare L against A.
-            compare(this->registers.getA(), this->registers.getL());
+            cp(this->registers.getA(), this->registers.getL());
             break;
         case 0xBE: // CP (HL)       compare value pointed by HL against A.
-            compare(this->registers.getA(), this->ram.getMemory(this->registers.getHL()));
+            cp(this->registers.getA(), this->ram.getMemory(this->registers.getHL()));
             break;
         case 0xBF: // CP A          compare A against A.
-            compare(this->registers.getA(), this->registers.getA());
+            cp(this->registers.getA(), this->registers.getA());
             break;
         case 0xC0: // RET NZ        return if last result was not zero.
-			if (this->registers.getF() & 0b10000000 != 0b10000000) {
+			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
 				this->registers.setPC(pop16bit());
 			}
             break;
@@ -1063,7 +1084,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setBC(pop16bit());
             break;
         case 0xC2: // JP NZ, nn     absolute jump to 16-bit location if last result was not zero.
-			if (this->registers.getF() & 0b10000000 != 0b1000000) {
+			if ((this->registers.getF() & 0b10000000) != 0b1000000) {
 				this->registers.setPC(load16bit());
 			}
             break;
@@ -1072,6 +1093,9 @@ void CPU::executeInstruction(Byte opcode) {
 			jump = 0x01;
             break;
         case 0xC4: // CALL NZ, nn   call routine at 16-bit location if last result was not zero.
+			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
+				call(load16bit());
+			}
             break;
         case 0xC5: // PUSH BC       push 16-bit BC onto stack.
 			push16bit(this->registers.getBC());
@@ -1080,32 +1104,40 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(add(this->registers.getA(), load8bit(), 'u'));
             break;
         case 0xC7: // RST 0         call routine at address 0000h
+			call(0x0000);
             break;
         case 0xC8: // RET Z         return if last result was zero.
-			if (this->registers.getF() & 0b10000000 == 0b10000000) {
+			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
 				this->registers.setPC(pop16bit());
 			}
             break;
         case 0xC9: // RET           return to calling routine.
+			this->registers.setPC(pop16bit());
             break;
         case 0xCA: // JP Z, nn      absolute jump to 16-bit location if last result was zero.
-			if (this->registers.getF() & 0b10000000 == 0b10000000) {
+			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
 				this->registers.setPC(load16bit());
 			}
             break;
         case 0xCB: // Ext ops       extended operations (two-Byte instruction code).
+			executeExtendedOpcodes();
             break;
         case 0xCC: // CALL Z, nn    call routine at 16-bit location if last result was zero.
+			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
+				call(load16bit());
+			}
             break;
         case 0xCD: // CALL nn       call routine at 16-bit location.
+			call(load16bit());
             break;
         case 0xCE: // ADC A, n      add 8-bit immediate and carry to A.
 			this->registers.setA(adc(this->registers.getA(), load8bit()));
             break;
         case 0xCF: // RST 8         call routine at adress 0008h.
+			call(0x0008);
             break;
         case 0xD0: // RET NC        return if last result caused no carry.
-			if (this->registers.getF() & 0b00010000 == 0b00010000) {
+			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
 				this->registers.setPC(pop16bit());
 			}
             break;
@@ -1113,13 +1145,16 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setDE(pop16bit());
             break;
         case 0xD2: // JP NC, nn     absolute jump to 16-bit location if last result caused no carry.
-			if (this->registers.getF() & 0b00010000 == 0b00010000) {
+			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
 				this->registers.setPC(load16bit());
 			}
             break;
         case 0xD3: // XX            operation removed in this CPU.
             break;
         case 0xD4: // CALL NC, nn   call routine at 16-bit location if last result caused no carry.
+			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+				call(load16bit());
+			}
             break;
         case 0xD5: // PUSH DE       push 16-bit DE onto stack.
 			push16bit(this->registers.getDE());
@@ -1128,22 +1163,28 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(sub(this->registers.getA(), load8bit()));
             break;
         case 0xD7: // RST 10        call routine at address 0010h.
+			call(0x0010);
             break;
         case 0xD8: // RET C         return if last result caused carry.
-			if (this->registers.getF() & 0b00010000 != 0b00010000) {
+			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
 				this->registers.setPC(pop16bit());
 			}
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
+			this->enableInterrupts = 0x01;
+			this->registers.setPC(pop16bit());
             break; 
         case 0xDA: // JP C, nn      absolute jump to 16-bit location if last result caused carry.
-			if (this->registers.getF() & 0b00010000 != 0b00010000) {
+			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
 				this->registers.setPC(load16bit());
 			}
             break;
         case 0xDB: // XX            operation removed in this CPU. 
             break;
         case 0xDC: // CALL C, nn    call routine at 16-bit location if last result caused no carry.
+			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+				call(load16bit());
+			}
             break;
         case 0xDD: // XX            operation removed in this CPU.
             break;
@@ -1151,6 +1192,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(sbc(this->registers.getA(), load8bit()));
             break;
         case 0xDF: // RST 18        call routine at address 0018h.
+			call(0x0018);
             break;
         case 0xE0: // LDH (n), A    save A at address pointed to by (FF00h + 8-bit immediate)
 			this->ram.setMemory(ADDR_IO + load8bit(), this->registers.getA());
@@ -1172,9 +1214,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(land(this->registers.getA(), load8bit()));
             break;
         case 0xE7: // RST 20        call routine at address 0020h.
+			call(0x0020);
             break;
         case 0xE8: // ADD SP, d     add signed 8-bit immediate to SP.
-			this->registers.setSP(add(this->registers.getSP(), load8bit(), 's'));
+			this->registers.setSP(add16bit(this->registers.getSP(), signed8to16(load8bit()), 's'));
             break;
         case 0xE9: // JP (HL)       jump to 16-bit value pointed by HL.
 			this->registers.setPC(this->registers.getHL());
@@ -1192,6 +1235,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(lxor(this->registers.getA(), load8bit()));
             break;
         case 0xEF: // RST 28        call routine at address 0028h.
+			call(0x0028);
             break;
         case 0xF0: // LDH A, (n)    load A from address pointed to by (FF00h + 8-bit immediate).
 			this->registers.setA(this->ram.getMemory(ADDR_IO + load8bit()));
@@ -1202,6 +1246,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xF2: // XX            operation removed in this CPU.
             break;
         case 0xF3: // DI            disable interrupts
+			this->enableInterrupts = 0x00;
             break;
         case 0xF4: // XX            operation removed in this CPU.
             break;
@@ -1213,9 +1258,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(lor(this->registers.getA(), load8bit()));
             break;
         case 0xF7: // RST 30        call routine at address 0030h.
+			call(0x0030);
             break;
         case 0xF8: // LDHL SP, d    add signed 8-bit immediate to SP and save result in HL.
-			this->registers.setHL(add(this->registers.getSP(), load8bit(), 's'));
+			this->registers.setHL(add16bit(this->registers.getSP(), signed8to16(load8bit()), 's'));
             break;
         case 0xF9: // LD SP, HL     copy HL to SP.
 			this->registers.setSP(this->registers.getHL());
@@ -1224,19 +1270,627 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(this->ram.getMemory(load16bit()));
             break;
         case 0xFB: // EI            enable interrupts.
+			this->enableInterrupts = 0x01;
             break;
         case 0xFC: // XX            operation removed in this CPU.
             break;
         case 0xFD: // XX            operation removed in this CPU.
             break;
         case 0xFE: // CP n          compare 8-bit immediate against A.
-			compare(this->registers.getA(), load8bit());
+			cp(this->registers.getA(), load8bit());
             break;
         case 0xFF: // RST 38        call routine at address 0038h.
+			call(0x0038);
             break;
     }
 }
 
-void CPU::CPUstep() {
+void CPU::sla() {
+	// Z is set if result is zero, else reset.
 
+	// N, H are reset.
+
+	// C is set according to result.
+}
+
+void CPU::sra() {
+	// Z is set if result is zero, else reset.
+
+	// N, H are reset.
+
+	// C is set according to result.
+}
+
+void CPU::swap() {
+	// Z is set if result is zero, else reset.
+
+	// N, H, C are reset.
+}
+
+void CPU::srl() {
+	// Z is set if result is zero, else reset.
+
+	// N, H are reset.
+
+	// C is set according to result.
+}
+
+void CPU::bit() {
+	// zero flag is set if bit is not set.
+
+	// N is reset.
+
+	// H is set.
+
+}
+
+void CPU::res() {
+	// flags are not affected.
+}
+
+void CPU::set() {
+	// flags are not affected.
+}
+
+void CPU::executeExtendedOpcodes() {
+	this->registers.setPC(this->registers.getPC() + 1);
+	Byte exOpcode = this->ram.getMemory(this->registers.getPC());
+
+	switch (exOpcode) {
+		case  0x0: // RLC B			rotate B left with carry.
+			this->registers.setB(rlc(this->registers.getB()));
+			break;
+		case  0x1: // RLC C
+			this->registers.setC(rlc(this->registers.getC()));
+			break;
+		case  0x2: // RLC D
+			this->registers.setD(rlc(this->registers.getD()));
+			break;
+		case  0x3: // RLC E
+			this->registers.setE(rlc(this->registers.getE()));
+			break;
+		case  0x4: // RLC H
+			this->registers.setH(rlc(this->registers.getH()));
+			break;
+		case  0x5: // RLC L
+			this->registers.setL(rlc(this->registers.getL()));
+			break;
+		case  0x6: // RLC (HL)
+			this->ram.setMemory(this->registers.getHL(), rlc(this->ram.getMemory(this->registers.getHL())));
+			break;
+		case  0x7: // RLC A
+			this->registers.setA(rlc(this->registers.getA()));
+			break;
+		case  0x8: // RRC B			rotate B right with carry.
+			this->registers.setB(rrc(this->registers.getB()));
+			break;
+		case  0x9: // RRC C
+			this->registers.setC(rrc(this->registers.getC()));
+			break;
+		case  0xA: // RRC D
+			this->registers.setD(rrc(this->registers.getD()));
+			break;
+		case  0xB: // RRC E 
+			this->registers.setE(rrc(this->registers.getE()));
+			break;
+		case  0xC: // RRC H
+			this->registers.setH(rrc(this->registers.getH()));
+			break;
+		case  0xD: // RRC L
+			this->registers.setL(rrc(this->registers.getL()));
+			break;
+		case  0xE: // RRC (HL)
+			this->ram.setMemory(this->registers.getHL(), rrc(this->ram.getMemory(this->registers.getHL())));
+			break;
+		case  0xF: // RRC A
+			this->registers.setA(rrc(this->registers.getA()));
+			break;
+		case 0x10: // RL B			rotate B left.
+			this->registers.setB(rl(this->registers.getB()));
+			break;
+		case 0x11: // RL C
+			this->registers.setC(rl(this->registers.getC()));
+			break;
+		case 0x12: // RL D
+			this->registers.setD(rl(this->registers.getD()));
+			break;
+		case 0x13: // RL E
+			this->registers.setE(rl(this->registers.getE()));
+			break;
+		case 0x14: // RL H
+			this->registers.setH(rl(this->registers.getH()));
+			break;
+		case 0x15: // RL L
+			this->registers.setL(rl(this->registers.getL()));
+			break;
+		case 0x16: // RL (HL)
+			this->ram.setMemory(this->registers.getHL(), rl(this->ram.getMemory(this->registers.getHL())));
+			break;
+		case 0x17: // RL A
+			this->registers.setA(rl(this->registers.getA()));
+			break;
+		case 0x18: // RR B			rotate B right.
+			this->registers.setB(rr(this->registers.getB()));
+			break;
+		case 0x19: // RR C
+			this->registers.setC(rr(this->registers.getC()));
+			break;
+		case 0x1A: // RR D
+			this->registers.setD(rr(this->registers.getD()));
+			break;
+		case 0x1B: // RR E
+			this->registers.setE(rr(this->registers.getE()));
+			break;
+		case 0x1C: // RR H
+			this->registers.setH(rr(this->registers.getH()));
+			break;
+		case 0x1D: // RR L
+			this->registers.setL(rr(this->registers.getL()));
+			break;
+		case 0x1E: // RR (HL)
+			this->ram.setMemory(this->registers.getHL(), rr(this->ram.getMemory(this->registers.getHL())));
+			break;
+		case 0x1F: // RR A
+			this->registers.setA(rr(this->registers.getA()));
+			break;
+		case 0x20: // SLA B			shift B left preserving sign.
+			break;
+		case 0x21: // 
+			break;
+		case 0x22: // 
+			break;
+		case 0x23: // 
+			break;
+		case 0x24: // 
+			break;
+		case 0x25: // 
+			break;
+		case 0x26: // 
+			break;
+		case 0x27: // 
+			break;
+		case 0x28: // SRA B			shift B right preserving sign.
+			break;
+		case 0x29: // 
+			break;
+		case 0x2A: // 
+			break;
+		case 0x2B: // 
+			break;
+		case 0x2C: // 
+			break;
+		case 0x2D: // 
+			break;
+		case 0x2E: // 
+			break;
+		case 0x2F: // 
+			break;
+		case 0x30: // SWAP B		swap nybbles in B.
+			break;
+		case 0x31: // 
+			break;
+		case 0x32: // 
+			break;
+		case 0x33: // 
+			break;
+		case 0x34: // 
+			break;
+		case 0x35: // 
+			break;
+		case 0x36: // 
+			break;
+		case 0x37: // 
+			break;
+		case 0x38: // SRL B			shift B right.
+			break;
+		case 0x39: // 
+			break;
+		case 0x3A: // 
+			break;
+		case 0x3B: // 
+			break;
+		case 0x3C: // 
+			break;
+		case 0x3D: // 
+			break;
+		case 0x3E: // 
+			break;
+		case 0x3F: // 
+			break;
+		case 0x40: // BIT 0, B		test bit 0 of B.
+			break;
+		case 0x41: // BIT 0, C
+			break;
+		case 0x42: // BIT 0, D
+			break;
+		case 0x43: // BIT 0, E
+			break;
+		case 0x44: // BIT 0, H
+			break;
+		case 0x45: // BIT 0, L
+			break;
+		case 0x46: // BIT 0, (HL)
+			break;
+		case 0x47: // BIT 0, A
+			break;
+		case 0x48: // BIT 1, B
+			break;
+		case 0x49: // BIT 1, C
+			break;
+		case 0x4A: // BIT 1, D
+			break;
+		case 0x4B: // BIT 1, E
+			break;
+		case 0x4C: // BIT 1, H
+			break;
+		case 0x4D: // BIT 1, L
+			break;
+		case 0x4E: // BIT 1, (HL)
+			break;
+		case 0x4F: // BIT 1, A
+			break;
+		case 0x50: // BIT 2, B
+			break;
+		case 0x51: // BIT 2, C
+			break;
+		case 0x52: // BIT 2, D
+			break;
+		case 0x53: // BIT 2, E
+			break;
+		case 0x54: // BIT 2, H
+			break;
+		case 0x55: // BIT 2, L
+			break;
+		case 0x56: // BIT 2, (HL)
+			break;
+		case 0x57: // BIT 2, A
+			break;
+		case 0x58: // BIT 3, B
+			break;
+		case 0x59: // BIT 3, C
+			break;
+		case 0x5A: // BIT 3, D
+			break;
+		case 0x5B: // BIT 3, E
+			break;
+		case 0x5C: // BIT 3, H
+			break;
+		case 0x5D: // BIT 3, L
+			break;
+		case 0x5E: // BIT 3, (HL)
+			break;
+		case 0x5F: // BIT 3, A
+			break;
+		case 0x60: // BIT 4, B
+			break;
+		case 0x61: // BIT 4, C
+			break;
+		case 0x62: // BIT 4, D
+			break;
+		case 0x63: // BIT 4, E
+			break;
+		case 0x64: // BIT 4, H
+			break;
+		case 0x65: // BIT 4, L
+			break;
+		case 0x66: // BIT 4, (HL)
+			break;
+		case 0x67: // BIT 4, A
+			break;
+		case 0x68: // BIT 5, B
+			break;
+		case 0x69: // BIT 5, C
+			break;
+		case 0x6A: // BIT 5, D
+			break;
+		case 0x6B: // BIT 5, E
+			break;
+		case 0x6C: // BIT 5, H
+			break;
+		case 0x6D: // BIT 5, L
+			break;
+		case 0x6E: // BIT 5, (HL)
+			break;
+		case 0x6F: // BIT 5, A
+			break;
+		case 0x70: // BIT 6, B
+			break;
+		case 0x71: // BIT 6, C
+			break;
+		case 0x72: // BIT 6, D
+			break;
+		case 0x73: // BIT 6, E
+			break;
+		case 0x74: // BIT 6, H
+			break;
+		case 0x75: // BIT 6, L
+			break;
+		case 0x76: // BIT 6, (HL)
+			break;
+		case 0x77: // BIT 6, A
+			break;
+		case 0x78: // BIT 7, B
+			break;
+		case 0x79: // BIT 7, C
+			break;
+		case 0x7A: // BIT 7, D
+			break;
+		case 0x7B: // BIT 7, E
+			break;
+		case 0x7C: // BIT 7, H
+			break;
+		case 0x7D: // BIT 7, L
+			break;
+		case 0x7E: // BIT 7, (HL)
+			break;
+		case 0x7F: // BIT 7, A
+			break;
+		case 0x80: // RES 0, B		clear (reset) bit 0 of B.
+			break;
+		case 0x81: // RES 0, C
+			break;
+		case 0x82: // RES 0, D
+			break;
+		case 0x83: // RES 0, E
+			break;
+		case 0x84: // RES 0, H
+			break;
+		case 0x85: // RES 0, L
+			break;
+		case 0x86: // RES 0, (HL)
+			break;
+		case 0x87: // RES 0, A
+			break;
+		case 0x88: // RES 1, B
+			break;
+		case 0x89: // RES 1, C
+			break;
+		case 0x8A: // RES 1, D
+			break;
+		case 0x8B: // RES 1, E
+			break;
+		case 0x8C: // RES 1, H
+			break;
+		case 0x8D: // RES 1, L
+			break;
+		case 0x8E: // RES 1, (HL)
+			break;
+		case 0x8F: // RES 1, A
+			break;
+		case 0x90: // RES 2, B
+			break;
+		case 0x91: // RES 2, C
+			break;
+		case 0x92: // RES 2, D
+			break;
+		case 0x93: // RES 2, E
+			break;
+		case 0x94: // RES 2, H
+			break;
+		case 0x95: // RES 2, L
+			break;
+		case 0x96: // RES 2, (HL)
+			break;
+		case 0x97: // RES 2, A
+			break;
+		case 0x98: // RES 3, B
+			break;
+		case 0x99: // RES 3, C
+			break;
+		case 0x9A: // RES 3, D
+			break;
+		case 0x9B: // RES 3, E
+			break;
+		case 0x9C: // RES 3, H
+			break;
+		case 0x9D: // RES 3, L
+			break;
+		case 0x9E: // RES 3, (HL)
+			break;
+		case 0x9F: // RES 3, A
+			break;
+		case 0xA0: // RES 4, B
+			break;
+		case 0xA1: // RES 4, C
+			break;
+		case 0xA2: // RES 4, D
+			break;
+		case 0xA3: // RES 4, E
+			break;
+		case 0xA4: // RES 4, H
+			break;
+		case 0xA5: // RES 4, L
+			break;
+		case 0xA6: // RES 4, (HL)
+			break;
+		case 0xA7: // RES 4, A
+			break;
+		case 0xA8: // RES 5, B
+			break;
+		case 0xA9: // RES 5, C
+			break;
+		case 0xAA: // RES 5, D
+			break;
+		case 0xAB: // RES 5, E
+			break;
+		case 0xAC: // RES 5, H
+			break;
+		case 0xAD: // RES 5, L
+			break;
+		case 0xAE: // RES 5, (HL)
+			break;
+		case 0xAF: // RES 5, A
+			break;
+		case 0xB0: // RES 6, B
+			break;
+		case 0xB1: // RES 6, C
+			break;
+		case 0xB2: // RES 6, D
+			break;
+		case 0xB3: // RES 6, E
+			break;
+		case 0xB4: // RES 6, H
+			break;
+		case 0xB5: // RES 6, L
+			break;
+		case 0xB6: // RES 6, (HL)
+			break;
+		case 0xB7: // RES 6, A
+			break;
+		case 0xB8: // RES 6, B
+			break;
+		case 0xB9: // RES 7, C
+			break;
+		case 0xBA: // RES 7, D
+			break;
+		case 0xBB: // RES 7, E
+			break;
+		case 0xBC: // RES 7, H
+			break;
+		case 0xBD: // RES 7, L
+			break;
+		case 0xBE: // RES 7, (HL)
+			break;
+		case 0xBF: // RES 7, A
+			break;
+		case 0xC0: // SET 0, B
+			break;
+		case 0xC1: // SET 0, C
+			break;
+		case 0xC2: // SET 0, D
+			break;
+		case 0xC3: // SET 0, E
+			break;
+		case 0xC4: // SET 0, H
+			break;
+		case 0xC5: // SET 0, L
+			break;
+		case 0xC6: // SET 0, (HL)
+			break;
+		case 0xC7: // SET 0, A
+			break;
+		case 0xC8: // SET 1, B
+			break;
+		case 0xC9: // SET 1, C
+			break;
+		case 0xCA: // SET 1, D
+			break;
+		case 0xCB: // SET 1, E
+			break;
+		case 0xCC: // SET 1, H
+			break;
+		case 0xCD: // SET 1, L
+			break;
+		case 0xCE: // SET 1, (HL)
+			break;
+		case 0xCF: // SET 1, A
+			break;
+		case 0xD0: // SET 2, B
+			break;
+		case 0xD1: // SET 2, C
+			break;
+		case 0xD2: // SET 2, D
+			break;
+		case 0xD3: // SET 2, E
+			break;
+		case 0xD4: // SET 2, H
+			break;
+		case 0xD5: // SET 2, L
+			break;
+		case 0xD6: // SET 2, (HL)
+			break;
+		case 0xD7: // SET 2, A
+			break;
+		case 0xD8: // SET 3, B
+			break;
+		case 0xD9: // SET 3, C
+			break;
+		case 0xDA: // SET 3, D
+			break;
+		case 0xDB: // SET 3, E
+			break;
+		case 0xDC: // SET 3, H
+			break;
+		case 0xDD: // SET 3, L
+			break;
+		case 0xDE: // SET 3, (HL)
+			break;
+		case 0xDF: // SET 3, A
+			break;
+		case 0xE0: // SET 4, B
+			break;
+		case 0xE1: // SET 4, C
+			break;
+		case 0xE2: // SET 4, D
+			break;
+		case 0xE3: // SET 4, E
+			break;
+		case 0xE4: // SET 4, H
+			break;
+		case 0xE5: // SET 4, L
+			break;
+		case 0xE6: // SET 4, (HL)
+			break;
+		case 0xE7: // SET 4, A
+			break;
+		case 0xE8: // SET 5, B
+			break;
+		case 0xE9: // SET 5, C
+			break;
+		case 0xEA: // SET 5, D
+			break;
+		case 0xEB: // SET 5, E
+			break;
+		case 0xEC: // SET 5, H
+			break;
+		case 0xED: // SET 5, L
+			break;
+		case 0xEE: // SET 5, (HL)
+			break;
+		case 0xEF: // SET 5, A
+			break;
+		case 0xF0: // SET 6, B
+			break;
+		case 0xF1: // SET 6, C
+			break;
+		case 0xF2: // SET 6, D
+			break;
+		case 0xF3: // SET 6, E
+			break;
+		case 0xF4: // SET 6, H
+			break;
+		case 0xF5: // SET 6, L
+			break;
+		case 0xF6: // SET 6, (HL)
+			break;
+		case 0xF7: // SET 6, A
+			break;
+		case 0xF8: // SET 7, B
+			break;
+		case 0xF9: // SET 7, C
+			break;
+		case 0xFA: // SET 7, D
+			break;
+		case 0xFB: // SET 7, E
+			break;
+		case 0xFC: // SET 7, H
+			break;
+		case 0xFD: // SET 7, L
+			break;
+		case 0xFE: // SET 7, (HL)
+			break;
+		case 0xFF: // SET 7, A
+			break;
+	}
+}
+
+void CPU::CPUstep() {
+	executeInstruction(this->ram.getMemory(this->registers.getPC()));
+
+	// may not increase program counter after jumps.
+	if (!this->jump) {
+		this->registers.setPC(this->registers.getPC() + 1);
+	} else {
+		this->jump = 0x00;
+	}
 }

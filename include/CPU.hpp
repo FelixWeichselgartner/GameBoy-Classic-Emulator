@@ -16,7 +16,8 @@ class CPU {
 private:
 
 	Byte running, gb_stop, gb_halt;
-	Byte jump;
+	Byte jump, enableInterrupts;
+	int clockSpeed = 4000000; // 4MHz
 
 public:
 
@@ -29,12 +30,12 @@ public:
 
     CPU();
 
-	// setter and getter for jump.
-	void setJump(Byte);
-	Byte getJump() const;
-
+	// setter and getter for running.
 	Byte getRunning();
 	void setRunning(Byte);
+
+	// getter for clock speed.
+	int getClockSpeed() const;
 
     Byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, Byte);
@@ -58,7 +59,7 @@ public:
 	// add two Byte values.
     Byte add(Byte, Byte, char);
 	// add two 16-bit values.
-	unsigned short add16bit(unsigned short, unsigned short);
+	unsigned short add16bit(unsigned short, unsigned short, char);
 	// add two Byte values + carry.
 	Byte adc(Byte, Byte);
 	// sub two Byte values.
@@ -72,7 +73,7 @@ public:
 	// logical OR on two Byte values.
 	Byte lor(Byte, Byte);
 	// compare two Byte values.
-	void compare(Byte, Byte);
+	void cp(Byte, Byte);
 	// push Byte value on the stack.
 	void push8bit(Byte);
 	// pop Byte value from the stack.
@@ -81,9 +82,29 @@ public:
 	void push16bit(unsigned short);
 	// pop 2 Byte value from the stack.
 	unsigned short pop16bit();
+	// call routine.
+	void call(unsigned short);
 	
 	// execute instructions according to opcode.
     void executeInstruction(Byte);
+
+	// shift Byte left with preserving sign.
+	void sla();
+	// shift Byte right with preserving sign.
+	void sra();
+	// swap nybbles in Byte.
+	void swap();
+	// shift Byte right.
+	void srl();
+	// test bit of Byte.
+	void bit();
+	// clear (reset) bit of Byte.
+	void res();
+	// set bit of Byte.
+	void set();
+
+	// execute extended opcodes.
+	void executeExtendedOpcodes();
 
 	// one cpu step.
 	void CPUstep();
