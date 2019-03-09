@@ -16,6 +16,7 @@ class CPU {
 private:
 
 	Byte running, gb_stop, gb_halt;
+	Byte jump;
 
 public:
 
@@ -27,6 +28,10 @@ public:
 public:
 
     CPU();
+
+	// setter and getter for jump.
+	void setJump(Byte);
+	Byte getJump() const;
 
 	Byte getRunning();
 	void setRunning(Byte);
@@ -51,7 +56,7 @@ public:
 	// complement of Byte value.
 	Byte cpl(Byte);
 	// add two Byte values.
-    Byte add(Byte, Byte);
+    Byte add(Byte, Byte, char);
 	// add two 16-bit values.
 	unsigned short add16bit(unsigned short, unsigned short);
 	// add two Byte values + carry.
@@ -68,10 +73,19 @@ public:
 	Byte lor(Byte, Byte);
 	// compare two Byte values.
 	void compare(Byte, Byte);
+	// push Byte value on the stack.
+	void push8bit(Byte);
+	// pop Byte value from the stack.
+	Byte pop8bit();
+	// push 2 Byte value on the stack.
+	void push16bit(unsigned short);
+	// pop 2 Byte value from the stack.
+	unsigned short pop16bit();
 	
 	// execute instructions according to opcode.
     void executeInstruction(Byte);
 
+	// one cpu step.
 	void CPUstep();
 
 };

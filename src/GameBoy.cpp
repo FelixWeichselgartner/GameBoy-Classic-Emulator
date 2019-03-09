@@ -47,26 +47,42 @@ void GameBoy::AdditionTest() {
 void GameBoy::RomTest() {
 	this->cpu.rom.load(&this->cpu.ram);
 	// Entry point to start of game code
-	this->cpu.rom.print(&this->cpu.ram, 0x100, 0x14F);
+	this->cpu.rom.print(&this->cpu.ram, 0x0100, 0x014F);
+	// game code starts here
+	this->cpu.rom.print(&this->cpu.ram, 0x0150, 0x01FF);
+}
+
+void GameBoy::tests() {
+	AdditionTest();
+	RomTest();
 }
 
 void GameBoy::run() {
-	//AdditionTest();
-	//RomTest();
 	int count = 0;
 	while (this->cpu.getRunning()) {
 		this->cpu.executeInstruction(this->cpu.ram.getMemory(this->cpu.registers.getPC()));
-		this->cpu.registers.setPC(this->cpu.registers.getPC() + 1);
+		if (!this->cpu.getJump()) {
+			this->cpu.registers.setPC(this->cpu.registers.getPC() + 1);
+		} else {
+			this->cpu.setJump(0x00);
+		}
 		count++;
-		if (count == 256) {
-			cpu.setRunning(0);
-			break;
+		if (count % 10000 == 0) {
+			cout << count << endl;
+			//cpu.setRunning(0);
+			//break;
 		}
 	}
 }
 
+#define MODE 0
+
 int main() {
     class GameBoy gameboy;
-    gameboy.run();
+	if (MODE) {
+		gameboy.tests();
+	} else {
+		gameboy.run();
+	}
     return 0;
 }

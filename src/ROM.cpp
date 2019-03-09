@@ -50,11 +50,10 @@ void ROM::print(class RAM* ram, unsigned short start, unsigned short end) {
 		cout << setw(2) << hex << setfill('0') << i << " ";
 	}
 	cout << endl;
-
-	for (int i = start; i < end; i++) {
-		cout << setw(8) << hex << setfill('0') << i * 16 << ": ";
+	for (int i = start, c = 0; i < end; i++, c++) {
+		cout << setw(8) << hex << setfill('0')<< start + c * 16 << ": ";
 		for (int k = 0; k < 16; k++) {
-			cout << setw(2) << hex << (int)ram->getMemory(i * 16 + k) << " ";
+			cout << setw(2) << hex << (int)ram->getMemory(start + c * 16 + k) << " ";
 		}
 		cout << endl;
 	}

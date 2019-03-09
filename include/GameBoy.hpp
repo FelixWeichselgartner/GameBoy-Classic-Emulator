@@ -25,6 +25,8 @@ public:
 
 	void RomTest();
 
+	void tests();
+
     void run();
 
 };

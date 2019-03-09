@@ -3,20 +3,25 @@
 #include <iomanip>
 
 #include "../include/Registers.hpp"
+#include "../include/RAM.hpp"
 //----------------------------------------------------------------------------------------------
+
+Registers::Registers() {
+    this->A = this->B = this->C = this->D = this->E = this->F = this->H = this->L = 0x00;
+	this->PC = 0x0150;
+	this->SP = ADDR_STACK;
+}
 
 std::string toBinary(int n) {
 	std::string r;
-	while (n != 0) { r = (n % 2 == 0 ? "0" : "1") + r; n /= 2; }
+	while (n != 0) { 
+		r = (n % 2 == 0 ? "0" : "1") + r; 
+		n /= 2; 
+	}
 	while (r.length() < 8) {
 		r = "0" + r;
 	}
 	return r;
-}
-
-Registers::Registers() {
-    this->A = this->B = this->C = this->D = this->E = this->F = this->H = this->L = 0x00;
-    this->PC = this-> SP = 0;
 }
 
 
