@@ -91,7 +91,7 @@ void GameBoy::run() {
 	}
 }
 
-#define MODE 0
+#define MODE 1
 
 int main() {
     class GameBoy gameboy;

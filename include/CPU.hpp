@@ -37,6 +37,9 @@ public:
 	// getter for clock speed.
 	int getClockSpeed() const;
 
+	void setFlag(char);
+	void resetFlag(char);
+
     Byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, Byte);
 
@@ -97,11 +100,11 @@ public:
 	// shift Byte right.
 	void srl();
 	// test bit of Byte.
-	void bit();
+	void bit(Byte, int);
 	// clear (reset) bit of Byte.
 	void res();
 	// set bit of Byte.
-	void set();
+	Byte set(Byte, int);
 
 	// execute extended opcodes.
 	void executeExtendedOpcodes();

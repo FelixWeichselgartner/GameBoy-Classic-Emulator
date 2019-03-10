@@ -30,6 +30,26 @@ int CPU::getClockSpeed() const {
 	return this->clockSpeed;
 }
 
+void CPU::setFlag(char type) {
+	switch (type) {
+		case 'F': this->registers.setF(this->registers.getF() | 0b10000000); break;
+		case 'N': this->registers.setF(this->registers.getF() | 0b01000000); break;
+		case 'H': this->registers.setF(this->registers.getF() | 0b00100000); break;
+		case 'C': this->registers.setF(this->registers.getF() | 0b00010000); break;
+		default: break;
+	}
+}
+
+void CPU::resetFlag(char type) {
+	switch (type) {
+		case 'F': this->registers.setF(this->registers.getF() & 0b01111111); break;
+		case 'N': this->registers.setF(this->registers.getF() & 0b10111111); break;
+		case 'H': this->registers.setF(this->registers.getF() & 0b11011111); break;
+		case 'C': this->registers.setF(this->registers.getF() & 0b11101111); break;
+		default: break;
+	}
+}
+
 Byte CPU::ReadByte(unsigned short address) const {
     return this->ram.getMemory(address);
 }
@@ -1286,50 +1306,91 @@ void CPU::executeInstruction(Byte opcode) {
 }
 
 void CPU::sla() {
+	Byte retval;
+
 	// Z is set if result is zero, else reset.
 
 	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
 
 	// C is set according to result.
 }
 
 void CPU::sra() {
+	Byte retval;
+
 	// Z is set if result is zero, else reset.
 
 	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
 
 	// C is set according to result.
 }
 
 void CPU::swap() {
+	Byte retval;
+
 	// Z is set if result is zero, else reset.
 
 	// N, H, C are reset.
+	resetFlag('N');
+	resetFlag('H');
+	resetFlag('C');
 }
 
 void CPU::srl() {
+	Byte retval;
+
 	// Z is set if result is zero, else reset.
 
 	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
 
 	// C is set according to result.
 }
 
-void CPU::bit() {
+void CPU::bit(Byte value, int bit) {
+	Byte check = 0x01;
+
+	// shift the bit to the according position.
+	for (int i = 0; i < bit; i++) {
+		check = check >> 1;
+	}
+
 	// zero flag is set if bit is not set.
+	if ((value & check) == check) {
+		setFlag('F');
+	} else {
+		resetFlag('F');
+	}
 
 	// N is reset.
+	resetFlag('N');
 
 	// H is set.
-
+	setFlag('H');
 }
 
 void CPU::res() {
+
+
 	// flags are not affected.
 }
 
-void CPU::set() {
+Byte CPU::set(Byte value, int bit) {
+	Byte setter = 0x01;
+
+	// shift the bit to the according position.
+	for (int i = 0; i < bit; i++) {
+		setter = setter >> 1;
+	}
+
 	// flags are not affected.
+
+	return value | setter;
 }
 
 void CPU::executeExtendedOpcodes() {
@@ -1498,132 +1559,196 @@ void CPU::executeExtendedOpcodes() {
 		case 0x3F: // 
 			break;
 		case 0x40: // BIT 0, B		test bit 0 of B.
+			bit(0, this->registers.getB());
 			break;
 		case 0x41: // BIT 0, C
+			bit(0, this->registers.getC());
 			break;
 		case 0x42: // BIT 0, D
+			bit(0, this->registers.getC());
 			break;
 		case 0x43: // BIT 0, E
+			bit(0, this->registers.getE());
 			break;
 		case 0x44: // BIT 0, H
+			bit(0, this->registers.getH());
 			break;
 		case 0x45: // BIT 0, L
+			bit(0, this->registers.getL());
 			break;
 		case 0x46: // BIT 0, (HL)
+			bit(0, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x47: // BIT 0, A
+			bit(0, this->registers.getA());
 			break;
 		case 0x48: // BIT 1, B
+			bit(1, this->registers.getB());
 			break;
 		case 0x49: // BIT 1, C
+			bit(1, this->registers.getC());
 			break;
 		case 0x4A: // BIT 1, D
+			bit(1, this->registers.getD());
 			break;
 		case 0x4B: // BIT 1, E
+			bit(1, this->registers.getE());
 			break;
 		case 0x4C: // BIT 1, H
+			bit(1, this->registers.getH());
 			break;
 		case 0x4D: // BIT 1, L
+			bit(1, this->registers.getL());
 			break;
 		case 0x4E: // BIT 1, (HL)
+			bit(1, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x4F: // BIT 1, A
+			bit(1, this->registers.getA());
 			break;
 		case 0x50: // BIT 2, B
+			bit(2, this->registers.getB());
 			break;
 		case 0x51: // BIT 2, C
+			bit(2, this->registers.getC());
 			break;
 		case 0x52: // BIT 2, D
+			bit(2, this->registers.getD());
 			break;
 		case 0x53: // BIT 2, E
+			bit(2, this->registers.getE());
 			break;
 		case 0x54: // BIT 2, H
+			bit(2, this->registers.getH());
 			break;
 		case 0x55: // BIT 2, L
+			bit(2, this->registers.getL());
 			break;
 		case 0x56: // BIT 2, (HL)
+			bit(2, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x57: // BIT 2, A
+			bit(2, this->registers.getA());
 			break;
 		case 0x58: // BIT 3, B
+			bit(3, this->registers.getB());
 			break;
 		case 0x59: // BIT 3, C
+			bit(3, this->registers.getC());
 			break;
 		case 0x5A: // BIT 3, D
+			bit(3, this->registers.getD());
 			break;
 		case 0x5B: // BIT 3, E
+			bit(3, this->registers.getE());
 			break;
 		case 0x5C: // BIT 3, H
+			bit(3, this->registers.getH());
 			break;
 		case 0x5D: // BIT 3, L
+			bit(3, this->registers.getL());
 			break;
 		case 0x5E: // BIT 3, (HL)
+			bit(3, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x5F: // BIT 3, A
+			bit(3, this->registers.getA());
 			break;
 		case 0x60: // BIT 4, B
+			bit(4, this->registers.getB());
 			break;
 		case 0x61: // BIT 4, C
+			bit(4, this->registers.getC());
 			break;
 		case 0x62: // BIT 4, D
+			bit(4, this->registers.getD());
 			break;
 		case 0x63: // BIT 4, E
+			bit(4, this->registers.getE());
 			break;
 		case 0x64: // BIT 4, H
+			bit(4, this->registers.getH());
 			break;
 		case 0x65: // BIT 4, L
+			bit(4, this->registers.getL());
 			break;
 		case 0x66: // BIT 4, (HL)
+			bit(4, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x67: // BIT 4, A
+			bit(4, this->registers.getA());
 			break;
 		case 0x68: // BIT 5, B
+			bit(5, this->registers.getB());
 			break;
 		case 0x69: // BIT 5, C
+			bit(5, this->registers.getC());
 			break;
 		case 0x6A: // BIT 5, D
+			bit(5, this->registers.getD());
 			break;
 		case 0x6B: // BIT 5, E
+			bit(5, this->registers.getE());
 			break;
 		case 0x6C: // BIT 5, H
+			bit(5, this->registers.getH());
 			break;
 		case 0x6D: // BIT 5, L
+			bit(5, this->registers.getL());
 			break;
 		case 0x6E: // BIT 5, (HL)
+			bit(5, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x6F: // BIT 5, A
+			bit(5, this->registers.getA());
 			break;
 		case 0x70: // BIT 6, B
+			bit(6, this->registers.getB());
 			break;
 		case 0x71: // BIT 6, C
+			bit(6, this->registers.getC());
 			break;
 		case 0x72: // BIT 6, D
+			bit(6, this->registers.getD());
 			break;
 		case 0x73: // BIT 6, E
+			bit(6, this->registers.getE());
 			break;
 		case 0x74: // BIT 6, H
+			bit(6, this->registers.getH());
 			break;
 		case 0x75: // BIT 6, L
+			bit(6, this->registers.getL());
 			break;
 		case 0x76: // BIT 6, (HL)
+			bit(6, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x77: // BIT 6, A
+			bit(6, this->registers.getA());
 			break;
 		case 0x78: // BIT 7, B
+			bit(7, this->registers.getB());
 			break;
 		case 0x79: // BIT 7, C
+			bit(7, this->registers.getC());
 			break;
 		case 0x7A: // BIT 7, D
+			bit(7, this->registers.getD());
 			break;
 		case 0x7B: // BIT 7, E
+			bit(7, this->registers.getE());
 			break;
 		case 0x7C: // BIT 7, H
+			bit(7, this->registers.getH());
 			break;
 		case 0x7D: // BIT 7, L
+			bit(7, this->registers.getL());
 			break;
 		case 0x7E: // BIT 7, (HL)
+			bit(7, this->ram.getMemory(this->registers.getHL()));
 			break;
 		case 0x7F: // BIT 7, A
+			bit(7, this->registers.getA());
 			break;
 		case 0x80: // RES 0, B		clear (reset) bit 0 of B.
 			break;
@@ -1754,132 +1879,196 @@ void CPU::executeExtendedOpcodes() {
 		case 0xBF: // RES 7, A
 			break;
 		case 0xC0: // SET 0, B
+			this->registers.setB(set(0, this->registers.getB()));
 			break;
 		case 0xC1: // SET 0, C
+			this->registers.setC(set(0, this->registers.getC()));
 			break;
 		case 0xC2: // SET 0, D
+			this->registers.setD(set(0, this->registers.getD()));
 			break;
 		case 0xC3: // SET 0, E
+			this->registers.setE(set(0, this->registers.getE()));
 			break;
 		case 0xC4: // SET 0, H
+			this->registers.setH(set(0, this->registers.getH()));
 			break;
 		case 0xC5: // SET 0, L
+			this->registers.setL(set(0, this->registers.getL()));
 			break;
 		case 0xC6: // SET 0, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(0, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xC7: // SET 0, A
+			this->registers.setA(set(0, this->registers.getA()));
 			break;
 		case 0xC8: // SET 1, B
+			this->registers.setB(set(1, this->registers.getB()));
 			break;
 		case 0xC9: // SET 1, C
+			this->registers.setC(set(1, this->registers.getC()));
 			break;
 		case 0xCA: // SET 1, D
+			this->registers.setD(set(1, this->registers.getD()));
 			break;
 		case 0xCB: // SET 1, E
+			this->registers.setE(set(1, this->registers.getE()));
 			break;
 		case 0xCC: // SET 1, H
+			this->registers.setH(set(1, this->registers.getH()));
 			break;
 		case 0xCD: // SET 1, L
+			this->registers.setB(set(1, this->registers.getL()));
 			break;
 		case 0xCE: // SET 1, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(1, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xCF: // SET 1, A
+			this->registers.setA(set(1, this->registers.getA()));
 			break;
 		case 0xD0: // SET 2, B
+			this->registers.setB(set(2, this->registers.getB()));
 			break;
 		case 0xD1: // SET 2, C
+			this->registers.setC(set(2, this->registers.getC()));
 			break;
 		case 0xD2: // SET 2, D
+			this->registers.setD(set(2, this->registers.getD()));
 			break;
 		case 0xD3: // SET 2, E
+			this->registers.setE(set(2, this->registers.getE()));
 			break;
 		case 0xD4: // SET 2, H
+			this->registers.setH(set(2, this->registers.getH()));
 			break;
 		case 0xD5: // SET 2, L
+			this->registers.setL(set(2, this->registers.getL()));
 			break;
 		case 0xD6: // SET 2, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(2, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xD7: // SET 2, A
+			this->registers.setA(set(2, this->registers.getA()));
 			break;
 		case 0xD8: // SET 3, B
+			this->registers.setB(set(3, this->registers.getB()));
 			break;
 		case 0xD9: // SET 3, C
+			this->registers.setC(set(3, this->registers.getC()));
 			break;
 		case 0xDA: // SET 3, D
+			this->registers.setD(set(3, this->registers.getD()));
 			break;
 		case 0xDB: // SET 3, E
+			this->registers.setE(set(3, this->registers.getE()));
 			break;
 		case 0xDC: // SET 3, H
+			this->registers.setH(set(3, this->registers.getH()));
 			break;
 		case 0xDD: // SET 3, L
+			this->registers.setL(set(3, this->registers.getL()));
 			break;
 		case 0xDE: // SET 3, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(3, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xDF: // SET 3, A
+			this->registers.setA(set(3, this->registers.getA()));
 			break;
 		case 0xE0: // SET 4, B
+			this->registers.setB(set(4, this->registers.getB()));
 			break;
 		case 0xE1: // SET 4, C
+			this->registers.setC(set(4, this->registers.getC()));
 			break;
 		case 0xE2: // SET 4, D
+			this->registers.setD(set(4, this->registers.getD()));
 			break;
 		case 0xE3: // SET 4, E
+			this->registers.setE(set(4, this->registers.getE()));
 			break;
 		case 0xE4: // SET 4, H
+			this->registers.setH(set(4, this->registers.getH()));
 			break;
 		case 0xE5: // SET 4, L
+			this->registers.setL(set(4, this->registers.getL()));
 			break;
 		case 0xE6: // SET 4, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(4, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xE7: // SET 4, A
+			this->registers.setA(set(4, this->registers.getA()));
 			break;
 		case 0xE8: // SET 5, B
+			this->registers.setB(set(5, this->registers.getB()));
 			break;
 		case 0xE9: // SET 5, C
+			this->registers.setC(set(5, this->registers.getC()));
 			break;
 		case 0xEA: // SET 5, D
+			this->registers.setD(set(5, this->registers.getD()));
 			break;
 		case 0xEB: // SET 5, E
+			this->registers.setE(set(5, this->registers.getE()));
 			break;
 		case 0xEC: // SET 5, H
+			this->registers.setH(set(5, this->registers.getH()));
 			break;
 		case 0xED: // SET 5, L
+			this->registers.setL(set(5, this->registers.getL()));
 			break;
 		case 0xEE: // SET 5, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(5, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xEF: // SET 5, A
+			this->registers.setA(set(5, this->registers.getA()));
 			break;
 		case 0xF0: // SET 6, B
+			this->registers.setB(set(6, this->registers.getB()));
 			break;
 		case 0xF1: // SET 6, C
+			this->registers.setC(set(6, this->registers.getC()));
 			break;
 		case 0xF2: // SET 6, D
+			this->registers.setD(set(6, this->registers.getD()));
 			break;
 		case 0xF3: // SET 6, E
+			this->registers.setE(set(6, this->registers.getE()));
 			break;
 		case 0xF4: // SET 6, H
+			this->registers.setH(set(6, this->registers.getH()));
 			break;
 		case 0xF5: // SET 6, L
+			this->registers.setL(set(6, this->registers.getL()));
 			break;
 		case 0xF6: // SET 6, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(6, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xF7: // SET 6, A
+			this->registers.setA(set(6, this->registers.getB()));
 			break;
 		case 0xF8: // SET 7, B
+			this->registers.setB(set(7, this->registers.getB()));
 			break;
 		case 0xF9: // SET 7, C
+			this->registers.setC(set(7, this->registers.getC()));
 			break;
 		case 0xFA: // SET 7, D
+			this->registers.setD(set(7, this->registers.getD()));
 			break;
 		case 0xFB: // SET 7, E
+			this->registers.setE(set(7, this->registers.getE()));
 			break;
 		case 0xFC: // SET 7, H
+			this->registers.setH(set(7, this->registers.getH()));
 			break;
 		case 0xFD: // SET 7, L
+			this->registers.setL(set(7, this->registers.getL()));
 			break;
 		case 0xFE: // SET 7, (HL)
+			this->ram.setMemory(this->registers.getHL(), set(7, this->ram.getMemory(this->registers.getHL())));
 			break;
 		case 0xFF: // SET 7, A
+			this->registers.setA(set(7, this->registers.getA()));
 			break;
 	}
 }
