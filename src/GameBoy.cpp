@@ -11,10 +11,12 @@ using namespace std;
 #include <thread>
 
 #include <time.h>
+
+#include <SDL.h>
 //----------------------------------------------------------------------------------------------
 
 GameBoy::GameBoy() {
-    
+
 }
 
 // seems to be working
@@ -67,6 +69,7 @@ void delay(int micro_seconds) {
 }
 
 void GameBoy::run() {
+	SDL_Event windowEvent;
 
 	// this is not final
 	int delaytime = 1000 * 1000 / this->cpu.getClockSpeed();
@@ -74,6 +77,11 @@ void GameBoy::run() {
 
 	int count = 0;
 	while (this->cpu.getRunning()) {
+		if (SDL_PollEvent(&windowEvent)) {
+			if (windowEvent.type == SDL_QUIT) {
+				return;
+			}
+		}
 		cpu.CPUstep();
 
 		/*
@@ -89,11 +97,14 @@ void GameBoy::run() {
 		delay(delaytime);
 		//
 	}
+
+	SDL_DestroyWindow(gpu.getWindow());
+	SDL_Quit();
 }
 
-#define MODE 1
+#define MODE 0
 
-int main() {
+int main(int argc, char *argv[]) {
     class GameBoy gameboy;
 	if (MODE) {
 		gameboy.tests();

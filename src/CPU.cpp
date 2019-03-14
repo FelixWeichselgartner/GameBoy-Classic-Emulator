@@ -78,23 +78,23 @@ unsigned short CPU::load16bit() {
 void CPU::daa() {
 	unsigned short s = this->registers.getA();
 
-	if (this->registers.getF() & 0b01000000 == 0b01000000) {
-		if (this->registers.getF() & 0b00100000 == 0b00100000) {
+	if ((this->registers.getF() & 0b01000000) == 0b01000000) {
+		if ((this->registers.getF() & 0b00100000) == 0b00100000) {
 			s = (s - 0x06) & 0xFF;
 		}
-		if (this->registers.getF() & 0b00010000 == 0b00010000) {
+		if ((this->registers.getF() & 0b00010000) == 0b00010000) {
 			s -= 0x60;
 		}
 	} else {
-		if (this->registers.getF() & 0b00100000 == 0b00100000 || (s & 0xF) > 9) {
+		if ((this->registers.getF() & 0b00100000) == 0b00100000 || (s & 0xF) > 9) {
 			s += 0x06;
 		}
-		if (this->registers.getF() & 0b00010000 == 0b00010000 || s > 0x9F) {
+		if ((this->registers.getF() & 0b00010000) == 0b00010000 || s > 0x9F) {
 			s += 0x60;
 		}
 	}
 
-	this->registers.setA(s);
+	this->registers.setA((Byte) s); // maybe do s%255
 
 	resetFlag('H');
 

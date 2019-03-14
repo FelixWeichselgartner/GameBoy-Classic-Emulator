@@ -2,6 +2,22 @@
 #define GPU_HPP_
 
 //----------------------------------------------------------------------------------------------
+#include <SDL.h>
+#include "../include/CPU.hpp"
+#include <string>
+//----------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------
+// screen resolution:
+
+// amount of pixels in x direction.
+#define X_RES 144
+// amount of pixels in y direction.
+#define Y_RES 160
+
+//----------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------
 // format:
 // 0xAARRGGBB (Alhpa-Red-Green-Blue)
 
@@ -22,9 +38,20 @@ class GPU {
 
 private:
 
+	class CPU* cpuLink;
+	class RAM* ramLink;
+	SDL_Window* window;
+	std::string windowName;
+
 public:
 
-    GPU();
+    GPU(class CPU*);
+
+	SDL_Window* getWindow() const { return window; }
+
+	void SetLCDStatus();
+
+	void UpdateGraphics();
 
 };
 //----------------------------------------------------------------------------------------------

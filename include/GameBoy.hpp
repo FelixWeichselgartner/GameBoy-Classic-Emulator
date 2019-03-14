@@ -15,7 +15,7 @@ class GameBoy {
 private:
 
     class CPU cpu;
-    class GPU gpu;
+    class GPU gpu = GPU(&cpu);
 
 public:
 
