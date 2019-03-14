@@ -43,6 +43,8 @@ public:
     Byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, Byte);
 
+	// adjust for register a for bcd addition.
+	void daa();
 	// load 8 bit value in register.
 	Byte load8bit();
 	// load 16 bit value in register.
@@ -92,17 +94,17 @@ public:
     void executeInstruction(Byte);
 
 	// shift Byte left with preserving sign.
-	void sla();
+	Byte sla(Byte);
 	// shift Byte right with preserving sign.
-	void sra();
+	Byte sra(Byte);
 	// swap nybbles in Byte.
-	void swap();
+	Byte swap(Byte);
 	// shift Byte right.
-	void srl();
+	Byte srl(Byte);
 	// test bit of Byte.
 	void bit(Byte, int);
 	// clear (reset) bit of Byte.
-	void res();
+	Byte res(Byte, int);
 	// set bit of Byte.
 	Byte set(Byte, int);
 

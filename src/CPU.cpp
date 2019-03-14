@@ -75,6 +75,40 @@ unsigned short CPU::load16bit() {
 	return retval;
 }
 
+void CPU::daa() {
+	unsigned short s = this->registers.getA();
+
+	if (this->registers.getF() & 0b01000000 == 0b01000000) {
+		if (this->registers.getF() & 0b00100000 == 0b00100000) {
+			s = (s - 0x06) & 0xFF;
+		}
+		if (this->registers.getF() & 0b00010000 == 0b00010000) {
+			s -= 0x60;
+		}
+	} else {
+		if (this->registers.getF() & 0b00100000 == 0b00100000 || (s & 0xF) > 9) {
+			s += 0x06;
+		}
+		if (this->registers.getF() & 0b00010000 == 0b00010000 || s > 0x9F) {
+			s += 0x60;
+		}
+	}
+
+	this->registers.setA(s);
+
+	resetFlag('H');
+
+	if (s == 0x00) {
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
+	}
+
+	if (s >= 0x100) {
+		setFlag('C');
+	}
+}
+
 //----------------------------------------------------------------------------------------------
 // split a 16-bit number in 2 x 8-bit numbers to save to memory
 #define LOW_BYTE(x)        (x & 0xff)
@@ -93,13 +127,15 @@ Byte CPU::rlc(Byte a) {
 	Byte retval = a << 1 | a >> 7;
 
 	// Z, N, H are reset
-	this->registers.setF(this->registers.getF() & 0b00011111);
+	resetFlag('Z');
+	resetFlag('N');
+	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
 	if (this->registers.getA() & 0x01) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
+		setFlag('C');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 
 	return retval;
@@ -109,13 +145,15 @@ Byte CPU::rrc(Byte a) {
 	Byte retval = a >> 1 | a << 7;
 
 	// Z, N, H are reset
-	this->registers.setF(this->registers.getF() & 0b00011111);
+	resetFlag('Z');
+	resetFlag('N');
+	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
 	if (this->registers.getA() & 0x01) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
+		setFlag('C');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 
 	return retval;
@@ -126,19 +164,20 @@ Byte CPU::rr(Byte a) {
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		resetFlag('Z');
 	}
 
 	// N, H are reset
-	this->registers.setF(this->registers.getF() & 0b10011111);
+	resetFlag('N');
+	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
 	if (this->registers.getA() & 0x01) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
+		setFlag('C');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 
 	return retval;
@@ -149,21 +188,20 @@ Byte CPU::rl(Byte a) {
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
-	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
 	}
 
 	// N, H are reset
-	this->registers.setF(this->registers.getF() & 0b10011111);
+	resetFlag('N');
+	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
 	if (this->registers.getA() & 0x01) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
-	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		setFlag('C');
+	} else {
+		resetFlag('C');
 	}
 
 	return retval;
@@ -171,10 +209,10 @@ Byte CPU::rl(Byte a) {
 
 Byte CPU::cpl(Byte a) {
 	// N is set
-	this->registers.setF(this->registers.getF() | 0b01000000);
+	setFlag('N');
 
 	// H is set
-	this->registers.setF(this->registers.getF() | 0b00100000);
+	setFlag('H');
 
 	return !a;
 }
@@ -190,26 +228,26 @@ Byte CPU::add(Byte a, Byte b, char type) {
 
 	// Z is set if result is zero, else reset
     if (retval == (Byte) 0x00) {
-        this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		resetFlag('Z');
 	}
 
     // N is set to zero
-    this->registers.setF(this->registers.getF() & 0b10111111);
+	resetFlag('N');
 
     // H is set if overflow from bit 3, else reset
     if ((((a & 0xf) + (b & 0xf)) & 0x10) == 0x10) {
-        this->registers.setF(this->registers.getF() | 0b00100000);
+		setFlag('H');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11011111);
+		resetFlag('H');
 	}
 
     // C is set if overflow from bit 7, else reset
-    if (((int) a + (int) b) > (Byte) 255) {
-        this->registers.setF(this->registers.getF() | 0b00010000);
+    if (((int) a + (int) b) > (int) 255) {
+		setFlag('C');
     } else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 
 	return retval;
@@ -240,27 +278,26 @@ unsigned short CPU::add16bit(unsigned short a, unsigned short b, char type) {
 
 	// Z is set if result is zero, else reset
 	if (retval == (unsigned short)0x0000) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
-	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
 	}
 
 	// N is set to zero
-	this->registers.setF(this->registers.getF() & 0b10111111);
+	resetFlag('N');
 
 	// H is set if overflow from bit 7, else reset
 	if ((retval ^ a ^ b) & 0x1000) {
-		this->registers.setF(this->registers.getF() | 0b00100000);
+		setFlag('H');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11011111);
+		resetFlag('H');
 	}
 
 	// C is set if overflow from bit 15, else reset
-	if (((int)a + (int)b) > 65536) { // 65536 == pow(2, 16) - 1
-		this->registers.setF(this->registers.getF() | 0b00010000);
+	if (((int)a + (int)b) > (int) 65536) { // 65536 == pow(2, 16) - 1
+		setFlag('C');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 
 	return retval;
@@ -279,28 +316,26 @@ Byte CPU::adc(Byte a, Byte b) {
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		resetFlag('Z');
 	}
 
 	// N is set to zero
-	this->registers.setF(this->registers.getF() & 0b10111111);
+	resetFlag('N');
 
 	// H is set if overflow from bit 3, else reset
 	if ((((a & 0xf) + (b & 0xf)) & 0x10) == 0x10) {
-		this->registers.setF(this->registers.getF() | 0b00100000);
-	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b11011111);
+		setFlag('H');
+	} else {
+		resetFlag('H');
 	}
 
 	// C is set if overflow from bit 7, else reset
 	if (((int)a + (int)b) > (Byte)255) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
-	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		setFlag('C');
+	} else {
+		resetFlag('C');
 	}
 
 	return retval;
@@ -311,26 +346,26 @@ Byte CPU::sub(Byte a, Byte b) {
 
 	// Z is set if result is zero, else reset
 	if (retval == 0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		resetFlag('Z');
 	}
 
 	// N is set
-	this->registers.setF(this->registers.getF() | 0b01000000);
+	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
 	if (((a ^ b ^ retval) & 0x10) == 0x01) {
-		this->registers.setF(this->registers.getF() | 0b00100000);
+		setFlag('H');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11011111);
+		resetFlag('H');
 	}
 
 	// C is set if no borrow from bit 7, else reset
 	if (b > a) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
+		setFlag('C');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 
 	return retval;
@@ -349,26 +384,26 @@ Byte CPU::sbc(Byte a, Byte b) {
 
 	// Z is set if result is zero, else reset
 	if (retval == 0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		resetFlag('Z');
 	}
 
 	// N is set
-	this->registers.setF(this->registers.getF() | 0b01000000);
+	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
 	if (((a ^ b ^ retval) & 0x10) == 0x01) {
-		this->registers.setF(this->registers.getF() | 0b00100000);
+		setFlag('H');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11011111);
+		resetFlag('H');
 	}
 
 	// C is set if no borrow from bit 7, else reset
 	if (b > a) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
+		setFlag('C');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 
 	return retval;
@@ -379,20 +414,19 @@ Byte CPU::land(Byte a, Byte b) {
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
-	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
 	}
 
 	// N is reset
-	this->registers.setF(this->registers.getF() & 0b10111111);
+	resetFlag('N');
 
 	// H is set
-	this->registers.setF(this->registers.getF() | 0b00100000);
+	setFlag('H');
 
 	// C is reset
-	this->registers.setF(this->registers.getF() & 0b11101111);
+	setFlag('C');
 
 	return retval;
 }
@@ -402,20 +436,15 @@ Byte CPU::lxor(Byte a, Byte b) {
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
 	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
-	}
 
-	// N is reset
-	this->registers.setF(this->registers.getF() & 0b10111111);
-
-	// H is reset
-	this->registers.setF(this->registers.getF() & 0b11011111);
-
-	// C is reset
-	this->registers.setF(this->registers.getF() & 0b11101111);
+	// N, H, C are reset
+	resetFlag('N');
+	resetFlag('H');
+	resetFlag('C');
 
 	return retval;
 }
@@ -425,20 +454,15 @@ Byte CPU::lor(Byte a, Byte b) {
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
 	}
-	else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
-	}
 
-	// N is reset
-	this->registers.setF(this->registers.getF() & 0b10111111);
-
-	// H is reset
-	this->registers.setF(this->registers.getF() & 0b11011111);
-
-	// C is reset
-	this->registers.setF(this->registers.getF() & 0b11101111);
+	// N, H, C is reset
+	resetFlag('N');
+	resetFlag('H');
+	resetFlag('C');
 
 	return retval;
 }
@@ -448,26 +472,26 @@ void CPU::cp(Byte A, Byte X) {
 
 	// Z is set if result is zero, else reset
 	if (sub == (Byte)0x00) {
-		this->registers.setF(this->registers.getF() | 0b10000000);
+		setFlag('Z');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b01111111);
+		resetFlag('Z');
 	}
 
 	// N is set
-	this->registers.setF(this->registers.getF() | 0b01000000);
+	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
 	if (((A ^ X ^ sub) & 0x10) == 0x01) {
-		this->registers.setF(this->registers.getF() | 0b00100000);
+		setFlag('H');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11011111);
+		resetFlag('H');
 	}
 
 	// C is set if no borrow from bit 7, else reset
 	if (X > A) {
-		this->registers.setF(this->registers.getF() | 0b00010000);
+		setFlag('C');
 	} else {
-		this->registers.setF(this->registers.getF() & 0b11101111);
+		resetFlag('C');
 	}
 }
 
@@ -625,6 +649,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setH(load8bit());
             break;
         case 0x27: // DAA           adjust A for BCD addition.
+			daa();
             break;
         case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
 			if ((this->registers.getF() & 0b10000000) == 0b1000000) {
@@ -1305,51 +1330,102 @@ void CPU::executeInstruction(Byte opcode) {
     }
 }
 
-void CPU::sla() {
-	Byte retval;
+Byte CPU::sla(Byte value) {
+	Byte retval = value << 1;
 
 	// Z is set if result is zero, else reset.
+	if (retval == 0x00) {
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
+	}
 
 	// N, H are reset.
 	resetFlag('N');
 	resetFlag('H');
 
 	// C is set according to result.
+	if (value & 0b1000000) {
+		setFlag('C');
+	} else {
+		resetFlag('C');
+	}
+
+	return retval;
 }
 
-void CPU::sra() {
-	Byte retval;
+Byte CPU::sra(Byte value) {
+	Byte retval = (value >> 1) | (value & 0b10000000);
 
 	// Z is set if result is zero, else reset.
+	if (retval == 0x00) {
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
+	}
 
 	// N, H are reset.
 	resetFlag('N');
 	resetFlag('H');
 
 	// C is set according to result.
+	if (value & 0b0000001) {
+		setFlag('C');
+	} else {
+		resetFlag('C');
+	}
+
+	return retval;
 }
 
-void CPU::swap() {
-	Byte retval;
+//----------------------------------------------------------------------------------------------
+// split an 8-bit number in 2 x 4 bit
+#define LOWER_BYTE(x)        (x & 0x00001111)
+#define UPPER_BYTE(x)       ((x >> 4) & 0x00001111)
+//----------------------------------------------------------------------------------------------
+
+Byte CPU::swap(Byte value) {
+	Byte upperbyte = UPPER_BYTE(value);
+	Byte lowerbyte = LOWER_BYTE(value);
+	Byte retval = (lowerbyte << 4) | upperbyte;
 
 	// Z is set if result is zero, else reset.
+	if (retval == 0x00) {
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
+	}
 
 	// N, H, C are reset.
 	resetFlag('N');
 	resetFlag('H');
 	resetFlag('C');
+
+	return retval;
 }
 
-void CPU::srl() {
-	Byte retval;
+Byte CPU::srl(Byte value) {
+	Byte retval = value >> 1;
 
 	// Z is set if result is zero, else reset.
+	if (retval == 0x00) {
+		setFlag('Z');
+	} else {
+		resetFlag('Z');
+	}
 
 	// N, H are reset.
 	resetFlag('N');
 	resetFlag('H');
 
 	// C is set according to result.
+	if (value & 0x01) {
+		setFlag('C');
+	} else {
+		resetFlag('C');
+	}
+
+	return retval;
 }
 
 void CPU::bit(Byte value, int bit) {
@@ -1374,10 +1450,17 @@ void CPU::bit(Byte value, int bit) {
 	setFlag('H');
 }
 
-void CPU::res() {
+Byte CPU::res(Byte value, int bit) {
+	Byte resetter = 0x01;
 
+	// shift the bit to the according position.
+	for (int i = 0; i < bit; i++) {
+		resetter = resetter >> 1;
+	}
 
 	// flags are not affected.
+
+	return value & !resetter;
 }
 
 Byte CPU::set(Byte value, int bit) {
@@ -1495,68 +1578,100 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setA(rr(this->registers.getA()));
 			break;
 		case 0x20: // SLA B			shift B left preserving sign.
+			this->registers.setB(sla(this->registers.getB()));
 			break;
-		case 0x21: // 
+		case 0x21: // SLA C
+			this->registers.setC(sla(this->registers.getC()));
 			break;
-		case 0x22: // 
+		case 0x22: // SLA D
+			this->registers.setD(sla(this->registers.getD()));
 			break;
-		case 0x23: // 
+		case 0x23: // SLA E
+			this->registers.setE(sla(this->registers.getE()));
 			break;
-		case 0x24: // 
+		case 0x24: // SLA H
+			this->registers.setH(sla(this->registers.getH()));
 			break;
-		case 0x25: // 
+		case 0x25: // SLA L
+			this->registers.setL(sla(this->registers.getL()));
 			break;
-		case 0x26: // 
+		case 0x26: // SLA (HL)
+			this->ram.setMemory(this->registers.getHL(), sla(this->ram.getMemory(this->registers.getHL())));
 			break;
-		case 0x27: // 
+		case 0x27: // SLA A
+			this->registers.setA(sla(this->registers.getA()));
 			break;
 		case 0x28: // SRA B			shift B right preserving sign.
+			this->registers.setB(sra(this->registers.getB()));
 			break;
-		case 0x29: // 
+		case 0x29: // SRA C
+			this->registers.setC(sra(this->registers.getC()));
 			break;
-		case 0x2A: // 
+		case 0x2A: // SRA D
+			this->registers.setD(sra(this->registers.getD()));
 			break;
-		case 0x2B: // 
+		case 0x2B: // SRA E
+			this->registers.setE(sra(this->registers.getE()));
 			break;
-		case 0x2C: // 
+		case 0x2C: // SRA H
+			this->registers.setH(sra(this->registers.getH()));
 			break;
-		case 0x2D: // 
+		case 0x2D: // SRA L
+			this->registers.setL(sra(this->registers.getL()));
 			break;
-		case 0x2E: // 
+		case 0x2E: // SRA (HL)
+			this->ram.setMemory(this->registers.getHL(), sra(this->ram.getMemory(this->registers.getHL())));
 			break;
-		case 0x2F: // 
+		case 0x2F: // SRA A
+			this->registers.setA(sra(this->registers.getA()));
 			break;
 		case 0x30: // SWAP B		swap nybbles in B.
+			this->registers.setB(swap(this->registers.getB()));
 			break;
-		case 0x31: // 
+		case 0x31: // SWAP C
+			this->registers.setC(swap(this->registers.getC()));
 			break;
-		case 0x32: // 
+		case 0x32: // SWAP D
+			this->registers.setD(swap(this->registers.getD()));
 			break;
-		case 0x33: // 
+		case 0x33: // SWAP E
+			this->registers.setE(swap(this->registers.getE()));
 			break;
-		case 0x34: // 
+		case 0x34: // SWAP H
+			this->registers.setH(swap(this->registers.getH()));
 			break;
-		case 0x35: // 
+		case 0x35: // SWAP L
+			this->registers.setL(swap(this->registers.getL()));
 			break;
-		case 0x36: // 
+		case 0x36: // SWAP (HL)
+			this->ram.setMemory(this->registers.getHL(), swap(this->ram.getMemory(this->registers.getHL())));
 			break;
-		case 0x37: // 
+		case 0x37: // SWAP A
+			this->registers.setA(swap(this->registers.getA()));
 			break;
 		case 0x38: // SRL B			shift B right.
+			this->registers.setB(srl(this->registers.getB()));
 			break;
-		case 0x39: // 
+		case 0x39: // SRL C
+			this->registers.setC(srl(this->registers.getC()));
 			break;
-		case 0x3A: // 
+		case 0x3A: // SRL D
+			this->registers.setD(srl(this->registers.getD()));
 			break;
-		case 0x3B: // 
+		case 0x3B: // SRL E
+			this->registers.setE(srl(this->registers.getE()));
 			break;
-		case 0x3C: // 
+		case 0x3C: // SRL H
+			this->registers.setH(srl(this->registers.getH()));
 			break;
-		case 0x3D: // 
+		case 0x3D: // SRL L
+			this->registers.setL(srl(this->registers.getL()));
 			break;
-		case 0x3E: // 
+		case 0x3E: // SRL (HL)
+			this->ram.setMemory(this->registers.getHL(), srl(this->ram.getMemory(this->registers.getHL())));
 			break;
-		case 0x3F: // 
+		case 0x3F: // SRL A
+			this->registers.setA(srl(this->registers.getA()));
 			break;
 		case 0x40: // BIT 0, B		test bit 0 of B.
 			bit(0, this->registers.getB());
@@ -1751,132 +1866,196 @@ void CPU::executeExtendedOpcodes() {
 			bit(7, this->registers.getA());
 			break;
 		case 0x80: // RES 0, B		clear (reset) bit 0 of B.
+			this->registers.setB(res(this->registers.getB(), 0));
 			break;
 		case 0x81: // RES 0, C
+			this->registers.setC(res(this->registers.getC(), 0));
 			break;
 		case 0x82: // RES 0, D
+			this->registers.setD(res(this->registers.getD(), 0));
 			break;
 		case 0x83: // RES 0, E
+			this->registers.setE(res(this->registers.getE(), 0));
 			break;
 		case 0x84: // RES 0, H
+			this->registers.setH(res(this->registers.getH(), 0));
 			break;
 		case 0x85: // RES 0, L
+			this->registers.setL(res(this->registers.getL(), 0));
 			break;
 		case 0x86: // RES 0, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 0));
 			break;
 		case 0x87: // RES 0, A
+			this->registers.setA(res(this->registers.getA(), 0));
 			break;
 		case 0x88: // RES 1, B
+			this->registers.setB(res(this->registers.getB(), 1));
 			break;
 		case 0x89: // RES 1, C
+			this->registers.setC(res(this->registers.getC(), 1));
 			break;
 		case 0x8A: // RES 1, D
+			this->registers.setD(res(this->registers.getD(), 1));
 			break;
 		case 0x8B: // RES 1, E
+			this->registers.setE(res(this->registers.getE(), 1));
 			break;
 		case 0x8C: // RES 1, H
+			this->registers.setH(res(this->registers.getH(), 1));
 			break;
 		case 0x8D: // RES 1, L
+			this->registers.setL(res(this->registers.getL(), 1));
 			break;
 		case 0x8E: // RES 1, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 1));
 			break;
 		case 0x8F: // RES 1, A
+			this->registers.setA(res(this->registers.getA(), 1));
 			break;
 		case 0x90: // RES 2, B
+			this->registers.setB(res(this->registers.getB(), 2));
 			break;
 		case 0x91: // RES 2, C
+			this->registers.setC(res(this->registers.getC(), 2));
 			break;
 		case 0x92: // RES 2, D
+			this->registers.setD(res(this->registers.getD(), 2));
 			break;
 		case 0x93: // RES 2, E
+			this->registers.setE(res(this->registers.getE(), 2));
 			break;
 		case 0x94: // RES 2, H
+			this->registers.setH(res(this->registers.getH(), 2));
 			break;
 		case 0x95: // RES 2, L
+			this->registers.setL(res(this->registers.getL(), 2));
 			break;
 		case 0x96: // RES 2, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 2));
 			break;
 		case 0x97: // RES 2, A
+			this->registers.setA(res(this->registers.getA(), 2));
 			break;
 		case 0x98: // RES 3, B
+			this->registers.setB(res(this->registers.getB(), 3));
 			break;
 		case 0x99: // RES 3, C
+			this->registers.setC(res(this->registers.getC(), 3));
 			break;
 		case 0x9A: // RES 3, D
+			this->registers.setD(res(this->registers.getD(), 3));
 			break;
 		case 0x9B: // RES 3, E
+			this->registers.setE(res(this->registers.getE(), 3));
 			break;
 		case 0x9C: // RES 3, H
+			this->registers.setH(res(this->registers.getH(), 3));
 			break;
 		case 0x9D: // RES 3, L
+			this->registers.setL(res(this->registers.getL(), 3));
 			break;
 		case 0x9E: // RES 3, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 3));
 			break;
 		case 0x9F: // RES 3, A
+			this->registers.setA(res(this->registers.getA(), 3));
 			break;
 		case 0xA0: // RES 4, B
+			this->registers.setB(res(this->registers.getB(), 4));
 			break;
 		case 0xA1: // RES 4, C
+			this->registers.setC(res(this->registers.getC(), 4));
 			break;
 		case 0xA2: // RES 4, D
+			this->registers.setD(res(this->registers.getD(), 4));
 			break;
 		case 0xA3: // RES 4, E
+			this->registers.setE(res(this->registers.getE(), 4));
 			break;
 		case 0xA4: // RES 4, H
+			this->registers.setH(res(this->registers.getH(), 4));
 			break;
 		case 0xA5: // RES 4, L
+			this->registers.setL(res(this->registers.getL(), 4));
 			break;
 		case 0xA6: // RES 4, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 4));
 			break;
 		case 0xA7: // RES 4, A
+			this->registers.setA(res(this->registers.getA(), 4));
 			break;
 		case 0xA8: // RES 5, B
+			this->registers.setB(res(this->registers.getB(), 5));
 			break;
 		case 0xA9: // RES 5, C
+			this->registers.setC(res(this->registers.getC(), 5));
 			break;
 		case 0xAA: // RES 5, D
+			this->registers.setD(res(this->registers.getD(), 5));
 			break;
 		case 0xAB: // RES 5, E
+			this->registers.setE(res(this->registers.getE(), 5));
 			break;
 		case 0xAC: // RES 5, H
+			this->registers.setH(res(this->registers.getH(), 5));
 			break;
 		case 0xAD: // RES 5, L
+			this->registers.setL(res(this->registers.getL(), 5));
 			break;
 		case 0xAE: // RES 5, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 5));
 			break;
 		case 0xAF: // RES 5, A
+			this->registers.setA(res(this->registers.getA(), 5));
 			break;
 		case 0xB0: // RES 6, B
+			this->registers.setB(res(this->registers.getB(), 6));
 			break;
 		case 0xB1: // RES 6, C
+			this->registers.setC(res(this->registers.getC(), 6));
 			break;
 		case 0xB2: // RES 6, D
+			this->registers.setD(res(this->registers.getD(), 6));
 			break;
 		case 0xB3: // RES 6, E
+			this->registers.setE(res(this->registers.getE(), 6));
 			break;
 		case 0xB4: // RES 6, H
+			this->registers.setH(res(this->registers.getH(), 6));
 			break;
 		case 0xB5: // RES 6, L
+			this->registers.setL(res(this->registers.getL(), 6));
 			break;
 		case 0xB6: // RES 6, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 6));
 			break;
 		case 0xB7: // RES 6, A
+			this->registers.setA(res(this->registers.getA(), 6));
 			break;
-		case 0xB8: // RES 6, B
+		case 0xB8: // RES 7, B
+			this->registers.setB(res(this->registers.getB(), 7));
 			break;
 		case 0xB9: // RES 7, C
+			this->registers.setC(res(this->registers.getC(), 7));
 			break;
 		case 0xBA: // RES 7, D
+			this->registers.setD(res(this->registers.getD(), 7));
 			break;
 		case 0xBB: // RES 7, E
+			this->registers.setE(res(this->registers.getE(), 7));
 			break;
 		case 0xBC: // RES 7, H
+			this->registers.setH(res(this->registers.getH(), 7));
 			break;
 		case 0xBD: // RES 7, L
+			this->registers.setL(res(this->registers.getL(), 7));
 			break;
 		case 0xBE: // RES 7, (HL)
+			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 7));
 			break;
 		case 0xBF: // RES 7, A
+			this->registers.setA(res(this->registers.getA(), 7));
 			break;
 		case 0xC0: // SET 0, B
 			this->registers.setB(set(0, this->registers.getB()));
