@@ -30,6 +30,21 @@ int CPU::getClockSpeed() const {
 	return this->clockSpeed;
 }
 
+bool testBit(Byte value, int bit) {
+	bool retval;
+	Byte checker = 0x01;
+	
+	for (int i = 0; i < bit; i++) {
+		checker = checker >> 1;
+	}
+
+	if ((value & checker) == checker) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 void CPU::setFlag(char type) {
 	switch (type) {
 		case 'F': this->registers.setF(this->registers.getF() | 0b10000000); break;

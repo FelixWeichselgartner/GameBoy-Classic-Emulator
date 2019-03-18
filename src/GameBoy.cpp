@@ -57,9 +57,24 @@ void GameBoy::RomTest() {
 	this->cpu.rom.print(&this->cpu.ram, 0x0150, 0x01FF);
 }
 
-void GameBoy::tests() {
-	AdditionTest();
-	RomTest();
+void GameBoy::tests(int mode) {
+	SDL_Event windowEvent;
+	bool running = true;
+	
+	switch (mode) {
+	case 1: AdditionTest(); break;
+	case 2:
+		while (running) {
+			if (SDL_PollEvent(&windowEvent)) {
+				if (windowEvent.type == SDL_QUIT) {
+					running = false;
+				}
+			}
+			this->gpu.TestGraphics();
+		}
+		break;
+	case 3: RomTest(); break;
+	}
 }
 
 void delay(int micro_seconds) {
@@ -98,16 +113,21 @@ void GameBoy::run() {
 		//
 	}
 
+	SDL_DestroyRenderer(gpu.getRenderer());
 	SDL_DestroyWindow(gpu.getWindow());
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 2
+// MODE 0		normal mode
+// MODE 1		cpu debug
+// MODE 2		gpu debug
+// MODE 3		rom test
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;
 	if (MODE) {
-		gameboy.tests();
+		gameboy.tests(MODE);
 	} else {
 		gameboy.run();
 	}
