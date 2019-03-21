@@ -10,13 +10,17 @@
 typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
 
+bool testBit(Byte, int);
+Byte resetBit(Byte, int);
+Byte setBit(Byte, int);
+
 //----------------------------------------------------------------------------------------------
 class CPU {
 
 private:
 
 	Byte running, gb_stop, gb_halt;
-	Byte jump, enableInterrupts;
+	Byte jump, enableInterupts;
 	int clockSpeed = 4000000; // 4MHz
 
 public:
@@ -113,6 +117,14 @@ public:
 
 	// one cpu step.
 	void CPUstep();
+
+	// interupts
+	void RequestInterupt(int);
+	void DoInterupts();
+	void ServiceInterupts(int);
+
+	// dma transfer - dma == direct memory access
+	void DoDMATransfer(Byte);
 
 };
 //----------------------------------------------------------------------------------------------

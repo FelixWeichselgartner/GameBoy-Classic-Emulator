@@ -30,6 +30,43 @@ int CPU::getClockSpeed() const {
 	return this->clockSpeed;
 }
 
+bool testBit(Byte value, int bit) {
+	bool retval;
+	Byte checker = 0x01;
+	
+	for (int i = 0; i < bit; i++) {
+		checker = checker >> 1;
+	}
+
+	if ((value & checker) == checker) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+Byte resetBit(Byte value, int bit) {
+	Byte resetter = 0x01;
+
+	// shift the bit to the according position.
+	for (int i = 0; i < bit; i++) {
+		resetter = resetter >> 1;
+	}
+
+	return value & !resetter;
+}
+
+Byte setBit(Byte value, int bit) {
+	Byte setter = 0x01;
+
+	// shift the bit to the according position.
+	for (int i = 0; i < bit; i++) {
+		setter = setter >> 1;
+	}
+
+	return value | setter;
+}
+
 void CPU::setFlag(char type) {
 	switch (type) {
 		case 'F': this->registers.setF(this->registers.getF() | 0b10000000); break;
@@ -51,16 +88,33 @@ void CPU::resetFlag(char type) {
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
-    return this->ram.getMemory(address);
+	return this->ram.getMemory(address);
 }
 
 void CPU::WriteByte(unsigned short address, Byte value) {
-    this->ram.setMemory(address, value);
-    return;
+	// address > 0x800:				can't override rom
+	// address 0xE000 to 0xFE00		writing in ECHO ram also writes in ram
+	// address 0xFEA0 to 0xFEFF		restricted area
+	// address 0xFF46:				do dma transfer
+
+	if (address < ADDR_VRAM_T_S) {
+		return;
+	} else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
+		this->ram.setMemory(address, value);
+		this->ram.setMemory(address - 0x2000, value);
+	} else if ((address >= ADDR_UNUSABLE) && (address < (ADDR_IO - 1))) {
+		return;
+	} else if (address == 0xFF46) {
+		DoDMATransfer(value);
+	} else {
+		this->ram.setMemory(address, value);
+	}
+
+	return;
 }
 
 Byte CPU::load8bit() {
-	Byte retval = this->ram.getMemory(this->registers.getPC());
+	Byte retval = ReadByte(this->registers.getPC());
 	this->registers.setPC(this->registers.getPC() + 1);
 	return retval;
 }
@@ -68,10 +122,10 @@ Byte CPU::load8bit() {
 unsigned short CPU::load16bit() {
 	unsigned short retval = 0x0000;
 	this->registers.setPC(this->registers.getPC() + 1);
-	retval = this->ram.getMemory(this->registers.getPC());
+	retval = ReadByte(this->registers.getPC());
 	retval = retval << 8;
 	this->registers.setPC(this->registers.getPC() + 1);
-	retval = retval | this->ram.getMemory(this->registers.getPC());
+	retval = retval | ReadByte(this->registers.getPC());
 	return retval;
 }
 
@@ -119,8 +173,8 @@ void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
 	Byte firstHalf, secondHalf;
 	firstHalf = HIGH_BYTE(value);
 	secondHalf = LOW_BYTE(value);
-	this->ram.setMemory(address, firstHalf);
-	this->ram.setMemory(address + 1, secondHalf);
+	WriteByte(address, firstHalf);
+	WriteByte(address + 1, secondHalf);
 }
 
 Byte CPU::rlc(Byte a) {
@@ -268,7 +322,6 @@ unsigned short signed8to16(Byte n) {
 
 unsigned short CPU::add16bit(unsigned short a, unsigned short b, char type) {
 	unsigned short retval;
-
 
 	if (type == 'u') { //unsigned
 		retval = a + b;
@@ -496,13 +549,13 @@ void CPU::cp(Byte A, Byte X) {
 }
 
 void CPU::push8bit(Byte value) {
-	this->ram.setMemory(this->registers.getSP(), value);
+	WriteByte(this->registers.getSP(), value);
 	this->registers.setSP(this->registers.getSP() + 1);
 }
 
 Byte CPU::pop8bit() {
 	this->registers.setSP(this->registers.getSP() - 1);
-	Byte retval = this->ram.getMemory(this->registers.getSP());
+	Byte retval = ReadByte(this->registers.getSP());
 	return retval;
 }
 
@@ -535,7 +588,7 @@ void CPU::executeInstruction(Byte opcode) {
 			save16bitToAddress(this->registers.getBC(), load16bit());
             break;
         case  0x2: // LD (BC), A    saves A to address pointed by BC.
-            this->ram.setMemory(this->registers.getBC(), this->registers.getA());
+            WriteByte(this->registers.getBC(), this->registers.getA());
             break;
         case  0x3: // INC BC        increment 16-bit BC.
             this->registers.setBC(this->registers.getBC() + 1);
@@ -559,7 +612,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setHL(this->registers.getHL() + this->registers.getBC());
             break;
         case  0xA: // LD A, (BC)    load A from address pointed by BC.  
-            this->registers.setA(this->ram.getMemory(this->registers.getBC()));
+            this->registers.setA(ReadByte(this->registers.getBC()));
             break;
         case  0xB: // DEC BC        decrement 16-bit BC.
             this->registers.setBC(this->registers.getBC() - 1);
@@ -583,7 +636,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setDE(load16bit());
             break;
         case 0x12: // LD (DE), A    save A to address pointed by DE.
-            this->ram.setMemory(this->registers.getDE(), this->registers.getA());
+            WriteByte(this->registers.getDE(), this->registers.getA());
             break;
         case 0x13: // INC DE        increment 16-bit DE.
             this->registers.setDE(this->registers.getDE() + 1);
@@ -607,7 +660,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE(), 'u'));
             break;
         case 0x1A: // LD A, (DE)    load A from address pointed to by DE.
-            this->registers.setA(this->ram.getMemory(this->registers.getDE()));
+            this->registers.setA(ReadByte(this->registers.getDE()));
             break;
         case 0x1B: // DEC DE        decrement 16-bit DE.
             this->registers.setDE(this->registers.getDE() - 1);
@@ -633,7 +686,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setHL(load16bit());
             break;
         case 0x22: // LDI (HL), A   save A to address pointed by HL, and increment HL.
-			this->ram.setMemory(this->registers.getHL(), this->registers.getA());
+			WriteByte(this->registers.getHL(), this->registers.getA());
 			this->registers.setHL(this->registers.getHL() + 1);
             break;
         case 0x23: // INC HL        increment 16-bit HL.
@@ -660,7 +713,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setHL(this->registers.getHL() + this->registers.getHL());
             break;
         case 0x2A: // LDI A, (HL)   load A from address pointed to by HL, and increment HL.
-			this->registers.setA(this->ram.getMemory(this->registers.getHL()));
+			this->registers.setA(ReadByte(this->registers.getHL()));
 			this->registers.setHL(this->registers.getHL() + 1);
             break;
         case 0x2B: // DEC HL        decrement 16-bit HL.
@@ -687,20 +740,20 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setSP(load16bit());
             break;
         case 0x32: // LDD (HL), A   save A to address pointed by HL, and decrement HL.
-			this->registers.setA(this->ram.getMemory(this->registers.getHL()));
+			this->registers.setA(ReadByte(this->registers.getHL()));
 			this->registers.setHL(this->registers.getHL() - 1);
             break;
         case 0x33: // INC SP        increment 16-bit SP.
             this->registers.setSP(this->registers.getSP() + 1);
             break;
         case 0x34: // INC (HL)      increment value pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->ram.getMemory(this->registers.getHL()) + 1);
+            WriteByte(this->registers.getHL(), ReadByte(this->registers.getHL()) + 1);
             break;
         case 0x35: // DEC (HL)      decrement value pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->ram.getMemory(this->registers.getHL()) - 1);
+            WriteByte(this->registers.getHL(), ReadByte(this->registers.getHL()) - 1);
             break;
         case 0x36: // LD (HL), n    load 8-bit immediate into address pointed by HL.
-			this->ram.setMemory(this->registers.getHL(), load8bit());
+			WriteByte(this->registers.getHL(), load8bit());
             break;
         case 0x37: // SCF           set carry flag.
 			this->registers.setF(this->registers.getF() | 0b00010000);
@@ -714,7 +767,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setHL(this->registers.getHL() + this->registers.getSP());
             break;
         case 0x3A: // LDD A, (HL)   load A from address pointed to by HL, and decrement HL.
-			this->registers.setA(this->ram.getMemory(this->registers.getHL()));
+			this->registers.setA(ReadByte(this->registers.getHL()));
 			this->registers.setHL(this->registers.getHL() - 1);
             break;
         case 0x3B: // DEC SP        decrement 16-bit SP.
@@ -755,7 +808,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setB(this->registers.getL());
             break;
         case 0x46: // LD B, (HL)    copy value pointed by HL to B.
-            this->registers.setB(this->ram.getMemory(this->registers.getHL()));
+            this->registers.setB(ReadByte(this->registers.getHL()));
             break;
         case 0x47: // LD B, A       copy A to B.
             this->registers.setB(this->registers.getA());
@@ -779,7 +832,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setC(this->registers.getL());
             break;
         case 0x4E: // LD C, (HL)    copy value pointed by HL to C.
-            this->registers.setC(this->ram.getMemory(this->registers.getHL()));
+            this->registers.setC(ReadByte(this->registers.getHL()));
             break;
         case 0x4F: // LD C, A       copy A to C.
             this->registers.setC(this->registers.getA());
@@ -803,7 +856,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setD(this->registers.getL());
             break;
         case 0x56: // LD D, (HL)    copy value pointed by HL to D.
-            this->registers.setD(this->ram.getMemory(this->registers.getHL()));
+            this->registers.setD(ReadByte(this->registers.getHL()));
             break;
         case 0x57: // LD D, A       copy A to D.
             this->registers.setD(this->registers.getA());
@@ -827,7 +880,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setE(this->registers.getL());
             break;
         case 0x5E: // LD E, (HL)    copy value pointed by HL to E.
-            this->registers.setE(this->ram.getMemory(this->registers.getHL()));
+            this->registers.setE(ReadByte(this->registers.getHL()));
             break;
         case 0x5F: // LD E, A       copy A to E.
             this->registers.setE(this->registers.getA());
@@ -851,7 +904,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setH(this->registers.getL());
             break;
         case 0x66: // LD H, (HL)    copy value pointed by HL to H.
-            this->registers.setH(this->ram.getMemory(this->registers.getHL()));
+            this->registers.setH(ReadByte(this->registers.getHL()));
             break;
         case 0x67: // LD H, A       copy A to H.
             this->registers.setH(this->registers.getA());
@@ -875,34 +928,34 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setL(this->registers.getL());
             break;
         case 0x6E: // LD L, (HL)    copy value pointed by HL to L.
-            this->registers.setL(this->ram.getMemory(this->registers.getHL()));
+            this->registers.setL(ReadByte(this->registers.getHL()));
             break;
         case 0x6F: // LD L, A       copy A to L.
             this->registers.setL(this->registers.getA());
             break;
         case 0x70: // LD (HL), B    copy B to address pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->registers.getB());
+            WriteByte(this->registers.getHL(), this->registers.getB());
             break;
         case 0x71: // LD (HL), C    copy C to address pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->registers.getC());
+            WriteByte(this->registers.getHL(), this->registers.getC());
             break;
         case 0x72: // LD (HL), D    copy D to address pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->registers.getD());
+            WriteByte(this->registers.getHL(), this->registers.getD());
             break;
         case 0x73: // LD (HL), E    copy E to address pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->registers.getE());
+            WriteByte(this->registers.getHL(), this->registers.getE());
             break;
         case 0x74: // LD (HL), H    copy H to address pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->registers.getH());
+            WriteByte(this->registers.getHL(), this->registers.getH());
             break;
         case 0x75: // LD (HL), L    copy L to address pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->registers.getL());
+            WriteByte(this->registers.getHL(), this->registers.getL());
             break;
         case 0x76: // HALT          halt processor.
 			this->gb_halt = 0x01;
             break;
         case 0x77: // LD (HL), A    copy A to address pointed by HL.
-            this->ram.setMemory(this->registers.getHL(), this->registers.getA());
+            WriteByte(this->registers.getHL(), this->registers.getA());
             break;
         case 0x78: // LD A, B       copy B to A.
             this->registers.setA(this->registers.getA() + this->registers.getB());
@@ -923,7 +976,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(this->registers.getA() + this->registers.getL());
             break;
         case 0x7E: // LD A, (HL)    copy value pointed by HL to A.
-            this->registers.setA(this->ram.getMemory(this->registers.getHL()));
+            this->registers.setA(ReadByte(this->registers.getHL()));
             break;
         case 0x7F: // LD A, A       copy A to A.
             this->registers.setA(this->registers.getA());
@@ -947,7 +1000,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(add(this->registers.getA(), this->registers.getL(), 'u'));
             break;
         case 0x86: // ADD A, (HL)   add value pointed by HL to A.
-            this->registers.setA(add(this->registers.getA(), this->ram.getMemory(this->registers.getHL()), 'u'));
+            this->registers.setA(add(this->registers.getA(), ReadByte(this->registers.getHL()), 'u'));
             break;
         case 0x87: // ADD A, A      add A to A.
             this->registers.setA(add(this->registers.getA(), this->registers.getA(), 'u'));
@@ -971,7 +1024,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(adc(this->registers.getA(), this->registers.getL()));
             break;
         case 0x8E: // ADC A, (HL)   add value pointed by HL and carry flag to A.
-			this->registers.setA(adc(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
+			this->registers.setA(adc(this->registers.getA(), ReadByte(this->registers.getHL())));
             break;
         case 0x8F: // ADC A, A      add A and carry flag to A.
 			this->registers.setA(adc(this->registers.getA(), this->registers.getA()));
@@ -995,7 +1048,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(sub(this->registers.getA(), this->registers.getL()));
             break;
         case 0x96: // SUB A, (HL)   subtract value pointed by HL from A.
-            this->registers.setA(sub(this->registers.getA(), this->ram.getMemory(this->registers.getB())));
+            this->registers.setA(sub(this->registers.getA(), ReadByte(this->registers.getB())));
             break; 
         case 0x97: // SUB A, A      subtract A from A.
             this->registers.setA(sub(this->registers.getA(), this->registers.getA()));
@@ -1019,7 +1072,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(sbc(this->registers.getA(), this->registers.getL()));
             break;
         case 0x9E: // SBC A, (HL)   subtract value pointed by HL and carry flag from A.
-			this->registers.setA(sbc(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
+			this->registers.setA(sbc(this->registers.getA(), ReadByte(this->registers.getHL())));
             break;
         case 0x9F: // SBC A, A      subtract A and carry flag from A.
 			this->registers.setA(sbc(this->registers.getA(), this->registers.getA()));
@@ -1043,7 +1096,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(land(this->registers.getA(), this->registers.getL()));
             break; 
         case 0xA6: // AND (HL)      logical AND value pointed by HL against A.
-            this->registers.setA(land(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
+            this->registers.setA(land(this->registers.getA(), ReadByte(this->registers.getHL())));
             break;
         case 0xA7: // AND A         logical AND A against A.
             this->registers.setA(land(this->registers.getA(), this->registers.getA()));
@@ -1067,7 +1120,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(lxor(this->registers.getA(), this->registers.getL()));
             break;
         case 0xAE: // XOR (HL)      logical XOR value pointed by HL against A.
-            this->registers.setA(lxor(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
+            this->registers.setA(lxor(this->registers.getA(), ReadByte(this->registers.getHL())));
             break;
         case 0xAF: // XOR A         logical XOR A against A.
             this->registers.setA(lxor(this->registers.getA(), this->registers.getA()));
@@ -1091,7 +1144,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(lor(this->registers.getA(), this->registers.getL()));
             break;
         case 0xB6: // OR (HL)       logical OR value pointed by HL against A.
-            this->registers.setA(lor(this->registers.getA(), this->ram.getMemory(this->registers.getHL())));
+            this->registers.setA(lor(this->registers.getA(), ReadByte(this->registers.getHL())));
             break;
         case 0xB7: // OR A          logical OR A against A.
             this->registers.setA(lor(this->registers.getA(), this->registers.getA()));
@@ -1115,7 +1168,7 @@ void CPU::executeInstruction(Byte opcode) {
             cp(this->registers.getA(), this->registers.getL());
             break;
         case 0xBE: // CP (HL)       compare value pointed by HL against A.
-            cp(this->registers.getA(), this->ram.getMemory(this->registers.getHL()));
+            cp(this->registers.getA(), ReadByte(this->registers.getHL()));
             break;
         case 0xBF: // CP A          compare A against A.
             cp(this->registers.getA(), this->registers.getA());
@@ -1216,7 +1269,7 @@ void CPU::executeInstruction(Byte opcode) {
 			}
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
-			this->enableInterrupts = 0x01;
+			this->enableInterupts = 0x01;
 			this->registers.setPC(pop16bit());
             break; 
         case 0xDA: // JP C, nn      absolute jump to 16-bit location if last result caused carry.
@@ -1240,13 +1293,13 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0018);
             break;
         case 0xE0: // LDH (n), A    save A at address pointed to by (FF00h + 8-bit immediate)
-			this->ram.setMemory(ADDR_IO + load8bit(), this->registers.getA());
+			WriteByte(ADDR_IO + load8bit(), this->registers.getA());
             break;
         case 0xE1: // POP HL        pop 16-bit value from stack into HL.
 			this->registers.setHL(pop16bit());
             break;
         case 0xE2: // LDH (C), A    save A at address pointed to by (FF00h + C)
-			this->ram.setMemory(ADDR_IO + this->registers.getC(), this->registers.getA());
+			WriteByte(ADDR_IO + this->registers.getC(), this->registers.getA());
             break;
         case 0xE3: // XX            operation removed in this CPU.
             break;
@@ -1268,7 +1321,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setPC(this->registers.getHL());
             break;
         case 0xEA: // LD (nn), A    save A at given 16-bit address.
-			this->ram.setMemory(load16bit(), this->registers.getA());
+			WriteByte(load16bit(), this->registers.getA());
             break;
         case 0xEB: // XX            operation removed in this CPU.
             break;
@@ -1283,7 +1336,7 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0028);
             break;
         case 0xF0: // LDH A, (n)    load A from address pointed to by (FF00h + 8-bit immediate).
-			this->registers.setA(this->ram.getMemory(ADDR_IO + load8bit()));
+			this->registers.setA(ReadByte(ADDR_IO + load8bit()));
             break;
         case 0xF1: // POP AF        pop 16-bit value from stack into AF.
 			this->registers.setAF(pop16bit());
@@ -1291,7 +1344,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xF2: // XX            operation removed in this CPU.
             break;
         case 0xF3: // DI            disable interrupts
-			this->enableInterrupts = 0x00;
+			this->enableInterupts = 0x00;
             break;
         case 0xF4: // XX            operation removed in this CPU.
             break;
@@ -1312,10 +1365,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setSP(this->registers.getHL());
             break;
         case 0xFA: // LD A, (nn)    load A from given 16-bit address.
-			this->registers.setA(this->ram.getMemory(load16bit()));
+			this->registers.setA(ReadByte(load16bit()));
             break;
         case 0xFB: // EI            enable interrupts.
-			this->enableInterrupts = 0x01;
+			this->enableInterupts = 0x01;
             break;
         case 0xFC: // XX            operation removed in this CPU.
             break;
@@ -1478,7 +1531,7 @@ Byte CPU::set(Byte value, int bit) {
 
 void CPU::executeExtendedOpcodes() {
 	this->registers.setPC(this->registers.getPC() + 1);
-	Byte exOpcode = this->ram.getMemory(this->registers.getPC());
+	Byte exOpcode = ReadByte(this->registers.getPC());
 
 	switch (exOpcode) {
 		case  0x0: // RLC B			rotate B left with carry.
@@ -1500,7 +1553,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(rlc(this->registers.getL()));
 			break;
 		case  0x6: // RLC (HL)
-			this->ram.setMemory(this->registers.getHL(), rlc(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), rlc(ReadByte(this->registers.getHL())));
 			break;
 		case  0x7: // RLC A
 			this->registers.setA(rlc(this->registers.getA()));
@@ -1524,7 +1577,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(rrc(this->registers.getL()));
 			break;
 		case  0xE: // RRC (HL)
-			this->ram.setMemory(this->registers.getHL(), rrc(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), rrc(ReadByte(this->registers.getHL())));
 			break;
 		case  0xF: // RRC A
 			this->registers.setA(rrc(this->registers.getA()));
@@ -1548,7 +1601,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(rl(this->registers.getL()));
 			break;
 		case 0x16: // RL (HL)
-			this->ram.setMemory(this->registers.getHL(), rl(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), rl(ReadByte(this->registers.getHL())));
 			break;
 		case 0x17: // RL A
 			this->registers.setA(rl(this->registers.getA()));
@@ -1572,7 +1625,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(rr(this->registers.getL()));
 			break;
 		case 0x1E: // RR (HL)
-			this->ram.setMemory(this->registers.getHL(), rr(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), rr(ReadByte(this->registers.getHL())));
 			break;
 		case 0x1F: // RR A
 			this->registers.setA(rr(this->registers.getA()));
@@ -1596,7 +1649,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(sla(this->registers.getL()));
 			break;
 		case 0x26: // SLA (HL)
-			this->ram.setMemory(this->registers.getHL(), sla(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), sla(ReadByte(this->registers.getHL())));
 			break;
 		case 0x27: // SLA A
 			this->registers.setA(sla(this->registers.getA()));
@@ -1620,7 +1673,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(sra(this->registers.getL()));
 			break;
 		case 0x2E: // SRA (HL)
-			this->ram.setMemory(this->registers.getHL(), sra(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), sra(ReadByte(this->registers.getHL())));
 			break;
 		case 0x2F: // SRA A
 			this->registers.setA(sra(this->registers.getA()));
@@ -1644,7 +1697,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(swap(this->registers.getL()));
 			break;
 		case 0x36: // SWAP (HL)
-			this->ram.setMemory(this->registers.getHL(), swap(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), swap(ReadByte(this->registers.getHL())));
 			break;
 		case 0x37: // SWAP A
 			this->registers.setA(swap(this->registers.getA()));
@@ -1668,7 +1721,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(srl(this->registers.getL()));
 			break;
 		case 0x3E: // SRL (HL)
-			this->ram.setMemory(this->registers.getHL(), srl(this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), srl(ReadByte(this->registers.getHL())));
 			break;
 		case 0x3F: // SRL A
 			this->registers.setA(srl(this->registers.getA()));
@@ -1692,7 +1745,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(0, this->registers.getL());
 			break;
 		case 0x46: // BIT 0, (HL)
-			bit(0, this->ram.getMemory(this->registers.getHL()));
+			bit(0, ReadByte(this->registers.getHL()));
 			break;
 		case 0x47: // BIT 0, A
 			bit(0, this->registers.getA());
@@ -1716,7 +1769,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(1, this->registers.getL());
 			break;
 		case 0x4E: // BIT 1, (HL)
-			bit(1, this->ram.getMemory(this->registers.getHL()));
+			bit(1, ReadByte(this->registers.getHL()));
 			break;
 		case 0x4F: // BIT 1, A
 			bit(1, this->registers.getA());
@@ -1740,7 +1793,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(2, this->registers.getL());
 			break;
 		case 0x56: // BIT 2, (HL)
-			bit(2, this->ram.getMemory(this->registers.getHL()));
+			bit(2, ReadByte(this->registers.getHL()));
 			break;
 		case 0x57: // BIT 2, A
 			bit(2, this->registers.getA());
@@ -1764,7 +1817,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(3, this->registers.getL());
 			break;
 		case 0x5E: // BIT 3, (HL)
-			bit(3, this->ram.getMemory(this->registers.getHL()));
+			bit(3, ReadByte(this->registers.getHL()));
 			break;
 		case 0x5F: // BIT 3, A
 			bit(3, this->registers.getA());
@@ -1788,7 +1841,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(4, this->registers.getL());
 			break;
 		case 0x66: // BIT 4, (HL)
-			bit(4, this->ram.getMemory(this->registers.getHL()));
+			bit(4, ReadByte(this->registers.getHL()));
 			break;
 		case 0x67: // BIT 4, A
 			bit(4, this->registers.getA());
@@ -1812,7 +1865,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(5, this->registers.getL());
 			break;
 		case 0x6E: // BIT 5, (HL)
-			bit(5, this->ram.getMemory(this->registers.getHL()));
+			bit(5, ReadByte(this->registers.getHL()));
 			break;
 		case 0x6F: // BIT 5, A
 			bit(5, this->registers.getA());
@@ -1836,7 +1889,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(6, this->registers.getL());
 			break;
 		case 0x76: // BIT 6, (HL)
-			bit(6, this->ram.getMemory(this->registers.getHL()));
+			bit(6, ReadByte(this->registers.getHL()));
 			break;
 		case 0x77: // BIT 6, A
 			bit(6, this->registers.getA());
@@ -1860,7 +1913,7 @@ void CPU::executeExtendedOpcodes() {
 			bit(7, this->registers.getL());
 			break;
 		case 0x7E: // BIT 7, (HL)
-			bit(7, this->ram.getMemory(this->registers.getHL()));
+			bit(7, ReadByte(this->registers.getHL()));
 			break;
 		case 0x7F: // BIT 7, A
 			bit(7, this->registers.getA());
@@ -1884,7 +1937,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 0));
 			break;
 		case 0x86: // RES 0, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 0));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 0));
 			break;
 		case 0x87: // RES 0, A
 			this->registers.setA(res(this->registers.getA(), 0));
@@ -1908,7 +1961,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 1));
 			break;
 		case 0x8E: // RES 1, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 1));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 1));
 			break;
 		case 0x8F: // RES 1, A
 			this->registers.setA(res(this->registers.getA(), 1));
@@ -1932,7 +1985,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 2));
 			break;
 		case 0x96: // RES 2, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 2));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 2));
 			break;
 		case 0x97: // RES 2, A
 			this->registers.setA(res(this->registers.getA(), 2));
@@ -1956,7 +2009,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 3));
 			break;
 		case 0x9E: // RES 3, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 3));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 3));
 			break;
 		case 0x9F: // RES 3, A
 			this->registers.setA(res(this->registers.getA(), 3));
@@ -1980,7 +2033,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 4));
 			break;
 		case 0xA6: // RES 4, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 4));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 4));
 			break;
 		case 0xA7: // RES 4, A
 			this->registers.setA(res(this->registers.getA(), 4));
@@ -2004,7 +2057,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 5));
 			break;
 		case 0xAE: // RES 5, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 5));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 5));
 			break;
 		case 0xAF: // RES 5, A
 			this->registers.setA(res(this->registers.getA(), 5));
@@ -2028,7 +2081,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 6));
 			break;
 		case 0xB6: // RES 6, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 6));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 6));
 			break;
 		case 0xB7: // RES 6, A
 			this->registers.setA(res(this->registers.getA(), 6));
@@ -2052,7 +2105,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(res(this->registers.getL(), 7));
 			break;
 		case 0xBE: // RES 7, (HL)
-			this->ram.setMemory(this->registers.getHL(), res(this->ram.getMemory(this->registers.getHL()), 7));
+			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 7));
 			break;
 		case 0xBF: // RES 7, A
 			this->registers.setA(res(this->registers.getA(), 7));
@@ -2076,7 +2129,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(0, this->registers.getL()));
 			break;
 		case 0xC6: // SET 0, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(0, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(0, ReadByte(this->registers.getHL())));
 			break;
 		case 0xC7: // SET 0, A
 			this->registers.setA(set(0, this->registers.getA()));
@@ -2100,7 +2153,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setB(set(1, this->registers.getL()));
 			break;
 		case 0xCE: // SET 1, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(1, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(1, ReadByte(this->registers.getHL())));
 			break;
 		case 0xCF: // SET 1, A
 			this->registers.setA(set(1, this->registers.getA()));
@@ -2124,7 +2177,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(2, this->registers.getL()));
 			break;
 		case 0xD6: // SET 2, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(2, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(2, ReadByte(this->registers.getHL())));
 			break;
 		case 0xD7: // SET 2, A
 			this->registers.setA(set(2, this->registers.getA()));
@@ -2148,7 +2201,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(3, this->registers.getL()));
 			break;
 		case 0xDE: // SET 3, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(3, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(3, ReadByte(this->registers.getHL())));
 			break;
 		case 0xDF: // SET 3, A
 			this->registers.setA(set(3, this->registers.getA()));
@@ -2172,7 +2225,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(4, this->registers.getL()));
 			break;
 		case 0xE6: // SET 4, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(4, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(4, ReadByte(this->registers.getHL())));
 			break;
 		case 0xE7: // SET 4, A
 			this->registers.setA(set(4, this->registers.getA()));
@@ -2196,7 +2249,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(5, this->registers.getL()));
 			break;
 		case 0xEE: // SET 5, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(5, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(5, ReadByte(this->registers.getHL())));
 			break;
 		case 0xEF: // SET 5, A
 			this->registers.setA(set(5, this->registers.getA()));
@@ -2220,7 +2273,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(6, this->registers.getL()));
 			break;
 		case 0xF6: // SET 6, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(6, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(6, ReadByte(this->registers.getHL())));
 			break;
 		case 0xF7: // SET 6, A
 			this->registers.setA(set(6, this->registers.getB()));
@@ -2244,7 +2297,7 @@ void CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(7, this->registers.getL()));
 			break;
 		case 0xFE: // SET 7, (HL)
-			this->ram.setMemory(this->registers.getHL(), set(7, this->ram.getMemory(this->registers.getHL())));
+			WriteByte(this->registers.getHL(), set(7, ReadByte(this->registers.getHL())));
 			break;
 		case 0xFF: // SET 7, A
 			this->registers.setA(set(7, this->registers.getA()));
@@ -2253,12 +2306,98 @@ void CPU::executeExtendedOpcodes() {
 }
 
 void CPU::CPUstep() {
-	executeInstruction(this->ram.getMemory(this->registers.getPC()));
+	executeInstruction(ReadByte(this->registers.getPC()));
 
 	// may not increase program counter after jumps.
 	if (!this->jump) {
 		this->registers.setPC(this->registers.getPC() + 1);
 	} else {
 		this->jump = 0x00;
+	}
+}
+
+/*
+interupts
+
+#define ADDR_INTR_REQ		0xFF0F		// Interupt Request Register
+#define ADDR_INTR_EN		0xFFFF		// Interupt Enable Register
+
+Bit 0:	V-Blank Interupt
+Bit 1:	LCD Interupt
+Bit 2: Timer Interupt
+Bit 4: Joypad Interupt
+*/
+
+void CPU::RequestInterupt(int id) {
+	Byte req = ReadByte(ADDR_INTR_REQ);
+	req = setBit(req, id);
+	WriteByte(ADDR_INTR_REQ, req);
+
+	return;
+}
+
+void CPU::DoInterupts() {
+	Byte req, enabled;
+
+	if (enableInterupts) {
+		req = ReadByte(ADDR_INTR_REQ);
+		enabled = ReadByte(ADDR_INTR_EN);
+
+		if (req > 0) {
+			for (int i = 0; i < 8; i++) {
+				if (testBit(req, i)) {
+					ServiceInterupts(i);
+				}
+			}
+		}
+
+		return;
+	}
+}
+
+/*
+V-Blank:	0x40
+LCD:		0x48
+TIMER:		0x50
+JOYPAD:		0x60
+*/
+#define INTERUPT_VBLANK 0x40
+#define INTERUPT_LCD	0x48
+#define INTERUPT_TIMER	0x50
+#define INTERUPT_JOYPAD 0x60
+
+void CPU::ServiceInterupts(int interupt) {
+	Byte req;
+
+	enableInterupts = 0x00;
+	req = ReadByte(ADDR_INTR_REQ);
+
+	req = resetBit(req, interupt);
+	WriteByte(ADDR_INTR_REQ, req);
+
+	push16bit(this->registers.getPC());
+
+	switch (interupt) {
+		case 0:
+			this->registers.setPC(INTERUPT_VBLANK);
+			break;
+		case 1:
+			this->registers.setPC(INTERUPT_LCD);
+			break;
+		case 2:
+			this->registers.setPC(INTERUPT_TIMER);
+			break;
+		case 4:
+			this->registers.setPC(INTERUPT_JOYPAD);
+		default:
+			break;
+	}
+}
+
+void CPU::DoDMATransfer(Byte data) {
+	unsigned short address = data << 8;
+	
+	for (int i = 0; i < 0xA0; i++) {
+		WriteByte(0xFE00 + i, ReadByte(address + i));
 	}
 }
