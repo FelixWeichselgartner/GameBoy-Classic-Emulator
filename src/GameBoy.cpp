@@ -79,7 +79,7 @@ void GameBoy::tests(int mode) {
 
 void delay(int micro_seconds) {
 	clock_t start_time = clock();
-	while (clock() < start_time + micro_seconds/1000)
+	while (clock() < start_time + micro_seconds / 1000)
 		;
 }
 
@@ -98,18 +98,12 @@ void GameBoy::run() {
 			}
 		}
 		cpu.CPUstep();
-
-		/*
-		count++;
-		if (count % 10000 == 0) {
-			cout << count << endl;
-			//cpu.setRunning(0);
-			//break;
-		}
-		*/
+		gpu.UpdateGraphics();
+		cpu.DoInterupts();
 
 		// this is not final
 		delay(delaytime);
+		//delay(1000000);
 		//
 	}
 
@@ -118,7 +112,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 2
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		cpu debug
 // MODE 2		gpu debug

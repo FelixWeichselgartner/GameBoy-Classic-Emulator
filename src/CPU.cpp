@@ -43,6 +43,8 @@ bool testBit(Byte value, int bit) {
 	} else {
 		return false;
 	}
+
+	return retval;
 }
 
 Byte resetBit(Byte value, int bit) {
