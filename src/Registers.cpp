@@ -8,7 +8,7 @@
 
 Registers::Registers() {
     this->A = this->B = this->C = this->D = this->E = this->F = this->H = this->L = 0x00;
-	this->PC = 0x0150;
+	this->PC = 0x0100;
 	this->SP = ADDR_STACK;
 }
 

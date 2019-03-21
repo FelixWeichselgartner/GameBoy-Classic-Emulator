@@ -10,6 +10,12 @@
 //----------------------------------------------------------------------------------------------
 // screen resolution:
 
+/*
+// amount of pixels in horizontal direction.
+#define LCD_HOR_LINES 
+// amount of pixels in vertical direction.
+#define LCD_VERT_LINES 154
+*/
 // amount of pixels in x direction.
 #define X_RES 160
 // amount of pixels in y direction.
@@ -75,10 +81,13 @@ public:
 	SDL_Window* getWindow() const { return window; }
 	SDL_Renderer* getRenderer() const { return renderer; }
 
+	void clearScreen();
+
 	bool IsLCDEnabled() const;
 	void SetLCDStatus();
 
 	void TestGraphics();
+	void TestTiles();
 
 	Byte getColor(Byte, unsigned short);
 
@@ -87,6 +96,7 @@ public:
 
 	void DrawScanLine();
 
+	void renderDisplay(Byte);
 	void UpdateGraphics();
 
 };

@@ -30,6 +30,22 @@ GPU::GPU(class CPU* cpuLink) {
 	}
 
 	SDL_RenderClear(renderer);
+
+	clearScreen();
+}
+
+void GPU::clearScreen() {
+	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
+
+	for (int x = 0; x < X_RES; x++) {
+		for (int y = 0; y < Y_RES; y++) {
+			display[y][x] = 0;
+			SDL_SetRenderDrawColor(renderer, white);
+			SDL_RenderDrawPoint(renderer, x, y);
+		}
+	}
+
+	SDL_RenderPresent(renderer);
 }
 
 bool GPU::IsLCDEnabled() const {
@@ -47,12 +63,12 @@ void GPU::SetLCDStatus() {
 		return;
 	} 
 
-	Byte currentline = this->cpuLink->ReadByte(0xFF44);
+	Byte lY = this->cpuLink->ReadByte(0xFF44);
 	Byte currentmode = status & 0x03;
 	Byte mode = 0x00;
 	bool reqInt = false;
 	
-	if (currentline >= 144) {
+	if (lY >= 144) {
 		mode = 1;
 		status = setBit(status, 0);
 		status = resetBit(status, 1);
@@ -82,7 +98,7 @@ void GPU::SetLCDStatus() {
 		cpuLink->RequestInterupt(1);
 	}
 
-	if (this->cpuLink->ReadByte(0xFF45)) { // conincidence flag
+	if (lY == this->cpuLink->ReadByte(0xFF45)) { // conincidence flag
 		status = setBit(status, 2);
 		if (testBit(status, 6)) {
 			this->cpuLink->RequestInterupt(1);
@@ -95,7 +111,7 @@ void GPU::SetLCDStatus() {
 }
 
 void GPU::TestGraphics() {
-	SDL_RenderSetScale(renderer, scaleWidth, scaleHeight);
+	SDL_RenderSetScale(renderer, (float) scaleWidth, (float) scaleHeight);
 	SDL_SetRenderDrawColor(renderer, dark_grey);
 	for (int y = 0; y < Y_RES; y++) {
 		for (int x = 0; x < X_RES; x++) {
@@ -110,6 +126,19 @@ void GPU::TestGraphics() {
 			SDL_SetRenderDrawColor(renderer, black);
 		}
 	}
+	SDL_RenderPresent(renderer);
+}
+
+void GPU::TestTiles() {
+	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
+	SDL_SetRenderDrawColor(renderer, dark_grey);
+
+	for (int y = 0; y < Y_RES; y++) {
+		for (int x = 0; x < X_RES; x++) {
+			SDL_RenderDrawPoint(renderer, x, y);
+		}
+	}
+
 	SDL_RenderPresent(renderer);
 }
 
@@ -152,10 +181,12 @@ void GPU::RenderTiles(Byte lcdControl) {
 		if (windowY <= this->cpuLink->ReadByte(0xFF44)) {
 			usingWindow = true;
 		}
+	} else {
+		usingWindow = false;
 	}
 
 	if (testBit(lcdControl, 4)) {
-		tileData = 0x8000;
+		tileData = ADDR_VRAM_T_S;
 	} else {
 		tileData = 0x8800;
 		noSign = false;
@@ -163,16 +194,16 @@ void GPU::RenderTiles(Byte lcdControl) {
 
 	if (!usingWindow) {
 		if (testBit(lcdControl, 3)) {
-			backgroundMemory = 0x9C00;
+			backgroundMemory = ADDR_VRAM_T_M_2;
 		} else {
-			backgroundMemory = 0x9800;
+			backgroundMemory = ADDR_VRAM_T_M_1;
 		}
 		yPos = scrollY + this->cpuLink->ReadByte(0xFF44);
 	} else {
 		if (testBit(lcdControl, 6)) {
-			backgroundMemory = 0x9C00;
+			backgroundMemory = ADDR_VRAM_T_M_2;
 		} else {
-			backgroundMemory = 0x9800;
+			backgroundMemory = ADDR_VRAM_T_M_1;
 		}
 		yPos = this->cpuLink->ReadByte(0xFF44) - windowY;
 	}
@@ -187,7 +218,9 @@ void GPU::RenderTiles(Byte lcdControl) {
 		xPos = i + scrollX;
 
 		if (usingWindow) {
-			xPos = i - windowX;
+			if (i >= windowX) {
+				xPos = i - windowX;
+			}
 		}
 
 		tileCol = xPos / 8;
@@ -197,8 +230,7 @@ void GPU::RenderTiles(Byte lcdControl) {
 		if (noSign) {
 			tileNum = (Byte)this->cpuLink->ReadByte(tileAddress);
 			tileLocation += tileNum * 16;
-		}
-		else {
+		} else {
 			tileNum = (signed char)this->cpuLink->ReadByte(tileAddress);
 			tileLocation += (tileNum + 128) * 16;
 		}
@@ -207,7 +239,7 @@ void GPU::RenderTiles(Byte lcdControl) {
 		data1 = this->cpuLink->ReadByte(tileLocation + line);
 		data2 = this->cpuLink->ReadByte(tileLocation + line + 1);
 
-		colorBit = (((xPos % 8) - 7) * -1);
+		colorBit = -((xPos % 8) - 7);
 		colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 
 		Byte color = getColor(colorNum, 0xFF47);
@@ -223,69 +255,75 @@ void GPU::RenderTiles(Byte lcdControl) {
 }
 
 void GPU::RenderSprites(Byte lcdControl) {
-	bool use8x16tiles = false;
-	if (testBit(lcdControl, 2)) {
-		use8x16tiles = true;
-	}
-
-	const int maxSprites = 40, bytesPerSprite = 4;
-	for (int sprite = 0; sprite < maxSprites; sprite++) {
-		Byte index = sprite * bytesPerSprite;
-		Byte xPos = this->cpuLink->ReadByte(ADDR_OAM + index + 0);
-		Byte yPos = this->cpuLink->ReadByte(ADDR_OAM + index + 1);
-		Byte tileLocation = this->cpuLink->ReadByte(ADDR_OAM + index + 2);
-		Byte attributes = this->cpuLink->ReadByte(ADDR_OAM + index + 3);
-
-		bool flipXaxis = testBit(attributes, 5);
-		bool flipYaxis = testBit(attributes, 6);
-
-		int scanline = this->cpuLink->ReadByte(0xFF44);
-
-		int ysize;
-		if (use8x16tiles) {
-			ysize = 16;
-		}
-		else {
-			ysize = 8;
+	if (testBit(lcdControl, 1)) {
+		bool use8x16tiles = false;
+		if (testBit(lcdControl, 2)) {
+			use8x16tiles = true;
 		}
 
-		if ((scanline >= yPos) && (scanline < (yPos + ysize))) {
-			int line = scanline - yPos;
+		const int maxSprites = 40, bytesPerSprite = 4;
+		for (int sprite = 0; sprite < maxSprites; sprite++) {
+			Byte index = sprite * bytesPerSprite;
+			Byte yPos = this->cpuLink->ReadByte(ADDR_OAM + index + 0) - 16;
+			Byte xPos = this->cpuLink->ReadByte(ADDR_OAM + index + 1) - 8;
+			Byte tileLocation = this->cpuLink->ReadByte(ADDR_OAM + index + 2);
+			Byte attributes = this->cpuLink->ReadByte(ADDR_OAM + index + 3);
 
-			if (flipYaxis) {
-				line = -(line - ysize);
+			bool flipXaxis = testBit(attributes, 5);
+			bool flipYaxis = testBit(attributes, 6);
+
+			int scanline = this->cpuLink->ReadByte(0xFF44);
+
+			int ysize;
+			if (use8x16tiles) {
+				ysize = 16;
+			}
+			else {
+				ysize = 8;
 			}
 
-			line *= 2;
+			if ((scanline >= yPos) && (scanline < (yPos + ysize))) {
+				int line = scanline - yPos;
 
-			unsigned short address = (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
-			Byte data1 = this->cpuLink->ReadByte(address);
-			Byte data2 = this->cpuLink->ReadByte(address + 1);
-
-			for (int tilePixel = 7; tilePixel >= 0; tilePixel--) {
-				int colorBit = tilePixel;
-
-				if (flipXaxis) {
-					colorBit = -(colorBit - 7);
+				if (flipYaxis) {
+					line = -(line - ysize);
 				}
 
-				int colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
+				line *= 2;
 
-				unsigned short colorAddress = testBit(attributes, 4) ? 0xFF49 : 0xFF48;
-				int color = getColor(colorNum, colorAddress);
+				unsigned short address = (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
+				Byte data1 = this->cpuLink->ReadByte(address);
+				Byte data2 = this->cpuLink->ReadByte(address + 1);
 
-				if (color == 0) { // transparant
-					continue;
+				for (int tilePixel = 7; tilePixel >= 0; tilePixel--) {
+					int colorBit = tilePixel;
+
+					if (flipXaxis) {
+						colorBit = -(colorBit - 7);
+					}
+
+					int colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
+
+					unsigned short colorAddress = testBit(attributes, 4) ? 0xFF49 : 0xFF48;
+					int color = getColor(colorNum, colorAddress);
+
+					if (color == 0) { // transparant
+						continue;
+					}
+
+					int xPixel = 0 - tilePixel + 7;
+					int pixel = xPixel + xPos;
+
+					if ((scanline < 0) || (scanline > X_RES - 1) || (pixel < 0) || (pixel > Y_RES - 1)) {
+						continue;
+					}
+
+					if (testBit(attributes, 7)) {
+
+					}
+
+					display[scanline][pixel] = color;
 				}
-
-				int xPixel = 0 - tilePixel + 7;
-				int pixel = xPixel + xPos;
-
-				if ((scanline < 0) || (scanline > X_RES - 1) || (pixel < 0) || (pixel > Y_RES - 1)) {
-					return;
-				}
-
-				display[scanline][pixel] = color;
 			}
 		}
 	}
@@ -303,39 +341,54 @@ void GPU::DrawScanLine() {
 	}
 }
 
-void GPU::UpdateGraphics() {
-	SDL_RenderSetScale(renderer, scaleWidth, scaleHeight);
-
-	this->cpuLink->WriteByte(0xFF40, this->cpuLink->ReadByte(0xFF40) + 1);
-	Byte currentline = this->cpuLink->ReadByte(0xFF44);
-
-	// error: currentline no value;
-	cout << "currentline: " << currentline << endl;
-
-	if (currentline == X_RES) {
-		cpuLink->RequestInterupt(0);
-	} else if (currentline > 153) {
-		this->cpuLink->WriteByte(0xFF40, 0);
-	} else if (currentline < X_RES) {
-		//cout << "scanLine has been drawn" << endl;
-		DrawScanLine();
-	}
+void GPU::renderDisplay(Byte currentline) {
+	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
 
 	for (int i = 0; i < X_RES; i++) {
 		switch (display[currentline][i]) {
-			case 0: 
-				SDL_SetRenderDrawColor(renderer, white); 
-				break; 
-			case 1: SDL_SetRenderDrawColor(renderer, light_grey); 
-				break;
-			case 2: SDL_SetRenderDrawColor(renderer, dark_grey); 
-				break;
-			case 3: SDL_SetRenderDrawColor(renderer, black); 
-				break;
-			default: break;
+		case 0:
+			SDL_SetRenderDrawColor(renderer, white);
+			break;
+		case 1: SDL_SetRenderDrawColor(renderer, light_grey);
+			break;
+		case 2: SDL_SetRenderDrawColor(renderer, dark_grey);
+			break;
+		case 3: SDL_SetRenderDrawColor(renderer, black);
+			break;
+		default: break;
 		}
 		SDL_RenderDrawPoint(renderer, i, currentline);
 	}
 
 	SDL_RenderPresent(renderer);
+}
+
+void GPU::UpdateGraphics() {
+	Byte currentline;
+
+	SetLCDStatus();
+
+	if (IsLCDEnabled()) {
+		;
+	} else {
+		return;
+	}
+
+	this->cpuLink->WriteByte(0xFF40, this->cpuLink->ReadByte(0xFF40) + 1);
+
+	currentline = this->cpuLink->ReadByte(0xFF44);
+
+	// error: currentline no value;
+	// cout << "currentline: " << (int) currentline << endl;
+	
+	if (currentline == X_RES) {
+		cpuLink->RequestInterupt(0);
+	} else if (currentline > 153) {
+		this->cpuLink->WriteByte(0xFF44, 0);
+	} else if (currentline < X_RES) {
+		DrawScanLine();
+		renderDisplay(currentline);
+	}
+
+	this->cpuLink->WriteByte(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
 }

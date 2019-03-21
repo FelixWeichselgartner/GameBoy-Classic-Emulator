@@ -9,6 +9,7 @@
 using namespace std;
 #include <iomanip>
 #include <thread>
+#include <chrono>
 
 #include <time.h>
 
@@ -74,12 +75,43 @@ void GameBoy::tests(int mode) {
 		}
 		break;
 	case 3: RomTest(); break;
+	case 4: gpu.TestTiles(); break;
+	case 5: 
+		int delaytime = 1000 * 1000 * 1000; // 1 second
+
+		while (this->cpu.getRunning()) {
+			if (SDL_PollEvent(&windowEvent)) {
+				if (windowEvent.type == SDL_QUIT) {
+					return;
+				}
+			}
+			cout << "[PC]: " << setw(4) << setfill('0') << hex << this->cpu.registers.getPC() << "\t [OPCODE]: ";
+			cout << hex << setw(2) << setfill('0') << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t->   ";
+			cout << "A" << setw(2) << setfill('0') << hex << (int)this->cpu.registers.getA() << " ";
+			cout << "F" << setw(2) << setfill('0') << (int)this->cpu.registers.getF() << "   ";
+			cout << "B" << setw(2) << setfill('0') << hex << (int)this->cpu.registers.getB() << " ";
+			cout << "C" << setw(2) << setfill('0') << (int)this->cpu.registers.getC() << "   ";
+			cout << "D" << setw(2) << setfill('0') << hex << (int)this->cpu.registers.getD() << " ";
+			cout << "E" << setw(2) << setfill('0') << (int)this->cpu.registers.getE() << "   ";
+			cout << "HL" << setw(4) << setfill('0') << hex << (int)this->cpu.registers.getHL() << "   " << endl;
+			//this->cpu.registers.printFlags();
+
+			cpu.CPUstep();
+			gpu.UpdateGraphics();
+			cpu.DoInterupts();
+
+			this_thread::sleep_for(chrono::nanoseconds(delaytime));
+		}
+
+		SDL_DestroyRenderer(gpu.getRenderer());
+		SDL_DestroyWindow(gpu.getWindow());
+		SDL_Quit();
 	}
 }
 
-void delay(int micro_seconds) {
+void delay(int nano_seconds) {
 	clock_t start_time = clock();
-	while (clock() < start_time + micro_seconds / 1000)
+	while (clock() < start_time + nano_seconds / 1000)
 		;
 }
 
@@ -87,10 +119,10 @@ void GameBoy::run() {
 	SDL_Event windowEvent;
 
 	// this is not final
-	int delaytime = 1000 * 1000 / this->cpu.getClockSpeed();
+	int delaytime = 1000 * 1000 * 1000 / this->cpu.getClockSpeed();
+	// 1/clockspeed = 2.5 * 10^-7 = 250 ns
 	//
 
-	int count = 0;
 	while (this->cpu.getRunning()) {
 		if (SDL_PollEvent(&windowEvent)) {
 			if (windowEvent.type == SDL_QUIT) {
@@ -102,8 +134,7 @@ void GameBoy::run() {
 		cpu.DoInterupts();
 
 		// this is not final
-		delay(delaytime);
-		//delay(1000000);
+		this_thread::sleep_for(chrono::nanoseconds(delaytime));
 		//
 	}
 
@@ -112,11 +143,13 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		cpu debug
 // MODE 2		gpu debug
 // MODE 3		rom test
+// MODE 4		tiles test
+// MODE 5		slow motion pc + opcode
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;

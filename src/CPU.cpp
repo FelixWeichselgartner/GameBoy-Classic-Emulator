@@ -4,6 +4,14 @@
 #include "../include/RAM.hpp"
 //----------------------------------------------------------------------------------------------
 
+/*----------------------------------------------------------------------------------------------
+note:
+
+for all relative jumps (e.g. 0x20)
+program counter is increased after this jump instruction
+according to bgb debugging this is neccessary
+*///--------------------------------------------------------------------------------------------
+
 //----------------------------------------------------------------------------------------------
 // Flags - F register is the flag register
 // Z = this->registers.F (Byte 7)
@@ -116,18 +124,14 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 }
 
 Byte CPU::load8bit() {
-	Byte retval = ReadByte(this->registers.getPC());
 	this->registers.setPC(this->registers.getPC() + 1);
-	return retval;
+	return ReadByte(this->registers.getPC());
 }
 
 unsigned short CPU::load16bit() {
 	unsigned short retval = 0x0000;
-	this->registers.setPC(this->registers.getPC() + 1);
-	retval = ReadByte(this->registers.getPC());
-	retval = retval << 8;
-	this->registers.setPC(this->registers.getPC() + 1);
-	retval = retval | ReadByte(this->registers.getPC());
+	retval = load8bit();
+	retval = retval | (load8bit() << 8);
 	return retval;
 }
 
@@ -657,6 +661,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x18: // JR n          relative jump by signed immediate.
 			this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
+			this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
 			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE(), 'u'));
@@ -683,6 +688,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if ((this->registers.getF() & 0b10000000) != 0b1000000) {
 				this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
 			}
+			this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x21: // LD HL, nn     load 16-bit immediate into HL.
 			this->registers.setHL(load16bit());
@@ -710,6 +716,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if ((this->registers.getF() & 0b10000000) == 0b1000000) {
 				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
 			}
+			this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
 			this->registers.setHL(this->registers.getHL() + this->registers.getHL());
@@ -737,6 +744,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
 				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
 			}
+			this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x31: // LD SP, nn     load 16-bit immediate into SP.
 			this->registers.setSP(load16bit());
@@ -764,6 +772,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
 				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
 			}
+			this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x39: // ADD HL, SP    add 16-bit SP to HL.
             this->registers.setHL(this->registers.getHL() + this->registers.getSP());
