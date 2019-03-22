@@ -1,4 +1,5 @@
 //----------------------------------------------------------------------------------------------
+#include "../include/GameBoy.hpp"
 #include "../include/RAM.hpp"
 #include "../include/GPU.hpp"
 #include "../include/CPU.hpp"
@@ -186,7 +187,6 @@ void GPU::RenderNintendoLogo() {
 #include <iostream>
 #include <iomanip>
 using namespace std;
-#define HEX hex << setw(2) << setfill('0')
 
 void GPU::RenderTiles(Byte lcdControl) {
 	unsigned short tileData = 0, backgroundMemory = 0;
@@ -261,17 +261,19 @@ void GPU::RenderTiles(Byte lcdControl) {
 		line = (yPos % 8) * 2;
 		data1 = this->cpuLink->ReadByte(tileLocation + line);
 		data2 = this->cpuLink->ReadByte(tileLocation + line + 1);
-		cout << HEX << data1 << HEX << data2;
+		//cout << HEX << data1 << HEX << data2;
 
 		colorBit = -((xPos % 8) - 7);
 		colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 
 		Byte color = getColor(colorNum, 0xFF47);
 
+		/*
 		cout << " " << "color: " << HEX << (int)color;
 		cout << " " << "colorBit: " << HEX << (int)colorBit;
 		cout << " " << "colorNum: " << HEX << (int)colorNum;
 		cout << " " << "(0xFF47): " << HEX << (int)this->cpuLink->ReadByte(0xFF47);
+		*/
 
 		int y = this->cpuLink->ReadByte(0xFF44);
 
@@ -280,7 +282,7 @@ void GPU::RenderTiles(Byte lcdControl) {
 		} else {
 			display[y][i] = color;
 		}
-		cout << endl;
+		//cout << endl;
 	}
 }
 

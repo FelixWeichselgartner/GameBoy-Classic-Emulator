@@ -103,6 +103,8 @@ void GameBoy::tests(int mode) {
 			gpu.UpdateGraphics();
 			cpu.DoInterupts();
 
+			this->cpu.rom.print(&this->cpu.ram, 0x8000, 0x8001);
+
 			this_thread::sleep_for(chrono::nanoseconds(delaytime));
 		}
 
@@ -161,7 +163,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 6
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		cpu debug
 // MODE 2		gpu debug

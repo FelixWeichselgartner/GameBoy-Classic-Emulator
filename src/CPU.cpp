@@ -38,14 +38,8 @@ int CPU::getClockSpeed() const {
 	return this->clockSpeed;
 }
 
-#include <iostream>
-#include <iomanip>
-using namespace std;
-
 bool testBit(Byte value, int bit) {
 	Byte checker = 0x01 << bit;
-
-	cout << hex << setw(2) << (int) checker;
 
 	if ((value & checker) == checker) {
 		return true;
