@@ -38,41 +38,30 @@ int CPU::getClockSpeed() const {
 	return this->clockSpeed;
 }
 
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
 bool testBit(Byte value, int bit) {
-	bool retval;
-	Byte checker = 0x01;
-	
-	for (int i = 0; i < bit; i++) {
-		checker = checker >> 1;
-	}
+	Byte checker = 0x01 << bit;
+
+	cout << hex << setw(2) << (int) checker;
 
 	if ((value & checker) == checker) {
 		return true;
 	} else {
 		return false;
 	}
-
-	return retval;
 }
 
 Byte resetBit(Byte value, int bit) {
-	Byte resetter = 0x01;
-
-	// shift the bit to the according position.
-	for (int i = 0; i < bit; i++) {
-		resetter = resetter >> 1;
-	}
+	Byte resetter = 0x01 << bit;
 
 	return value & !resetter;
 }
 
 Byte setBit(Byte value, int bit) {
-	Byte setter = 0x01;
-
-	// shift the bit to the according position.
-	for (int i = 0; i < bit; i++) {
-		setter = setter >> 1;
-	}
+	Byte setter = 0x01 << bit;
 
 	return value | setter;
 }

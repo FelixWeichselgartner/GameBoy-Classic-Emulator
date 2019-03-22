@@ -7,9 +7,12 @@
 //----------------------------------------------------------------------------------------------
 
 Registers::Registers() {
-    this->A = this->B = this->C = this->D = this->E = this->F = this->H = this->L = 0x00;
+	this->AF = 0x01B0;
+	this->BC = 0x0013;
+	this->DE = 0x00D8;
+	this->HL = 0x014D;
 	this->PC = 0x0100;
-	this->SP = ADDR_STACK;
+	this->SP = 0xFFFE; //ADDR_STACK
 }
 
 std::string toBinary(int n) {

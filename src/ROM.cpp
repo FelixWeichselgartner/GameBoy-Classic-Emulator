@@ -21,7 +21,7 @@ void ROM::load(class RAM* ram) {
 	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::beg);
-		size = 32768;
+		size = ADDR_VRAM_T_S;
 		buffer = new char[size];
 		gbfile.read(buffer, size);
 		for (int i = 0; i < size; i++) {

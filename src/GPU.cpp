@@ -17,12 +17,7 @@ GPU::GPU(class CPU* cpuLink) {
 		cout << "[Error] SDL coult not be initialised! SDL Error: " << SDL_GetError() << endl;
 	}
 
-	char* name = new char[windowName.length()];
-	for (unsigned int i = 0; i < windowName.length(); i++) {
-		name[i] = windowName.at(i);
-	}
-
-	this->window = SDL_CreateWindow(name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_ALLOW_HIGHDPI);
+	this->window = SDL_CreateWindow(windowName.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_ALLOW_HIGHDPI);
 	this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
 
 	if (window == NULL || renderer == NULL) {
@@ -165,6 +160,34 @@ Byte GPU::getColor(Byte colorNum, unsigned short address) {
 	return retval;
 }
 
+void GPU::RenderNintendoLogo() {
+	unsigned short address = 0x0104;
+	unsigned short end = 0x0133;
+	int x1, y1, x2, y2, c1, c2;
+	Byte data1, data2;
+
+	for (int i = address, c = 0; i < end; i += 2, c++) {
+		data1 = this->cpuLink->ReadByte(i);
+		data2 = this->cpuLink->ReadByte(i + 1);
+
+		for (int k = 7, t = 0; k >= 0; k--, t++) {
+			x1 = (c % 12) * 4 + t % 4;
+			y1 = (c / 12) * 4 + t / 4;
+			c1 = testBit(data1, k);
+			display[y1][x1] = c1;
+			x2 = x1;
+			y2 = y1 + 2;
+			c2 = testBit(data2, k);
+			display[y2][x2] = c2;
+		}
+	}
+}
+
+#include <iostream>
+#include <iomanip>
+using namespace std;
+#define HEX hex << setw(2) << setfill('0')
+
 void GPU::RenderTiles(Byte lcdControl) {
 	unsigned short tileData = 0, backgroundMemory = 0;
 	bool noSign = true, usingWindow = false;
@@ -238,11 +261,17 @@ void GPU::RenderTiles(Byte lcdControl) {
 		line = (yPos % 8) * 2;
 		data1 = this->cpuLink->ReadByte(tileLocation + line);
 		data2 = this->cpuLink->ReadByte(tileLocation + line + 1);
+		cout << HEX << data1 << HEX << data2;
 
 		colorBit = -((xPos % 8) - 7);
 		colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 
 		Byte color = getColor(colorNum, 0xFF47);
+
+		cout << " " << "color: " << HEX << (int)color;
+		cout << " " << "colorBit: " << HEX << (int)colorBit;
+		cout << " " << "colorNum: " << HEX << (int)colorNum;
+		cout << " " << "(0xFF47): " << HEX << (int)this->cpuLink->ReadByte(0xFF47);
 
 		int y = this->cpuLink->ReadByte(0xFF44);
 
@@ -251,6 +280,7 @@ void GPU::RenderTiles(Byte lcdControl) {
 		} else {
 			display[y][i] = color;
 		}
+		cout << endl;
 	}
 }
 

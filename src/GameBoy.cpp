@@ -56,11 +56,14 @@ void GameBoy::RomTest() {
 	this->cpu.rom.print(&this->cpu.ram, 0x0100, 0x014F);
 	// game code starts here
 	this->cpu.rom.print(&this->cpu.ram, 0x0150, 0x01FF);
+	// vram
+	this->cpu.rom.print(&this->cpu.ram, 0x8000, 0x8080);
 }
 
 void GameBoy::tests(int mode) {
 	SDL_Event windowEvent;
 	bool running = true;
+	int delaytime;
 	
 	switch (mode) {
 	case 1: AdditionTest(); break;
@@ -77,7 +80,7 @@ void GameBoy::tests(int mode) {
 	case 3: RomTest(); break;
 	case 4: gpu.TestTiles(); break;
 	case 5: 
-		int delaytime = 1000 * 1000 * 1000; // 1 second
+		delaytime = 1000 * 1000 * 1000; // 1 second
 
 		while (this->cpu.getRunning()) {
 			if (SDL_PollEvent(&windowEvent)) {
@@ -106,6 +109,21 @@ void GameBoy::tests(int mode) {
 		SDL_DestroyRenderer(gpu.getRenderer());
 		SDL_DestroyWindow(gpu.getWindow());
 		SDL_Quit();
+		break;
+	case 6:
+		gpu.RenderNintendoLogo();
+		for (int i = 0; i < Y_RES; i++) {
+			gpu.renderDisplay(i);
+		}
+
+		while (1) {
+
+		}
+
+		SDL_DestroyRenderer(gpu.getRenderer());
+		SDL_DestroyWindow(gpu.getWindow());
+		SDL_Quit();
+		break;
 	}
 }
 
@@ -143,13 +161,14 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 6
 // MODE 0		normal mode
 // MODE 1		cpu debug
 // MODE 2		gpu debug
 // MODE 3		rom test
 // MODE 4		tiles test
 // MODE 5		slow motion pc + opcode
+// MODE 6		show Nintendo Logo
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;
