@@ -53,7 +53,7 @@ void GameBoy::AdditionTest() {
 void GameBoy::RomTest() {
 	this->cpu.rom.load(&this->cpu.ram);
 	// Entry point to start of game code
-	this->cpu.rom.print(&this->cpu.ram, 0x0100, 0x014F);
+	this->cpu.rom.print(&this->cpu.ram, 0x0000, 0x014F);
 	// game code starts here
 	this->cpu.rom.print(&this->cpu.ram, 0x0150, 0x01FF);
 	// vram
@@ -80,7 +80,7 @@ void GameBoy::tests(int mode) {
 	case 3: RomTest(); break;
 	case 4: gpu.TestTiles(); break;
 	case 5: 
-		delaytime = 1000 * 1000 * 1000; // 1 second
+		delaytime = 1000 * 1000 * 10; // 1 second
 
 		while (this->cpu.getRunning()) {
 			if (SDL_PollEvent(&windowEvent)) {
@@ -149,6 +149,7 @@ void GameBoy::run() {
 				return;
 			}
 		}
+
 		cpu.CPUstep();
 		gpu.UpdateGraphics();
 		cpu.DoInterupts();
@@ -163,7 +164,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		cpu debug
 // MODE 2		gpu debug

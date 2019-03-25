@@ -539,11 +539,11 @@ void CPU::cp(Byte A, Byte X) {
 
 void CPU::push8bit(Byte value) {
 	WriteByte(this->registers.getSP(), value);
-	this->registers.setSP(this->registers.getSP() + 1);
+	this->registers.setSP(this->registers.getSP() - 1);
 }
 
 Byte CPU::pop8bit() {
-	this->registers.setSP(this->registers.getSP() - 1);
+	this->registers.setSP(this->registers.getSP() + 1);
 	Byte retval = ReadByte(this->registers.getSP());
 	return retval;
 }
@@ -2299,7 +2299,22 @@ void CPU::executeExtendedOpcodes() {
 	}
 }
 
+#include <iostream>
+#include <iomanip>
+using namespace std;
+
 void CPU::CPUstep() {
+	if (this->registers.getPC() > 0x0100 - 1) {
+		cout << "ROM emulation started" << endl;
+	} else if (this->registers.getPC() == 0x0098) {
+		// infinite loop here.
+		cout << "==== Graphics routine started ====" << endl;
+	} else {
+		cout << "current adress: " << HEX << this->registers.getPC() << endl;
+	}
+
+	cout << HEX << this->registers.getSP() << endl;
+
 	executeInstruction(ReadByte(this->registers.getPC()));
 
 	// may not increase program counter after jumps.
