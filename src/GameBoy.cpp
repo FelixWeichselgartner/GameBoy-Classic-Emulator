@@ -155,7 +155,7 @@ void GameBoy::run() {
 		cpu.DoInterupts();
 
 		// this is not final
-		this_thread::sleep_for(chrono::nanoseconds(delaytime));
+		//this_thread::sleep_for(chrono::nanoseconds(delaytime));
 		//
 	}
 

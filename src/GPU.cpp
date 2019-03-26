@@ -28,6 +28,8 @@ GPU::GPU(class CPU* cpuLink) {
 	SDL_RenderClear(renderer);
 
 	clearScreen();
+
+	return;
 }
 
 void GPU::clearScreen() {
@@ -42,6 +44,8 @@ void GPU::clearScreen() {
 	}
 
 	SDL_RenderPresent(renderer);
+
+	return;
 }
 
 bool GPU::IsLCDEnabled() const {
@@ -104,6 +108,8 @@ void GPU::SetLCDStatus() {
 	}
 
 	this->cpuLink->WriteByte(0xFF41, status);
+
+	return;
 }
 
 void GPU::TestGraphics() {
@@ -123,6 +129,8 @@ void GPU::TestGraphics() {
 		}
 	}
 	SDL_RenderPresent(renderer);
+
+	return;
 }
 
 void GPU::TestTiles() {
@@ -136,6 +144,8 @@ void GPU::TestTiles() {
 	}
 
 	SDL_RenderPresent(renderer);
+
+	return;
 }
 
 Byte GPU::getColor(Byte colorNum, unsigned short address) {
@@ -182,6 +192,8 @@ void GPU::RenderNintendoLogo() {
 			display[y2][x2] = c2;
 		}
 	}
+
+	return;
 }
 
 #include <iostream>
@@ -284,6 +296,8 @@ void GPU::RenderTiles(Byte lcdControl) {
 		}
 		//cout << endl;
 	}
+
+	return;
 }
 
 void GPU::RenderSprites(Byte lcdControl) {
@@ -359,6 +373,8 @@ void GPU::RenderSprites(Byte lcdControl) {
 			}
 		}
 	}
+
+	return;
 }
 
 void GPU::DrawScanLine() {
@@ -371,6 +387,8 @@ void GPU::DrawScanLine() {
 	if (testBit(control, 1)) {
 		RenderSprites(control);
 	}
+
+	return;
 }
 
 void GPU::renderDisplay(Byte currentline) {
@@ -393,6 +411,8 @@ void GPU::renderDisplay(Byte currentline) {
 	}
 
 	SDL_RenderPresent(renderer);
+
+	return;
 }
 
 void GPU::UpdateGraphics() {
@@ -423,4 +443,6 @@ void GPU::UpdateGraphics() {
 	}
 
 	this->cpuLink->WriteByte(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
+
+	return;
 }

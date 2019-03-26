@@ -118,6 +118,46 @@ unsigned short CPU::load16bit() {
 	return retval;
 }
 
+Byte CPU::inc(Byte value) {
+	value++;
+
+	if (value == 0x00) {
+		setFlag('F');
+	} else {
+		resetFlag('F');
+	}
+	
+	resetFlag('N');
+
+	if ((value & 0x0F) == 0x00) {
+		setFlag('H');
+	} else {
+		resetFlag('H');
+	}
+
+	return value;
+}
+
+Byte CPU::dec(Byte value) {
+	value--;
+
+	if (value == 0x00) {
+		setFlag('F');
+	} else {
+		resetFlag('F');
+	}
+	
+	setFlag('N');
+
+	if ((value & 0x0F) == 0x0F) {
+		setFlag('H');
+	} else {
+		resetFlag('N');
+	}
+
+	return value;
+}
+
 void CPU::daa() {
 	unsigned short s = this->registers.getA();
 
@@ -557,10 +597,10 @@ void CPU::push16bit(unsigned short value) {
 }
 
 unsigned short CPU::pop16bit() {
-	unsigned short retval = 0x0000;
-	retval = pop8bit();
-	retval = retval << 8;
-	retval = retval | pop8bit();
+	Byte retval, HighHalf, LowHalf;
+	LowHalf = pop8bit();
+	HighHalf = pop8bit();
+	retval = HighHalf << 8 | LowHalf;
 	return retval;
 }
 
@@ -583,10 +623,10 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setBC(this->registers.getBC() + 1);
             break;
         case  0x4: // INC B        increment 8-bit B.
-            this->registers.setB(this->registers.getB() + 1);
+            this->registers.setB(inc(this->registers.getB()));
             break;
         case  0x5: // DEC B         decrement 8-bit B.
-            this->registers.setB(this->registers.getB() - 1);
+            this->registers.setB(dec(this->registers.getB()));
             break;
         case  0x6: // LD B, n       load 8 bit immediate into B.
 			this->registers.setB(load8bit());
@@ -607,10 +647,10 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setBC(this->registers.getBC() - 1);
             break;
         case  0xC: // INC C         increment 8-bit C.
-            this->registers.setC(this->registers.getC() + 1);
+            this->registers.setC(inc(this->registers.getC()));
             break;
         case  0xD: // DEC C         decrement 8-bit C.
-            this->registers.setC(this->registers.getC() - 1);
+            this->registers.setC(dec(this->registers.getC()));
             break;
         case  0xE: // LD C, n       load 8-bit immediate to C.
 			this->registers.setC(load8bit());
@@ -631,10 +671,10 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setDE(this->registers.getDE() + 1);
             break;
         case 0x14: // INC D         increment 8-bit D.
-            this->registers.setD(this->registers.getD() + 1);
+            this->registers.setD(inc(this->registers.getD()));
             break;
         case 0x15: // DEC D         decrement 8-bit D.
-            this->registers.setD(this->registers.getD() - 1);
+            this->registers.setD(dec(this->registers.getD()));
             break;
         case 0x16: // LD D, n       load 8-bit immediate into D.
 			this->registers.setD(load8bit());
@@ -656,10 +696,10 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setDE(this->registers.getDE() - 1);
             break;
         case 0x1C: // INC E         increment 8-bit E.
-            this->registers.setE(this->registers.getE() + 1);
+            this->registers.setE(inc(this->registers.getE()));
             break;
         case 0x1D: // DEC E         decrement 8-bit E.
-            this->registers.setE(this->registers.getE() - 1);
+            this->registers.setE(dec(this->registers.getE()));
             break;
         case 0x1E: // LD E, n       Load 8-bit immediate into E.
 			this->registers.setE(load8bit());
@@ -667,8 +707,8 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x1F: // RR A          rotate A right.
 			this->registers.setA(rr(this->registers.getA()));
             break;
-        case 0x20: // JR NC, n      relative jump by signed immediate if last result was not zero.
-			if ((this->registers.getF() & 0b10000000) != 0b1000000) {
+        case 0x20: // JR NZ, n      relative jump by signed immediate if last result was not zero.
+			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
 				this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
 			}
 			this->registers.setPC(this->registers.getPC() + 1);
@@ -684,10 +724,10 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setHL(this->registers.getHL() + 1);
             break;
         case 0x24: // INC H         increment 8-bit H.
-            this->registers.setH(this->registers.getH() + 1);
+            this->registers.setH(inc(this->registers.getH()));
             break;
         case 0x25: // DEC H         decrement 8-bit H.
-            this->registers.setH(this->registers.getH() - 1);
+            this->registers.setH(dec(this->registers.getH()));
             break;
         case 0x26: // LD H, n       load 8-bit immediate into H.
 			this->registers.setH(load8bit());
@@ -712,10 +752,10 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setHL(this->registers.getHL() - 1);
             break;
         case 0x2C: // INC L         increment 8-bit L.
-            this->registers.setL(this->registers.getL() + 1);
+            this->registers.setL(inc(this->registers.getL()));
             break;
         case 0x2D: // DEC L         decrement 8-bit L.
-            this->registers.setL(this->registers.getL() - 1);
+            this->registers.setL(dec(this->registers.getL()));
             break;
         case 0x2E: // LD L, n       load 8-bit immediate into L.
 			this->registers.setL(load8bit());
@@ -733,17 +773,17 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setSP(load16bit());
             break;
         case 0x32: // LDD (HL), A   save A to address pointed by HL, and decrement HL.
-			this->registers.setA(ReadByte(this->registers.getHL()));
+			WriteByte(this->registers.getHL(), this->registers.getA());
 			this->registers.setHL(this->registers.getHL() - 1);
             break;
         case 0x33: // INC SP        increment 16-bit SP.
             this->registers.setSP(this->registers.getSP() + 1);
             break;
         case 0x34: // INC (HL)      increment value pointed by HL.
-            WriteByte(this->registers.getHL(), ReadByte(this->registers.getHL()) + 1);
+            WriteByte(this->registers.getHL(), inc(ReadByte(this->registers.getHL())));
             break;
         case 0x35: // DEC (HL)      decrement value pointed by HL.
-            WriteByte(this->registers.getHL(), ReadByte(this->registers.getHL()) - 1);
+            WriteByte(this->registers.getHL(), dec(ReadByte(this->registers.getHL())));
             break;
         case 0x36: // LD (HL), n    load 8-bit immediate into address pointed by HL.
 			WriteByte(this->registers.getHL(), load8bit());
@@ -768,10 +808,10 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setSP(this->registers.getSP() - 1);
             break;
         case 0x3C: // INC A         increment 8-bit A.
-            this->registers.setA(this->registers.getA() + 1);
+            this->registers.setA(inc(this->registers.getA()));
             break;
         case 0x3D: // DEC A         decrement 8-bit A.
-            this->registers.setA(this->registers.getA() - 1);
+            this->registers.setA(dec(this->registers.getA()));
             break;
         case 0x3E: // LD A, n       load 8-bit immediate into A.
 			this->registers.setA(load8bit());
@@ -1476,15 +1516,8 @@ Byte CPU::srl(Byte value) {
 }
 
 void CPU::bit(Byte value, int bit) {
-	Byte check = 0x01;
-
-	// shift the bit to the according position.
-	for (int i = 0; i < bit; i++) {
-		check = check >> 1;
-	}
-
 	// zero flag is set if bit is not set.
-	if ((value & check) == check) {
+	if (testBit(value, bit)) {
 		setFlag('F');
 	} else {
 		resetFlag('F');
@@ -1498,29 +1531,15 @@ void CPU::bit(Byte value, int bit) {
 }
 
 Byte CPU::res(Byte value, int bit) {
-	Byte resetter = 0x01;
-
-	// shift the bit to the according position.
-	for (int i = 0; i < bit; i++) {
-		resetter = resetter >> 1;
-	}
-
 	// flags are not affected.
 
-	return value & !resetter;
+	return resetBit(value, bit);
 }
 
 Byte CPU::set(Byte value, int bit) {
-	Byte setter = 0x01;
-
-	// shift the bit to the according position.
-	for (int i = 0; i < bit; i++) {
-		setter = setter >> 1;
-	}
-
 	// flags are not affected.
 
-	return value | setter;
+	return setBit(value, bit);
 }
 
 void CPU::executeExtendedOpcodes() {
@@ -2303,17 +2322,34 @@ void CPU::executeExtendedOpcodes() {
 #include <iomanip>
 using namespace std;
 
+int CPUstepCount = 0;
+
 void CPU::CPUstep() {
-	if (this->registers.getPC() > 0x0100 - 1) {
+	if (this->registers.getPC() == 0x0100) {
 		cout << "ROM emulation started" << endl;
+		rom.print(&ram, 0x8000, 0x8030);
 	} else if (this->registers.getPC() == 0x0098) {
 		// infinite loop here.
 		cout << "==== Graphics routine started ====" << endl;
 	} else {
-		cout << "current adress: " << HEX << this->registers.getPC() << endl;
+		//cout << "current adress: " << HEX << this->registers.getPC() << endl;
 	}
 
-	cout << HEX << this->registers.getSP() << endl;
+	if (CPUstepCount > 10000) {
+		cout << "current adress: " << HEX << this->registers.getPC() << endl;
+		cout << "C:  " << HEX << (int) this->registers.getC()  << endl;
+		cout << "SP: " << HEX << this->registers.getSP() << endl;
+		cout << "HL: " << HEX << this->registers.getHL() << endl;
+		
+		//rom.print(&ram, ADDR_VRAM_T_S, ADDR_EXT_RAM - 1);
+		
+		
+	}
+
+	CPUstepCount++;
+
+	//cout << "SP: " << HEX << this->registers.getSP() << endl;
+	//cout << "HL: " << HEX << this->registers.getHL() << endl;
 
 	executeInstruction(ReadByte(this->registers.getPC()));
 
@@ -2331,8 +2367,8 @@ interupts
 #define ADDR_INTR_REQ		0xFF0F		// Interupt Request Register
 #define ADDR_INTR_EN		0xFFFF		// Interupt Enable Register
 
-Bit 0:	V-Blank Interupt
-Bit 1:	LCD Interupt
+Bit 0: V-Blank Interupt
+Bit 1: LCD Interupt
 Bit 2: Timer Interupt
 Bit 4: Joypad Interupt
 */

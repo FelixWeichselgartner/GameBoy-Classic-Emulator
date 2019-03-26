@@ -15,32 +15,32 @@ class Registers {
 private:
     union {
         struct {
-            Byte A;
             Byte F;
+			Byte A;
         };
         unsigned short AF;
     };
 
     union {
         struct {
+			Byte C;
             Byte B;
-            Byte C;
         };
         unsigned short BC;
     };
 
     union {
         struct {
-            Byte D;
             Byte E;
+			Byte D;
         };
         unsigned short DE;
     };
 
     union {
         struct {
+			Byte L;
             Byte H;
-            Byte L;
         };
         unsigned short HL;
     };

@@ -56,7 +56,6 @@ void Registers::setF(Byte value) {
 unsigned short Registers::getAF() const {
     return this->AF;
 }
-
 void Registers::setAF(unsigned short value) {
     this->AF = value;
 }
@@ -64,7 +63,6 @@ void Registers::setAF(unsigned short value) {
 Byte Registers::getB() const {
     return this->B;
 }
-
 void Registers::setB(Byte value) {
     this->B = value;
 }
@@ -79,7 +77,6 @@ void Registers::setC(Byte value) {
 unsigned short Registers::getBC() const {
     return this->BC;
 }
-
 void Registers::setBC(unsigned short value) {
     this->BC = value;
 }
@@ -94,7 +91,6 @@ void Registers::setD(Byte value) {
 Byte Registers::getE() const {
     return this->E;
 }
-
 void Registers::setE(Byte value) {
     this->E = value;
 }
@@ -123,7 +119,6 @@ void Registers::setL(Byte value) {
 unsigned short Registers::getHL() const {
     return this->HL;
 }
-
 void Registers::setHL(unsigned short value) {
     this->HL = value;
 }
@@ -131,7 +126,6 @@ void Registers::setHL(unsigned short value) {
 unsigned short Registers::getPC() const {
     return this->PC;
 }
-
 void Registers::setPC(unsigned short value) {
     this->PC = value;
 }
@@ -139,7 +133,6 @@ void Registers::setPC(unsigned short value) {
 unsigned short Registers::getSP() const {
     return this->SP;
 }
-
 void Registers::setSP(unsigned short value) {
     this->SP = value;
 }

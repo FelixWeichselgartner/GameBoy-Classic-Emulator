@@ -47,6 +47,10 @@ public:
     Byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, Byte);
 
+	// increment value.
+	Byte inc(Byte);
+	// decrement value.
+	Byte dec(Byte);
 	// adjust for register a for bcd addition.
 	void daa();
 	// load 8 bit value in register.
