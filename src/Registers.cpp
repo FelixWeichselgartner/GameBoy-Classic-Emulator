@@ -71,7 +71,7 @@ Byte Registers::getC() const {
     return this->C;
 }
 void Registers::setC(Byte value) {
-    this-> C = value;
+    this->C = value;
 }
 
 unsigned short Registers::getBC() const {
@@ -82,10 +82,10 @@ void Registers::setBC(unsigned short value) {
 }
 
 Byte Registers::getD() const {
-    return this->A;
+    return this->D;
 }
 void Registers::setD(Byte value) {
-    this->A = value;
+    this->D = value;
 }
 
 Byte Registers::getE() const {

@@ -4,6 +4,7 @@
 #include "../include/ROM.hpp"
 #include "../include/GPU.hpp"
 #include "../include/Registers.hpp"
+#include "../include/format.hpp"
 
 #include <iostream>
 using namespace std;
@@ -14,23 +15,40 @@ using namespace std;
 #include <time.h>
 
 #include <SDL.h>
+
+#include <fstream>
+#include <string>
 //----------------------------------------------------------------------------------------------
 
 GameBoy::GameBoy() {
-
+	
 }
 
 void GameBoy::PrintRegisters() {
-	cout << "[PC]: " << setw(4) << setfill('0') << hex << this->cpu.registers.getPC() << "\t [OPCODE]: ";
-	cout << hex << setw(2) << setfill('0') << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t->   ";
-	cout << "A" << setw(2) << setfill('0') << hex << (int)this->cpu.registers.getA() << " ";
-	cout << "F" << setw(2) << setfill('0') << (int)this->cpu.registers.getF() << "   ";
-	cout << "B" << setw(2) << setfill('0') << hex << (int)this->cpu.registers.getB() << " ";
-	cout << "C" << setw(2) << setfill('0') << (int)this->cpu.registers.getC() << "   ";
-	cout << "D" << setw(2) << setfill('0') << hex << (int)this->cpu.registers.getD() << " ";
-	cout << "E" << setw(2) << setfill('0') << (int)this->cpu.registers.getE() << "   ";
-	cout << "HL" << setw(4) << setfill('0') << hex << (int)this->cpu.registers.getHL() << "   " << endl;
+	cout << "[PC]: " << HEX16 << this->cpu.registers.getPC() << "\t [OPCODE]: ";
+	cout << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t->   ";
+	cout << "A" << HEX << (int)this->cpu.registers.getA() << " ";
+	cout << "F" << HEX << (int)this->cpu.registers.getF() << "   ";
+	cout << "B" << HEX << (int)this->cpu.registers.getB() << " ";
+	cout << "C" << HEX << (int)this->cpu.registers.getC() << "   ";
+	cout << "D" << HEX << (int)this->cpu.registers.getD() << " ";
+	cout << "E" << HEX << (int)this->cpu.registers.getE() << "   ";
+	cout << "HL" << HEX16 << this->cpu.registers.getHL() << "   ";
+	cout << "SP" << HEX16 << this->cpu.registers.getSP() << endl;
 	//this->cpu.registers.printFlags();
+}
+
+void GameBoy::PrintRegistersFile(ofstream &file) {
+	file << "[PC]: " << HEX16 << this->cpu.registers.getPC() << "\t [OPCODE]: ";
+	file << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t->   ";
+	file << "A" << HEX << (int)this->cpu.registers.getA() << " ";
+	file << "F" << HEX << (int)this->cpu.registers.getF() << "   ";
+	file << "B" << HEX << (int)this->cpu.registers.getB() << " ";
+	file << "C" << HEX << (int)this->cpu.registers.getC() << "   ";
+	file << "D" << HEX << (int)this->cpu.registers.getD() << " ";
+	file << "E" << HEX << (int)this->cpu.registers.getE() << "   ";
+	file << "HL" << HEX16 << this->cpu.registers.getHL() << "   ";
+	file << "SP" << HEX16 << this->cpu.registers.getSP() << endl;
 }
 
 // seems to be working
@@ -93,8 +111,45 @@ void GameBoy::PushPopTest() {
 
 	cout << "n1: " << HEX << (int)n1 << " n2: " << HEX << (int)n2 << endl;
 	cout << "m1: " << HEX << (int)m1 << " m2: " << HEX << (int)m2 << endl;
-	cout << "s1: " << hex << setw(4) << setfill('0') << s1 << " s2: " << hex << setw(4) << setfill('0') << s2 << endl;
+	cout << "s1: " << HEX16 << s1 << " s2: " << HEX16 << s2 << endl;
 
+}
+
+void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
+	ofstream logFile;
+	logFile.open("logFile.log");
+
+	char key;
+
+	cout << "You can quit by pressing 'r'" << endl << endl;
+
+	while (this->cpu.getRunning()) {
+		if (SDL_PollEvent(&windowEvent)) {
+			if (windowEvent.type == SDL_QUIT) {
+				return;
+			}
+		}
+
+		key = cin.get();
+		if (key == 'r') {
+			break;
+		}
+
+		PrintRegisters();
+		PrintRegistersFile(logFile);
+
+		cpu.CPUstep();
+		gpu.UpdateGraphics();
+		cpu.DoInterupts();
+	}
+
+	cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
+
+	logFile.close();
+
+	SDL_DestroyRenderer(gpu.getRenderer());
+	SDL_DestroyWindow(gpu.getWindow());
+	SDL_Quit();
 }
 
 void GameBoy::tests(int mode) {
@@ -159,60 +214,41 @@ void GameBoy::tests(int mode) {
 		PushPopTest();
 		break;
 	case 8:
-		
-		while (this->cpu.getRunning()) {
+		Debug_InputAndLog(windowEvent);
+		break;
+	}
+}
+
+void GameBoy::run() {
+	SDL_Event windowEvent;
+
+	int cyclesInstruction;
+
+	// this is not final
+	int delaytime = 1000 / 60;
+	// 1/clockspeed = 2.5 * 10^-7 = 250 ns
+	//
+
+	while (this->cpu.getRunning()) {
+
+		cyclesInstruction = 0;
+
+		while (cyclesInstruction < MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {
 				if (windowEvent.type == SDL_QUIT) {
 					return;
 				}
 			}
 
-			cin.get();
-
-			PrintRegisters();
-
-			cpu.CPUstep();
+			cyclesInstruction += cpu.CPUstep();
+			cpu.UpdateTimers(cyclesInstruction);
 			gpu.UpdateGraphics();
 			cpu.DoInterupts();
 
-			this_thread::sleep_for(chrono::nanoseconds(delaytime));
 		}
 
-		SDL_DestroyRenderer(gpu.getRenderer());
-		SDL_DestroyWindow(gpu.getWindow());
-		SDL_Quit();
-		break;
-	}
-}
-
-void delay(int nano_seconds) {
-	clock_t start_time = clock();
-	while (clock() < start_time + nano_seconds / 1000)
-		;
-}
-
-void GameBoy::run() {
-	SDL_Event windowEvent;
-
-	// this is not final
-	int delaytime = 1000 * 1000 * 1000 / this->cpu.getClockSpeed();
-	// 1/clockspeed = 2.5 * 10^-7 = 250 ns
-	//
-
-	while (this->cpu.getRunning()) {
-		if (SDL_PollEvent(&windowEvent)) {
-			if (windowEvent.type == SDL_QUIT) {
-				return;
-			}
-		}
-
-		cpu.CPUstep();
-		gpu.UpdateGraphics();
-		cpu.DoInterupts();
-
-		// this is not final
-		//this_thread::sleep_for(chrono::nanoseconds(delaytime));
-		//
+		gpu.render();
+		this_thread::sleep_for(chrono::milliseconds(delaytime));
 	}
 
 	SDL_DestroyRenderer(gpu.getRenderer());
@@ -229,7 +265,7 @@ void GameBoy::run() {
 // MODE 5		slow motion pc + opcode
 // MODE 6		show Nintendo Logo
 // MODE 7		push and pop test
-// MODE 8		input -> next instruction
+// MODE 8		input -> next instruction and save in log file
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;

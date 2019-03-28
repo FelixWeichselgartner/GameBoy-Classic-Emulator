@@ -410,8 +410,6 @@ void GPU::renderDisplay(Byte currentline) {
 		SDL_RenderDrawPoint(renderer, i, currentline);
 	}
 
-	SDL_RenderPresent(renderer);
-
 	return;
 }
 
@@ -443,6 +441,12 @@ void GPU::UpdateGraphics() {
 	}
 
 	this->cpuLink->WriteByte(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
+
+	return;
+}
+
+void GPU::render() {
+	SDL_RenderPresent(renderer);
 
 	return;
 }

@@ -7,6 +7,8 @@
 #include "ROM.hpp"
 #include "GPU.hpp"
 #include "Registers.hpp"
+
+#include <fstream>
 //----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
@@ -22,10 +24,12 @@ public:
     GameBoy();
 
 	void PrintRegisters();
+	void PrintRegistersFile(std::ofstream &);
 
 	void AdditionTest();
 	void RomTest();
 	void PushPopTest();
+	void Debug_InputAndLog(SDL_Event &);
 
 	void tests(int);
 

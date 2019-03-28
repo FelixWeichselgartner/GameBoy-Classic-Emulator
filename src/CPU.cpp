@@ -2,6 +2,8 @@
 #include "../include/CPU.hpp"
 #include "../include/Registers.hpp"
 #include "../include/RAM.hpp"
+#include "../include/GameBoy.hpp"
+#include "../include/format.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -28,6 +30,7 @@ according to bgb debugging this is neccessary
 CPU::CPU() {
 	this->running = 0x01;
 	rom.load(&ram);
+	this->TimerCounter = 1024;
 }
 
 Byte CPU::getRunning() {
@@ -94,6 +97,11 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	// address 0xFEA0 to 0xFEFF		restricted area
 	// address 0xFF46:				do dma transfer
 
+	if (address == 0xFF44) {
+		cout << "im not sure" << endl;
+		// check for right timing here
+	}
+
 	if (address < ADDR_VRAM_T_S) {
 		return;
 	} else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
@@ -103,6 +111,16 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 		return;
 	} else if (address == 0xFF46) {
 		DoDMATransfer(value);
+	} else if (0xFF04) {
+		this->ram.setMemory(address, 0x00);
+	} else if (address == ADDR_TMC) {
+		Byte currentFrequency = getClockFrequency();
+		this->ram.setMemory(address, value);
+		Byte newFrequency = getClockFrequency();
+
+		if (currentFrequency != newFrequency) {
+			setClockFrequency();
+		}
 	} else {
 		this->ram.setMemory(address, value);
 	}
@@ -615,7 +633,29 @@ void CPU::call(unsigned short address) {
 	this->jump = true;
 }
 
+Byte CyclesPerOPCode[0x100] = {
+//   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+	 4, 12,  8,  8,  4,  4,  8,  4, 20,  8,  8,  8,  4,  4,  8,  4,    // 0x00
+	 4, 12,  8,  8,  4,  4,  8,  4,  8,  8,  8,  8,  4,  4,  8,  4,    // 0x10
+	 8, 12,  8,  8,  4,  4,  8,  4,  8,  8,  8,  8,  4,  4,  8,  4,    // 0x20
+	 8, 12,  8,  8, 12, 12, 12,  4,  8,  8,  8,  8,  4,  4,  8,  4,    // 0x30
+	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,    // 0x40
+	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,    // 0x50
+	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,    // 0x60
+	 8,  8,  8,  8,  8,  8,  4,  8,  4,  4,  4,  4,  4,  4,  8,  4,    // 0x70
+	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,    // 0x80
+	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,    // 0x90
+	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,    // 0xA0
+	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,    // 0xB0
+	 8, 12, 12, 12, 12, 16,  8, 32,  8,  8, 12,  8, 12, 12,  8, 32,    // 0xC0
+	 8, 12, 12,  0, 12, 16,  8, 32,  8,  8, 12,  0, 12,  0,  8, 32,    // 0xD0
+	12, 12,  8,  0,  0, 16,  8, 32, 16,  4, 16,  0,  0,  0,  8, 32,    // 0xE0
+	12, 12,  8,  4,  0, 16,  8, 32, 12,  8, 16,  4,  0,  0,  8, 32     // 0xF0
+};
+
 void CPU::executeInstruction(Byte opcode) {
+	this->cycles += CyclesPerOPCode[opcode];
+
     switch((int)opcode) {
         case  0x0: // NOP           no operation.
             break;
@@ -1020,6 +1060,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x7F: // LD A, A       copy A to A.
             this->registers.setA(this->registers.getA());
+			
             break;
         case 0x80: // ADD A, B      add B to A.
             this->registers.setA(add(this->registers.getA(), this->registers.getB(), 'u'));
@@ -2326,7 +2367,9 @@ void CPU::executeExtendedOpcodes() {
 
 int CPUstepCount = 0;
 
-void CPU::CPUstep() {
+int CPU::CPUstep() {
+	this->cycles = 0;
+
 	if (this->registers.getPC() == 0x0100) {
 		cout << "ROM emulation started" << endl;
 		rom.print(&ram, 0x8000, 0x8030);
@@ -2373,6 +2416,8 @@ void CPU::CPUstep() {
 	} else {
 		this->jump = 0x00;
 	}
+
+	return this->cycles;
 }
 
 /*
@@ -2458,5 +2503,58 @@ void CPU::DoDMATransfer(Byte data) {
 	
 	for (int i = 0; i < 0xA0; i++) {
 		WriteByte(0xFE00 + i, ReadByte(address + i));
+	}
+}
+
+bool CPU::IsClockEnabled() const {
+	return testBit(ReadByte(ADDR_TMC), 2);
+}
+
+Byte CPU::getClockFrequency() const {
+	return ReadByte(ADDR_TMC) & 0b00000011;
+}
+
+void CPU::setClockFrequency() {
+	switch (getClockFrequency()) {
+		case 0: this->TimerCounter = 1024; break; // => frequency = 4096
+		case 1: this->TimerCounter = 16;   break; // => frequency = 262144
+		case 2: this->TimerCounter = 64;   break; // => frequency = 65536
+		case 3: this->TimerCounter = 256;  break; // => frequency = 16382
+	}
+}
+
+void CPU::DoDividerRegister(int cycles) {
+	this->DividerRegister += cycles;
+
+	if (this->DividerRegister >= 0xFF) {
+		this->DividerRegister = 0x00;
+		ram.setMemory(0xFF04, ram.getMemory(0xFF04) + 1);
+	}
+}
+
+/*
+00: 4096 Hz
+01: 262144 Hz
+10: 65536 Hz
+11: 16384 Hz
+*/
+
+void CPU::UpdateTimers(int cycles) {
+	DoDividerRegister(cycles);
+
+	if (IsClockEnabled()) {
+		this->TimerCounter -= cycles;
+
+		if (this->TimerCounter <= 0) {
+			setClockFrequency();
+
+			if (ReadByte(ADDR_TIMA) == 0xFF) {
+				WriteByte(ADDR_TIMA, ReadByte(ADDR_TMA));
+				RequestInterupt(2);
+			}
+			else {
+				WriteByte(ADDR_TIMA, ReadByte(ADDR_TIMA) + 1);
+			}
+		}
 	}
 }

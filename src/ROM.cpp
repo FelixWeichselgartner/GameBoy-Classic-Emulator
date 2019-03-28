@@ -2,6 +2,9 @@
 #include "../include/Registers.hpp"
 #include "../include/RAM.hpp"
 #include "../include/ROM.hpp"
+#include "../include/GameBoy.hpp"
+#include "../include/format.hpp"
+
 #include <iostream>
 using namespace std;
 #include <iomanip>

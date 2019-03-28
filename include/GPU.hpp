@@ -100,6 +100,8 @@ public:
 	void renderDisplay(Byte);
 	void UpdateGraphics();
 
+	void render();
+
 };
 //----------------------------------------------------------------------------------------------
 

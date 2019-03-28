@@ -8,6 +8,8 @@
 #include "ROM.hpp"
 
 typedef unsigned char Byte;
+
+#define MAXCYCLES 69905
 //----------------------------------------------------------------------------------------------
 
 bool testBit(Byte, int);
@@ -21,7 +23,8 @@ private:
 
 	Byte running, gb_stop, gb_halt;
 	Byte jump, enableInterupts;
-	int clockSpeed = 4000000; // 4MHz
+	int clockSpeed = 4194304;
+	int cycles, TimerCounter, DividerRegister;
 
 public:
 
@@ -120,7 +123,7 @@ public:
 	void executeExtendedOpcodes();
 
 	// one cpu step.
-	void CPUstep();
+	int CPUstep();
 
 	// interupts
 	void RequestInterupt(int);
@@ -130,6 +133,11 @@ public:
 	// dma transfer - dma == direct memory access
 	void DoDMATransfer(Byte);
 
+	bool IsClockEnabled() const;
+	Byte getClockFrequency() const;
+	void setClockFrequency();
+	void DoDividerRegister(int);
+	void UpdateTimers(int);
 };
 //----------------------------------------------------------------------------------------------
 
