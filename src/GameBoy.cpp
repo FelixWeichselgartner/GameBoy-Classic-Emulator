@@ -126,6 +126,29 @@ void GameBoy::tests(int mode) {
 		SDL_DestroyWindow(gpu.getWindow());
 		SDL_Quit();
 		break;
+	case 7:
+		Byte n1 = 0x12, n2 = 0x34, m1, m2;
+		unsigned short s1 = 0x5678, s2;
+
+		cout << "SP: " << HEX << cpu.registers.getSP() << endl;
+		cpu.push8bit(n1);
+		cout << "SP: " << HEX << cpu.registers.getSP() << endl;
+		cpu.push8bit(n2);
+		cout << "SP: " << HEX << cpu.registers.getSP() << endl;
+		m2 = cpu.pop8bit();
+		cout << "SP: " << HEX << cpu.registers.getSP() << endl;
+		m1 = cpu.pop8bit();
+		cout << "SP: " << HEX << cpu.registers.getSP() << endl;
+		cpu.push16bit(s1);
+		cout << "SP: " << HEX << cpu.registers.getSP() << endl;
+		s2 = cpu.pop16bit();
+		cout << "SP: " << HEX << cpu.registers.getSP() << endl << endl;
+
+		cout << "n1: " << HEX << (int)n1 << " n2: " << HEX << (int)n2 << endl;
+		cout << "m1: " << HEX << (int)m1 << " m2: " << HEX << (int)m2 << endl;
+		cout << "s1: " << hex << setw(4) << setfill('0') << s1 << " s2: " << hex << setw(4) << setfill('0') << s2 << endl;
+
+		break;
 	}
 }
 
@@ -172,6 +195,7 @@ void GameBoy::run() {
 // MODE 4		tiles test
 // MODE 5		slow motion pc + opcode
 // MODE 6		show Nintendo Logo
+// MODE 7		push and pop test
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;

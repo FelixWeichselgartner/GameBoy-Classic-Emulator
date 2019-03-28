@@ -2,6 +2,10 @@
 #include "../include/CPU.hpp"
 #include "../include/Registers.hpp"
 #include "../include/RAM.hpp"
+
+#include <iostream>
+#include <iomanip>
+using namespace std;
 //----------------------------------------------------------------------------------------------
 
 /*----------------------------------------------------------------------------------------------
@@ -597,7 +601,8 @@ void CPU::push16bit(unsigned short value) {
 }
 
 unsigned short CPU::pop16bit() {
-	Byte retval, HighHalf, LowHalf;
+	unsigned short retval;
+	Byte HighHalf, LowHalf;
 	LowHalf = pop8bit();
 	HighHalf = pop8bit();
 	retval = HighHalf << 8 | LowHalf;
@@ -708,7 +713,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(rr(this->registers.getA()));
             break;
         case 0x20: // JR NZ, n      relative jump by signed immediate if last result was not zero.
-			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
+			if ((this->registers.getF() & 0b10000000) == 0x00) {
 				this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
 			}
 			this->registers.setPC(this->registers.getPC() + 1);
@@ -2318,10 +2323,6 @@ void CPU::executeExtendedOpcodes() {
 	}
 }
 
-#include <iostream>
-#include <iomanip>
-using namespace std;
-
 int CPUstepCount = 0;
 
 void CPU::CPUstep() {
@@ -2331,15 +2332,18 @@ void CPU::CPUstep() {
 	} else if (this->registers.getPC() == 0x0098) {
 		// infinite loop here.
 		cout << "==== Graphics routine started ====" << endl;
+	} else if (this->registers.getPC() == 0x004a) {
+		cout << "==== Setup background tilemap ====" << endl;
 	} else {
 		//cout << "current adress: " << HEX << this->registers.getPC() << endl;
 	}
 
 	if (CPUstepCount > 10000) {
 		cout << "current adress: " << HEX << this->registers.getPC() << endl;
-		cout << "C:  " << HEX << (int) this->registers.getC()  << endl;
-		cout << "SP: " << HEX << this->registers.getSP() << endl;
+		//cout << "C:  " << HEX << (int) this->registers.getC()  << endl;
+		//cout << "SP: " << HEX << this->registers.getSP() << endl;
 		cout << "HL: " << HEX << this->registers.getHL() << endl;
+		cout << "BC: " << hex << setw(4) << setfill('0') << this->registers.getBC() << " B: " << (int)this->registers.getB() << " C: " << (int)this->registers.getC() << endl;
 		
 		//rom.print(&ram, ADDR_VRAM_T_S, ADDR_EXT_RAM - 1);
 		
