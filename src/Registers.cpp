@@ -11,7 +11,7 @@ Registers::Registers() {
 	this->BC = 0x0013;
 	this->DE = 0x00D8;
 	this->HL = 0x014D;
-	this->PC = 0x0000; //0x0100
+	this->PC = 0x0150; //0x0100 ||0x0000
 	this->SP = 0xFFFE; //ADDR_STACK
 }
 

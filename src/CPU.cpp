@@ -612,6 +612,7 @@ unsigned short CPU::pop16bit() {
 void CPU::call(unsigned short address) {
 	push16bit(this->registers.getPC());
 	this->registers.setPC(address);
+	this->jump = true;
 }
 
 void CPU::executeInstruction(Byte opcode) {
@@ -741,7 +742,7 @@ void CPU::executeInstruction(Byte opcode) {
 			daa();
             break;
         case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
-			if ((this->registers.getF() & 0b10000000) == 0b1000000) {
+			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
 				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
 			}
 			this->registers.setPC(this->registers.getPC() + 1);
@@ -2338,22 +2339,31 @@ void CPU::CPUstep() {
 		//cout << "current adress: " << HEX << this->registers.getPC() << endl;
 	}
 
+	/*
+	if (CPUstepCount > 10000) {
+		rom.print(&ram, 0x8000, 0x9FFF);
+	}
+	*/
+
+	
 	if (CPUstepCount > 10000) {
 		cout << "current adress: " << HEX << this->registers.getPC() << endl;
 		//cout << "C:  " << HEX << (int) this->registers.getC()  << endl;
 		//cout << "SP: " << HEX << this->registers.getSP() << endl;
 		cout << "HL: " << HEX << this->registers.getHL() << endl;
-		cout << "BC: " << hex << setw(4) << setfill('0') << this->registers.getBC() << " B: " << (int)this->registers.getB() << " C: " << (int)this->registers.getC() << endl;
+		cout << "BC: " << hex << setw(4) << setfill('0') << this->registers.getBC();
+		cout << " A: " << (int)this->registers.getA();
+		cout << " C: " << (int)this->registers.getC();
+		cout << " L: " << (int)this->registers.getL();
+		cout << "   Zero Flag: " << boolalpha << ((this->registers.getF() & 0b10000000) != 0) << endl;
 		
 		//rom.print(&ram, ADDR_VRAM_T_S, ADDR_EXT_RAM - 1);
 		
 		
 	}
+	
 
 	CPUstepCount++;
-
-	//cout << "SP: " << HEX << this->registers.getSP() << endl;
-	//cout << "HL: " << HEX << this->registers.getHL() << endl;
 
 	executeInstruction(ReadByte(this->registers.getPC()));
 

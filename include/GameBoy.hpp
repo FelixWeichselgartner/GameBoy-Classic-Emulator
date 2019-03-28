@@ -21,9 +21,11 @@ public:
 
     GameBoy();
 
-	void AdditionTest();
+	void PrintRegisters();
 
+	void AdditionTest();
 	void RomTest();
+	void PushPopTest();
 
 	void tests(int);
 

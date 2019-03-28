@@ -60,7 +60,7 @@ void ROM::load(class RAM* ram) {
 		cout << "unable to open file" << endl;
 	}
 
-	cpBootstrap(ram);
+	//cpBootstrap(ram);
 }
 
 string ROM::getGameName(class RAM* ram) {
