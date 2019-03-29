@@ -4,7 +4,7 @@
 #include "../include/GPU.hpp"
 #include "../include/CPU.hpp"
 
-#include <SDL.h>
+#include "../lib/SDL2/include/SDL2/SDL.h"
 #include <iostream>
 using namespace std;
 //----------------------------------------------------------------------------------------------
@@ -427,6 +427,7 @@ void GPU::UpdateGraphics() {
 	this->cpuLink->WriteByte(0xFF40, this->cpuLink->ReadByte(0xFF40) + 1);
 
 	currentline = this->cpuLink->ReadByte(0xFF44);
+	cout << "currentline: " << (int)currentline << endl;
 
 	// error: currentline no value;
 	// cout << "currentline: " << (int) currentline << endl;

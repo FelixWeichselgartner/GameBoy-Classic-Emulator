@@ -9,12 +9,13 @@
 #include <iostream>
 using namespace std;
 #include <iomanip>
+
 #include <thread>
 #include <chrono>
 
 #include <time.h>
 
-#include <SDL.h>
+#include "../lib/SDL2/include/SDL2/SDL.h"
 
 #include <fstream>
 #include <string>
@@ -116,6 +117,8 @@ void GameBoy::PushPopTest() {
 }
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
+	int cyclesInstruction, delaytime = 1000 / 60;
+	
 	ofstream logFile;
 	logFile.open("logFile.log");
 
@@ -124,23 +127,30 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	cout << "You can quit by pressing 'r'" << endl << endl;
 
 	while (this->cpu.getRunning()) {
-		if (SDL_PollEvent(&windowEvent)) {
-			if (windowEvent.type == SDL_QUIT) {
+		cyclesInstruction = 0;
+
+		while (cyclesInstruction < MAXCYCLES) {
+			if (SDL_PollEvent(&windowEvent)) {
+				if (windowEvent.type == SDL_QUIT) {
+					return;
+				}
+			}
+
+			key = cin.get();
+			if (key == 'r') {
 				return;
 			}
+
+			PrintRegisters();
+			PrintRegistersFile(logFile);
+
+			cyclesInstruction += cpu.CPUstep();
+			cpu.UpdateTimers(cyclesInstruction);
+			gpu.UpdateGraphics();
+			cpu.DoInterupts();
 		}
-
-		key = cin.get();
-		if (key == 'r') {
-			break;
-		}
-
-		PrintRegisters();
-		PrintRegistersFile(logFile);
-
-		cpu.CPUstep();
-		gpu.UpdateGraphics();
-		cpu.DoInterupts();
+		gpu.render();
+		this_thread::sleep_for(chrono::milliseconds(delaytime));
 	}
 
 	cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
@@ -155,7 +165,6 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 void GameBoy::tests(int mode) {
 	SDL_Event windowEvent;
 	bool running = true;
-	int delaytime;
 	
 	switch (mode) {
 	case 1: AdditionTest(); break;
@@ -171,30 +180,8 @@ void GameBoy::tests(int mode) {
 		break;
 	case 3: RomTest(); break;
 	case 4: gpu.TestTiles(); break;
-	case 5: 
-		delaytime = 1000 * 1000 * 10; // 1 second
-
-		while (this->cpu.getRunning()) {
-			if (SDL_PollEvent(&windowEvent)) {
-				if (windowEvent.type == SDL_QUIT) {
-					return;
-				}
-			}
-			
-			PrintRegisters();
-
-			cpu.CPUstep();
-			gpu.UpdateGraphics();
-			cpu.DoInterupts();
-
-			this->cpu.rom.print(&this->cpu.ram, 0x8000, 0x8001);
-
-			this_thread::sleep_for(chrono::nanoseconds(delaytime));
-		}
-
-		SDL_DestroyRenderer(gpu.getRenderer());
-		SDL_DestroyWindow(gpu.getWindow());
-		SDL_Quit();
+	case 5:
+		Debug_InputAndLog(windowEvent);
 		break;
 	case 6:
 		gpu.RenderNintendoLogo();
@@ -212,9 +199,6 @@ void GameBoy::tests(int mode) {
 		break;
 	case 7:
 		PushPopTest();
-		break;
-	case 8:
-		Debug_InputAndLog(windowEvent);
 		break;
 	}
 }
@@ -262,10 +246,9 @@ void GameBoy::run() {
 // MODE 2		gpu debug
 // MODE 3		rom test
 // MODE 4		tiles test
-// MODE 5		slow motion pc + opcode
+// MODE 5		input -> next instruction and save in log file
 // MODE 6		show Nintendo Logo
 // MODE 7		push and pop test
-// MODE 8		input -> next instruction and save in log file
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;

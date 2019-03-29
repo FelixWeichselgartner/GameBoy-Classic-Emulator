@@ -69,21 +69,21 @@ Byte setBit(Byte value, int bit) {
 
 void CPU::setFlag(char type) {
 	switch (type) {
-		case 'F': this->registers.setF(this->registers.getF() | 0b10000000); break;
+		case 'Z': this->registers.setF(this->registers.getF() | 0b10000000); break;
 		case 'N': this->registers.setF(this->registers.getF() | 0b01000000); break;
 		case 'H': this->registers.setF(this->registers.getF() | 0b00100000); break;
 		case 'C': this->registers.setF(this->registers.getF() | 0b00010000); break;
-		default: break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; break;
 	}
 }
 
 void CPU::resetFlag(char type) {
 	switch (type) {
-		case 'F': this->registers.setF(this->registers.getF() & 0b01111111); break;
+		case 'Z': this->registers.setF(this->registers.getF() & 0b01111111); break;
 		case 'N': this->registers.setF(this->registers.getF() & 0b10111111); break;
 		case 'H': this->registers.setF(this->registers.getF() & 0b11011111); break;
 		case 'C': this->registers.setF(this->registers.getF() & 0b11101111); break;
-		default: break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; break;
 	}
 }
 
@@ -92,15 +92,17 @@ Byte CPU::ReadByte(unsigned short address) const {
 }
 
 void CPU::WriteByte(unsigned short address, Byte value) {
-	// address > 0x800:				can't override rom
+	// address > 0x0800:				can't override rom
 	// address 0xE000 to 0xFE00		writing in ECHO ram also writes in ram
 	// address 0xFEA0 to 0xFEFF		restricted area
 	// address 0xFF46:				do dma transfer
 
+	
 	if (address == 0xFF44) {
-		cout << "im not sure" << endl;
+		cout << "value: " << (int)value << endl;
 		// check for right timing here
 	}
+	
 
 	if (address < ADDR_VRAM_T_S) {
 		return;
@@ -111,7 +113,7 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 		return;
 	} else if (address == 0xFF46) {
 		DoDMATransfer(value);
-	} else if (0xFF04) {
+	} else if (address == 0xFF04) {
 		this->ram.setMemory(address, 0x00);
 	} else if (address == ADDR_TMC) {
 		Byte currentFrequency = getClockFrequency();
@@ -144,9 +146,9 @@ Byte CPU::inc(Byte value) {
 	value++;
 
 	if (value == 0x00) {
-		setFlag('F');
+		setFlag('Z');
 	} else {
-		resetFlag('F');
+		resetFlag('Z');
 	}
 	
 	resetFlag('N');
@@ -164,9 +166,9 @@ Byte CPU::dec(Byte value) {
 	value--;
 
 	if (value == 0x00) {
-		setFlag('F');
+		setFlag('Z');
 	} else {
-		resetFlag('F');
+		resetFlag('Z');
 	}
 	
 	setFlag('N');
@@ -573,6 +575,7 @@ Byte CPU::lor(Byte a, Byte b) {
 
 void CPU::cp(Byte A, Byte X) {
 	Byte sub = A - X;
+	cout << "[A]" << (int)A << " - [X]" << (int)X << " = [sub]" << (int)sub << " Zero? = " << boolalpha << (sub == 0x00) << endl;
 
 	// Z is set if result is zero, else reset
 	if (sub == (Byte)0x00) {
@@ -1038,29 +1041,28 @@ void CPU::executeInstruction(Byte opcode) {
             WriteByte(this->registers.getHL(), this->registers.getA());
             break;
         case 0x78: // LD A, B       copy B to A.
-            this->registers.setA(this->registers.getA() + this->registers.getB());
+            this->registers.setA(this->registers.getB());
             break;
         case 0x79: // LD A, C       copy C to A.
-            this->registers.setA(this->registers.getA() + this->registers.getC());
+            this->registers.setA(this->registers.getC());
             break;
         case 0x7A: // LD A, D       copy D to A.
-            this->registers.setA(this->registers.getA() + this->registers.getD());
+            this->registers.setA(this->registers.getD());
             break;
         case 0x7B: // LD A, E       copy E to A.
-            this->registers.setA(this->registers.getA() + this->registers.getE());
+            this->registers.setA(this->registers.getE());
             break;
         case 0x7C: // LD A, H       copy H to A.
-            this->registers.setA(this->registers.getA() + this->registers.getH());
+            this->registers.setA(this->registers.getH());
             break;
         case 0x7D: // LD A, L       copy L to A.
-            this->registers.setA(this->registers.getA() + this->registers.getL());
+            this->registers.setA(this->registers.getL());
             break;
         case 0x7E: // LD A, (HL)    copy value pointed by HL to A.
             this->registers.setA(ReadByte(this->registers.getHL()));
             break;
         case 0x7F: // LD A, A       copy A to A.
             this->registers.setA(this->registers.getA());
-			
             break;
         case 0x80: // ADD A, B      add B to A.
             this->registers.setA(add(this->registers.getA(), this->registers.getB(), 'u'));
@@ -1565,9 +1567,9 @@ Byte CPU::srl(Byte value) {
 void CPU::bit(Byte value, int bit) {
 	// zero flag is set if bit is not set.
 	if (testBit(value, bit)) {
-		setFlag('F');
+		setFlag('Z');
 	} else {
-		resetFlag('F');
+		resetFlag('Z');
 	}
 
 	// N is reset.
