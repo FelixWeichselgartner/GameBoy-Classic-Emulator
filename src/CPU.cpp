@@ -95,14 +95,7 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	// address > 0x0800:				can't override rom
 	// address 0xE000 to 0xFE00		writing in ECHO ram also writes in ram
 	// address 0xFEA0 to 0xFEFF		restricted area
-	// address 0xFF46:				do dma transfer
-
-	
-	if (address == 0xFF44) {
-		cout << "value: " << (int)value << endl;
-		// check for right timing here
-	}
-	
+	// address 0xFF46:				do dma transfer	
 
 	if (address < ADDR_VRAM_T_S) {
 		return;
@@ -575,7 +568,6 @@ Byte CPU::lor(Byte a, Byte b) {
 
 void CPU::cp(Byte A, Byte X) {
 	Byte sub = A - X;
-	cout << "[A]" << (int)A << " - [X]" << (int)X << " = [sub]" << (int)sub << " Zero? = " << boolalpha << (sub == 0x00) << endl;
 
 	// Z is set if result is zero, else reset
 	if (sub == (Byte)0x00) {
@@ -2391,6 +2383,7 @@ int CPU::CPUstep() {
 	*/
 
 	
+	/*
 	if (CPUstepCount > 10000) {
 		cout << "current adress: " << HEX << this->registers.getPC() << endl;
 		//cout << "C:  " << HEX << (int) this->registers.getC()  << endl;
@@ -2403,9 +2396,8 @@ int CPU::CPUstep() {
 		cout << "   Zero Flag: " << boolalpha << ((this->registers.getF() & 0b10000000) != 0) << endl;
 		
 		//rom.print(&ram, ADDR_VRAM_T_S, ADDR_EXT_RAM - 1);
-		
-		
 	}
+	*/
 	
 
 	CPUstepCount++;
@@ -2553,8 +2545,7 @@ void CPU::UpdateTimers(int cycles) {
 			if (ReadByte(ADDR_TIMA) == 0xFF) {
 				WriteByte(ADDR_TIMA, ReadByte(ADDR_TMA));
 				RequestInterupt(2);
-			}
-			else {
+			} else {
 				WriteByte(ADDR_TIMA, ReadByte(ADDR_TIMA) + 1);
 			}
 		}

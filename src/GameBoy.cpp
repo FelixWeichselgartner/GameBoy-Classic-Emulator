@@ -36,6 +36,7 @@ void GameBoy::PrintRegisters() {
 	cout << "E" << HEX << (int)this->cpu.registers.getE() << "   ";
 	cout << "HL" << HEX16 << this->cpu.registers.getHL() << "   ";
 	cout << "SP" << HEX16 << this->cpu.registers.getSP() << endl;
+	//cout << "Memory[0xFF44] = " << (int)this->cpu.ReadByte(0xFF44) << endl;
 	//this->cpu.registers.printFlags();
 }
 
@@ -117,7 +118,7 @@ void GameBoy::PushPopTest() {
 }
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
-	int cyclesInstruction, delaytime = 1000 / 60;
+	int c, cyclesInstruction, delaytime = 1000 / 60;
 	
 	ofstream logFile;
 	logFile.open("logFile.log");
@@ -138,15 +139,17 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 			key = cin.get();
 			if (key == 'r') {
-				return;
+				cpu.setRunning(false);
+				break;
 			}
 
 			PrintRegisters();
 			PrintRegistersFile(logFile);
 
-			cyclesInstruction += cpu.CPUstep();
-			cpu.UpdateTimers(cyclesInstruction);
-			gpu.UpdateGraphics();
+			c = cpu.CPUstep();
+			cyclesInstruction += c;
+			cpu.UpdateTimers(c);
+			gpu.UpdateGraphics(c);
 			cpu.DoInterupts();
 		}
 		gpu.render();
@@ -206,7 +209,7 @@ void GameBoy::tests(int mode) {
 void GameBoy::run() {
 	SDL_Event windowEvent;
 
-	int cyclesInstruction;
+	int c, cyclesInstruction;
 
 	// this is not final
 	int delaytime = 1000 / 60;
@@ -224,9 +227,10 @@ void GameBoy::run() {
 				}
 			}
 
-			cyclesInstruction += cpu.CPUstep();
-			cpu.UpdateTimers(cyclesInstruction);
-			gpu.UpdateGraphics();
+			c = cpu.CPUstep();
+			cyclesInstruction += c;
+			cpu.UpdateTimers(c);
+			gpu.UpdateGraphics(c);
 			cpu.DoInterupts();
 
 		}

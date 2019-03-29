@@ -68,10 +68,10 @@ private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	std::string windowName;
+	int ScanLineCounter;
 	const int pixelsPerTile = 8;
 	const int scaleWidth = 4, scaleHeight = 4;
 	const int windowWidth = X_RES * scaleWidth, windowHeight = Y_RES * scaleHeight;
-	unsigned short scanLineCounter;
 	Byte display[Y_RES][X_RES];
 
 public:
@@ -98,7 +98,7 @@ public:
 	void DrawScanLine();
 
 	void renderDisplay(Byte);
-	void UpdateGraphics();
+	void UpdateGraphics(int);
 
 	void render();
 

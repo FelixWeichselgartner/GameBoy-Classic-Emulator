@@ -6,6 +6,7 @@
 
 #include "../lib/SDL2/include/SDL2/SDL.h"
 #include <iostream>
+#include <iomanip>
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
@@ -13,6 +14,7 @@ GPU::GPU(class CPU* cpuLink) {
 	this->cpuLink = cpuLink;
 	this->ramLink = &cpuLink->ram;
 	windowName = this->cpuLink->rom.getGameName(this->ramLink);
+	ScanLineCounter = 456;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		cout << "[Error] SDL coult not be initialised! SDL Error: " << SDL_GetError() << endl;
@@ -54,21 +56,22 @@ bool GPU::IsLCDEnabled() const {
 
 void GPU::SetLCDStatus() {
 	Byte status = this->cpuLink->ReadByte(0xFF41);
+
 	if (!IsLCDEnabled()) {
-		scanLineCounter = 456;
+		ScanLineCounter = 456;
 		this->cpuLink->WriteByte(0xFF44, 0x00);
-		status = status & 252;
+		status &= 252;
 		status = setBit(status, 0);
 		this->cpuLink->WriteByte(0xFF41, status);
 		return;
 	} 
 
-	Byte lY = this->cpuLink->ReadByte(0xFF44);
+	Byte currentline = this->cpuLink->ReadByte(0xFF44);
 	Byte currentmode = status & 0x03;
 	Byte mode = 0x00;
 	bool reqInt = false;
 	
-	if (lY >= 144) {
+	if (currentline >= Y_RES) {
 		mode = 1;
 		status = setBit(status, 0);
 		status = resetBit(status, 1);
@@ -77,12 +80,12 @@ void GPU::SetLCDStatus() {
 		int mode2bounds = 456 - 80;
 		int mode3bounds = mode2bounds - 172;
 
-		if (scanLineCounter >= mode2bounds) {
+		if (ScanLineCounter >= mode2bounds) {
 			mode = 2;
 			status = setBit(status, 1);
 			status = resetBit(status, 0);
 			reqInt = testBit(status, 5);
-		} else if (scanLineCounter >= mode3bounds) {
+		} else if (ScanLineCounter >= mode3bounds) {
 			mode = 3;
 			status = setBit(status, 1);
 			status = setBit(status, 0);
@@ -98,7 +101,7 @@ void GPU::SetLCDStatus() {
 		cpuLink->RequestInterupt(1);
 	}
 
-	if (lY == this->cpuLink->ReadByte(0xFF45)) { // conincidence flag
+	if (currentline == this->cpuLink->ReadByte(0xFF45)) { // conincidence flag
 		status = setBit(status, 2);
 		if (testBit(status, 6)) {
 			this->cpuLink->RequestInterupt(1);
@@ -195,10 +198,6 @@ void GPU::RenderNintendoLogo() {
 
 	return;
 }
-
-#include <iostream>
-#include <iomanip>
-using namespace std;
 
 void GPU::RenderTiles(Byte lcdControl) {
 	unsigned short tileData = 0, backgroundMemory = 0;
@@ -413,37 +412,41 @@ void GPU::renderDisplay(Byte currentline) {
 	return;
 }
 
-void GPU::UpdateGraphics() {
+void GPU::UpdateGraphics(int cycles) {
 	Byte currentline;
 
 	SetLCDStatus();
 
 	if (IsLCDEnabled()) {
-		;
+		ScanLineCounter -= cycles;
+
+		if (ScanLineCounter <= 0) {
+			this->cpuLink->WriteByte(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
+			//this->cpuLink->WriteByte(0xFF40, this->cpuLink->ReadByte(0xFF40) + 1);
+
+			ScanLineCounter = 456;
+
+			currentline = this->cpuLink->ReadByte(0xFF44);
+			//cout << "currentline: " << (int)currentline << endl;
+
+			// error: currentline no value;
+			// cout << "currentline: " << (int) currentline << endl;
+
+			if (currentline == Y_RES) {
+				cpuLink->RequestInterupt(0);
+			} else if (currentline > 153) {
+				this->cpuLink->WriteByte(0xFF44, 0);
+			} else if (currentline < Y_RES) {
+				DrawScanLine();
+				renderDisplay(currentline);
+			}
+		}
+
+		return;
 	} else {
+		//cout << "lcd is disabled " << endl;
 		return;
 	}
-
-	this->cpuLink->WriteByte(0xFF40, this->cpuLink->ReadByte(0xFF40) + 1);
-
-	currentline = this->cpuLink->ReadByte(0xFF44);
-	cout << "currentline: " << (int)currentline << endl;
-
-	// error: currentline no value;
-	// cout << "currentline: " << (int) currentline << endl;
-	
-	if (currentline == X_RES) {
-		cpuLink->RequestInterupt(0);
-	} else if (currentline > 153) {
-		this->cpuLink->WriteByte(0xFF44, 0);
-	} else if (currentline < X_RES) {
-		DrawScanLine();
-		renderDisplay(currentline);
-	}
-
-	this->cpuLink->WriteByte(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
-
-	return;
 }
 
 void GPU::render() {
