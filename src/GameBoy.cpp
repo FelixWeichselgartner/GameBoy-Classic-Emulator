@@ -127,6 +127,16 @@ void GameBoy::decFlagTest() {
 	this->cpu.registers.printFlags();
 }
 
+void GameBoy::add2x16bithl() {
+	this->cpu.registers.setHL(0xff0f);
+	this->cpu.registers.setF(0x40);
+	cout << "BEFORE:\tHL:" << HEX16 << this->cpu.registers.getHL() << " F: " << HEX << (int)this->cpu.registers.getF() << endl;
+	this->cpu.registers.printFlags();
+	this->cpu.registers.setHL(this->cpu.add16bit(this->cpu.registers.getHL(), this->cpu.registers.getHL(), 'u'));
+	cout << "AFTER:\tHL:" << HEX16 << this->cpu.registers.getHL() << " F: " << HEX << (int)this->cpu.registers.getF() << endl;
+	this->cpu.registers.printFlags();
+}
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction, delaytime = 1000 / 60;
 	
@@ -197,7 +207,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 					break;
 				case 0x4d25: 
-					keyEn = true; // false;
+					keyEn = false; // true;
 					cout << "[call] @ 0x4d25" << endl;
 					cout << "==== Tiles are being copied here ====" << endl;
 					break;
@@ -219,11 +229,18 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 					break;
 				case 0x07c0:
-					keyEn = true;
+					keyEn = false; //true
 					cout << "[call] @ 0x07c0 -- copying numbers + letters" << endl;
-					// infinite loop here
+					// registers don't fit in the end
 					break;
 				case 0x4d2e:
+					keyEn = true;
+					break;
+				case 0x4d37:
+					keyEn = true;
+					break;
+
+				case 0x0800:
 					keyEn = true;
 					break;
 				}
@@ -307,6 +324,9 @@ void GameBoy::tests(int mode) {
 	case 8:
 		decFlagTest();
 		break;
+	case 9:
+		add2x16bithl();
+		break;
 	}
 }
 
@@ -314,11 +334,7 @@ void GameBoy::run() {
 	SDL_Event windowEvent;
 
 	int c, cyclesInstruction;
-
-	// this is not final
 	int delaytime = 1000 / 60;
-	// 1/clockspeed = 2.5 * 10^-7 = 250 ns
-	//
 
 	while (this->cpu.getRunning()) {
 
@@ -348,7 +364,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 8
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
@@ -358,6 +374,7 @@ void GameBoy::run() {
 // MODE 6		show Nintendo Logo
 // MODE 7		push and pop test
 // MODE 8		dec flag test
+// MODE 9		add 2 times 16 bit (hl)
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;

@@ -823,7 +823,7 @@ void CPU::executeInstruction(Byte opcode) {
 			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
-			this->registers.setHL(this->registers.getHL() + this->registers.getHL());
+			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getHL(), 'u'));
             break;
         case 0x2A: // LDI A, (HL)   load A from address pointed to by HL, and increment HL.
 			this->registers.setA(ReadByte(this->registers.getHL()));
@@ -1300,7 +1300,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xC2: // JP NZ, nn     absolute jump to 16-bit location if last result was not zero.
 			jumpAddress = load16bit();
-			if ((this->registers.getF() & 0b10000000) != 0b1000000) {
+			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
 				this->registers.setPC(jumpAddress);
 				this->jump = 0x01;
 			}
@@ -2427,7 +2427,6 @@ int CPU::CPUstep() {
 		cout << "ROM emulation started" << endl;
 		rom.print(&ram, 0x8000, 0x8030);
 	} else if (this->registers.getPC() == 0x0098) {
-		// infinite loop here.
 		cout << "==== Graphics routine started ====" << endl;
 	} else if (this->registers.getPC() == 0x004a) {
 		cout << "==== Setup background tilemap ====" << endl;

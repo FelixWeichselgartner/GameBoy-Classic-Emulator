@@ -28,7 +28,7 @@ private:
 
 public:
 
-    // general purpose registersm + stack pointer & program counter.
+    // general purpose registers + stack pointer & program counter.
     class Registers registers;
     class RAM ram;
 	class ROM rom;
