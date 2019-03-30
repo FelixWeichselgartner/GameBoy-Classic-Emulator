@@ -27,7 +27,7 @@ GameBoy::GameBoy() {
 
 void GameBoy::PrintRegisters() {
 	cout << "[PC]: " << HEX16 << this->cpu.registers.getPC() << "\t [OPCODE]: ";
-	cout << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t->   ";
+	cout << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t<-   ";
 	cout << "A" << HEX << (int)this->cpu.registers.getA() << " ";
 	cout << "F" << HEX << (int)this->cpu.registers.getF() << "   ";
 	cout << "B" << HEX << (int)this->cpu.registers.getB() << " ";
@@ -42,7 +42,7 @@ void GameBoy::PrintRegisters() {
 
 void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "[PC]: " << HEX16 << this->cpu.registers.getPC() << "\t [OPCODE]: ";
-	file << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t->   ";
+	file << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t<-   ";
 	file << "A" << HEX << (int)this->cpu.registers.getA() << " ";
 	file << "F" << HEX << (int)this->cpu.registers.getF() << "   ";
 	file << "B" << HEX << (int)this->cpu.registers.getB() << " ";
@@ -117,18 +117,30 @@ void GameBoy::PushPopTest() {
 
 }
 
+void GameBoy::decFlagTest() {
+	this->cpu.registers.setB(0x0F);
+	this->cpu.registers.setF(0x60);
+	cout << "B: 0x0F, F: 0x60" << endl;
+	this->cpu.registers.printFlags();
+	this->cpu.registers.setB(cpu.dec(this->cpu.registers.getB()));
+	cout << "F: " << HEX << (int)this->cpu.registers.getF() << endl;
+	this->cpu.registers.printFlags();
+}
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction, delaytime = 1000 / 60;
 	
 	ofstream logFile;
 	logFile.open("logFile.log");
 
-	char key;
+	char key; bool keyEn = true;
+	char game = 'M'; // 'M' == MINESWEEPER
 
 	cout << "You can quit by pressing 'r'" << endl << endl;
 
 	while (this->cpu.getRunning()) {
 		cyclesInstruction = 0;
+		bool printVRAMAfterInstruction = false;
 
 		while (cyclesInstruction < MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {
@@ -137,14 +149,103 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 			}
 
-			key = cin.get();
-			if (key == 'r') {
-				cpu.setRunning(false);
-				break;
+			if (game == 'M') {
+				switch (this->cpu.registers.getPC()) {
+				case 0x06e6:
+					keyEn = false;
+					cout << "[call] @ 0x06e6" << endl;
+					break;
+				case 0x0157:
+					keyEn = true;
+					break;
+				case 0x05fd:
+					keyEn = false;
+					cout << "[call] @ 0x05fd" << endl;
+					break;
+				case 0x015a:
+					keyEn = true; 
+					break;
+				case 0x5879:
+					keyEn = false;
+					cout << "[call] @ 0x5879" << endl;
+					break;
+				case 0x015d:
+					keyEn = true;
+					break;
+				case 0x06ff:
+					if (keyEn) {
+						keyEn = false;
+						cout << "[call] @ 0x06ff" << endl;
+					}
+					break;
+				case 0x0166:
+					keyEn = true;
+					break;
+
+				case 0x08ef:
+					keyEn = false;
+					cout << "[call] @ 0x08ef" << endl;
+					break;
+				case 0x4cd4:
+					keyEn = true;
+					break;
+				case 0x0708:
+					keyEn = false;
+					cout << "[call] @ 0x0708" << endl;
+					break;
+				case 0x4cd7:
+					keyEn = true;
+					break;
+				case 0x4d25: 
+					keyEn = true; // false;
+					cout << "[call] @ 0x4d25" << endl;
+					cout << "==== Tiles are being copied here ====" << endl;
+					break;
+				case 0x4cda:
+					keyEn = true;
+					break;
+				case 0x0297:
+					keyEn = false;
+					cout << "[call] @ 0x0297" << endl;
+					break;
+				case 0x4cdd:
+					keyEn = true;
+					break;
+				case 0x02e5:
+					keyEn = false;
+					cout << "[call] @ 0x02e5" << endl;
+					break;
+				case 0x4ce0:
+					keyEn = true;
+					break;
+				case 0x07c0:
+					keyEn = true;
+					cout << "[call] @ 0x07c0 -- copying numbers + letters" << endl;
+					// infinite loop here
+					break;
+				case 0x4d2e:
+					keyEn = true;
+					break;
+				}
 			}
 
-			PrintRegisters();
-			PrintRegistersFile(logFile);
+			if (keyEn) {
+				if (printVRAMAfterInstruction) {
+					cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
+					printVRAMAfterInstruction = false;
+				}
+
+				key = cin.get();
+				if (key == 'r') {
+					cpu.setRunning(false);
+					break;
+				} else if (key == 'p') {
+					printVRAMAfterInstruction = true;
+				}
+
+				PrintRegisters();
+				PrintRegistersFile(logFile);
+			}
 
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
@@ -203,6 +304,9 @@ void GameBoy::tests(int mode) {
 	case 7:
 		PushPopTest();
 		break;
+	case 8:
+		decFlagTest();
+		break;
 	}
 }
 
@@ -244,7 +348,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 8
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
@@ -253,6 +357,7 @@ void GameBoy::run() {
 // MODE 5		input -> next instruction and save in log file
 // MODE 6		show Nintendo Logo
 // MODE 7		push and pop test
+// MODE 8		dec flag test
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;

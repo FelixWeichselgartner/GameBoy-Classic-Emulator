@@ -44,6 +44,7 @@ public:
 	// getter for clock speed.
 	int getClockSpeed() const;
 
+	Byte getFlag(char);
 	void setFlag(char);
 	void resetFlag(char);
 

@@ -30,6 +30,7 @@ public:
 	void RomTest();
 	void PushPopTest();
 	void Debug_InputAndLog(SDL_Event &);
+	void decFlagTest();
 
 	void tests(int);
 

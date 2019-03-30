@@ -67,6 +67,39 @@ Byte setBit(Byte value, int bit) {
 	return value | setter;
 }
 
+Byte CPU::getFlag(char type) {
+	switch (type) {
+	case 'Z':
+		if ((this->registers.getF() & 0b10000000) != 0x00) {
+			return 0x01;
+		} else {
+			return 0x00;
+		}
+	case 'N': 
+		if ((this->registers.getF() & 0b01000000) != 0x00) {
+			return 0x01;
+		} else {
+			return 0x00;
+		}
+	case 'H': 
+		if ((this->registers.getF() & 0b00100000) != 0x00) {
+			return 0x01;
+		} else {
+			return 0x00;
+		}
+	case 'C': 
+		if ((this->registers.getF() & 0b00010000) != 0x00) {
+			return 0x01;
+		} else {
+			return 0x00;
+		}
+	default: 
+		cout << "[type]" << (int)type << " does not exist" << endl;
+		exit(1);
+		return 0x00;
+	}
+}
+
 void CPU::setFlag(char type) {
 	switch (type) {
 		case 'Z': this->registers.setF(this->registers.getF() | 0b10000000); break;
@@ -136,9 +169,9 @@ unsigned short CPU::load16bit() {
 }
 
 Byte CPU::inc(Byte value) {
-	value++;
+	Byte retval = value + 1;
 
-	if (value == 0x00) {
+	if (retval == 0x00) {
 		setFlag('Z');
 	} else {
 		resetFlag('Z');
@@ -146,19 +179,19 @@ Byte CPU::inc(Byte value) {
 	
 	resetFlag('N');
 
-	if ((value & 0x0F) == 0x00) {
+	if ((retval & 0x0F) == 0x00) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
 	}
 
-	return value;
+	return retval;
 }
 
 Byte CPU::dec(Byte value) {
-	value--;
+	Byte retval = value - 1;
 
-	if (value == 0x00) {
+	if (retval == 0x00) {
 		setFlag('Z');
 	} else {
 		resetFlag('Z');
@@ -166,13 +199,13 @@ Byte CPU::dec(Byte value) {
 	
 	setFlag('N');
 
-	if ((value & 0x0F) == 0x0F) {
+	if (retval == 0x0F) {
 		setFlag('H');
 	} else {
-		resetFlag('N');
+		resetFlag('H');
 	}
 
-	return value;
+	return retval;
 }
 
 void CPU::daa() {
@@ -206,6 +239,8 @@ void CPU::daa() {
 
 	if (s >= 0x100) {
 		setFlag('C');
+	} else {
+		resetFlag('C');
 	}
 }
 
@@ -224,15 +259,15 @@ void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
 }
 
 Byte CPU::rlc(Byte a) {
-	Byte retval = a << 1 | a >> 7;
+	Byte retval = (a << 1) | (a >> 7);
 
 	// Z, N, H are reset
 	resetFlag('Z');
 	resetFlag('N');
 	resetFlag('H');
 
-	// C is set if bit 0 is 1, else reset
-	if (this->registers.getA() & 0x01) {
+	// C is set if bit 7 is 1, else reset
+	if (((a >> 7) & 0x01) == 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -242,7 +277,7 @@ Byte CPU::rlc(Byte a) {
 }
 
 Byte CPU::rrc(Byte a) {
-	Byte retval = a >> 1 | a << 7;
+	Byte retval = (a >> 1) | (a << 7);
 
 	// Z, N, H are reset
 	resetFlag('Z');
@@ -250,7 +285,7 @@ Byte CPU::rrc(Byte a) {
 	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
-	if (this->registers.getA() & 0x01) {
+	if ((a & 0x01) == 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -260,7 +295,7 @@ Byte CPU::rrc(Byte a) {
 }
 
 Byte CPU::rr(Byte a) {
-	Byte retval = a >> 1 | a << 7;
+	Byte retval = (a >> 1) | (getFlag('C') << 7);
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
@@ -274,7 +309,7 @@ Byte CPU::rr(Byte a) {
 	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
-	if (this->registers.getA() & 0x01) {
+	if ((a & 0x01) == 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -284,7 +319,7 @@ Byte CPU::rr(Byte a) {
 }
 
 Byte CPU::rl(Byte a) {
-	Byte retval = a << 1 | a >> 7;
+	Byte retval = (a << 1) | getFlag('C');
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
@@ -297,8 +332,8 @@ Byte CPU::rl(Byte a) {
 	resetFlag('N');
 	resetFlag('H');
 
-	// C is set if bit 0 is 1, else reset
-	if (this->registers.getA() & 0x01) {
+	// C is set if bit 7 is 1, else reset
+	if (((a >> 7) & 0x01) == 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -406,7 +441,7 @@ Byte CPU::adc(Byte a, Byte b) {
 	Byte c;
 
 	if ((this->registers.getF() & 0b00010000) == 0b00010000) {
-		c = 0b00000001;
+		c = 0x01;
 	} else {
 		c = 0x00;
 	}
@@ -650,12 +685,14 @@ Byte CyclesPerOPCode[0x100] = {
 
 void CPU::executeInstruction(Byte opcode) {
 	this->cycles += CyclesPerOPCode[opcode];
+	unsigned short	jumpAddress;
+	Byte			jumpRelAddress;
 
     switch((int)opcode) {
         case  0x0: // NOP           no operation.
             break;
         case  0x1: // LD (BC), nn   load 16-bit immediate into BC.
-			save16bitToAddress(this->registers.getBC(), load16bit());
+			this->registers.setBC(load16bit());
             break;
         case  0x2: // LD (BC), A    saves A to address pointed by BC.
             WriteByte(this->registers.getBC(), this->registers.getA());
@@ -724,8 +761,9 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(rl(this->registers.getA()));
             break;
         case 0x18: // JR n          relative jump by signed immediate.
-			this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
-			this->registers.setPC(this->registers.getPC() + 1);
+			jumpRelAddress = load8bit();
+			this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
+			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
 			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE(), 'u'));
@@ -749,10 +787,11 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(rr(this->registers.getA()));
             break;
         case 0x20: // JR NZ, n      relative jump by signed immediate if last result was not zero.
+			jumpRelAddress = load8bit();
 			if ((this->registers.getF() & 0b10000000) == 0x00) {
-				this->registers.setPC(this->registers.getPC() + (signed char) load8bit());
+				this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
 			}
-			this->registers.setPC(this->registers.getPC() + 1);
+			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x21: // LD HL, nn     load 16-bit immediate into HL.
 			this->registers.setHL(load16bit());
@@ -777,10 +816,11 @@ void CPU::executeInstruction(Byte opcode) {
 			daa();
             break;
         case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
+			jumpRelAddress = load8bit();
 			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
-				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
+				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
 			}
-			this->registers.setPC(this->registers.getPC() + 1);
+			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
 			this->registers.setHL(this->registers.getHL() + this->registers.getHL());
@@ -805,10 +845,11 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(cpl(this->registers.getA()));
             break;
         case 0x30: // JR NC, n      relative jump by signed immediate if last result caused no carry.
+			jumpRelAddress = load8bit();
 			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
-				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
+				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
 			}
-			this->registers.setPC(this->registers.getPC() + 1);
+			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x31: // LD SP, nn     load 16-bit immediate into SP.
 			this->registers.setSP(load16bit());
@@ -833,10 +874,11 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setF(this->registers.getF() | 0b00010000);
             break;
         case 0x38: // JR C, n       relative jump by signed immediate if last result caused carry.
+			jumpRelAddress = load8bit();
 			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
-				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(load8bit()), 's'));
+				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
 			}
-			this->registers.setPC(this->registers.getPC() + 1);
+			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x39: // ADD HL, SP    add 16-bit SP to HL.
             this->registers.setHL(this->registers.getHL() + this->registers.getSP());
@@ -1257,8 +1299,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setBC(pop16bit());
             break;
         case 0xC2: // JP NZ, nn     absolute jump to 16-bit location if last result was not zero.
+			jumpAddress = load16bit();
 			if ((this->registers.getF() & 0b10000000) != 0b1000000) {
-				this->registers.setPC(load16bit());
+				this->registers.setPC(jumpAddress);
+				this->jump = 0x01;
 			}
             break;
         case 0xC3: // JP nn         absolute jump to 16-bit location.
@@ -1277,6 +1321,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(add(this->registers.getA(), load8bit(), 'u'));
             break;
         case 0xC7: // RST 0         call routine at address 0000h
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0000);
             break;
         case 0xC8: // RET Z         return if last result was zero.
@@ -1288,8 +1333,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setPC(pop16bit());
             break;
         case 0xCA: // JP Z, nn      absolute jump to 16-bit location if last result was zero.
+			jumpAddress = load16bit();
 			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
-				this->registers.setPC(load16bit());
+				this->registers.setPC(jumpAddress);
+				this->jump = 0x01;
 			}
             break;
         case 0xCB: // Ext ops       extended operations (two-Byte instruction code).
@@ -1307,6 +1354,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(adc(this->registers.getA(), load8bit()));
             break;
         case 0xCF: // RST 8         call routine at adress 0008h.
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0008);
             break;
         case 0xD0: // RET NC        return if last result caused no carry.
@@ -1318,8 +1366,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setDE(pop16bit());
             break;
         case 0xD2: // JP NC, nn     absolute jump to 16-bit location if last result caused no carry.
+			jumpAddress = load16bit();
 			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
-				this->registers.setPC(load16bit());
+				this->registers.setPC(jumpAddress);
+				this->jump = 0x01;
 			}
             break;
         case 0xD3: // XX            operation removed in this CPU.
@@ -1336,6 +1386,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(sub(this->registers.getA(), load8bit()));
             break;
         case 0xD7: // RST 10        call routine at address 0010h.
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0010);
             break;
         case 0xD8: // RET C         return if last result caused carry.
@@ -1348,8 +1399,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setPC(pop16bit());
             break; 
         case 0xDA: // JP C, nn      absolute jump to 16-bit location if last result caused carry.
+			jumpAddress = load16bit();
 			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
-				this->registers.setPC(load16bit());
+				this->registers.setPC(jumpAddress);
+				this->jump = 0x01;
 			}
             break;
         case 0xDB: // XX            operation removed in this CPU. 
@@ -1365,6 +1418,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(sbc(this->registers.getA(), load8bit()));
             break;
         case 0xDF: // RST 18        call routine at address 0018h.
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0018);
             break;
         case 0xE0: // LDH (n), A    save A at address pointed to by (FF00h + 8-bit immediate)
@@ -1387,6 +1441,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(land(this->registers.getA(), load8bit()));
             break;
         case 0xE7: // RST 20        call routine at address 0020h.
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0020);
             break;
         case 0xE8: // ADD SP, d     add signed 8-bit immediate to SP.
@@ -1394,6 +1449,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xE9: // JP (HL)       jump to 16-bit value pointed by HL.
 			this->registers.setPC(this->registers.getHL());
+			this->jump = 0x01;
             break;
         case 0xEA: // LD (nn), A    save A at given 16-bit address.
 			WriteByte(load16bit(), this->registers.getA());
@@ -1408,6 +1464,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(lxor(this->registers.getA(), load8bit()));
             break;
         case 0xEF: // RST 28        call routine at address 0028h.
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0028);
             break;
         case 0xF0: // LDH A, (n)    load A from address pointed to by (FF00h + 8-bit immediate).
@@ -1431,6 +1488,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(lor(this->registers.getA(), load8bit()));
             break;
         case 0xF7: // RST 30        call routine at address 0030h.
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0030);
             break;
         case 0xF8: // LDHL SP, d    add signed 8-bit immediate to SP and save result in HL.
@@ -1453,6 +1511,7 @@ void CPU::executeInstruction(Byte opcode) {
 			cp(this->registers.getA(), load8bit());
             break;
         case 0xFF: // RST 38        call routine at address 0038h.
+			this->registers.setPC(this->registers.getPC() + 1);
 			call(0x0038);
             break;
     }
