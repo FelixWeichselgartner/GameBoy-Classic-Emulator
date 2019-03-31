@@ -137,13 +137,27 @@ void GameBoy::add2x16bithl() {
 	this->cpu.registers.printFlags();
 }
 
+void GameBoy::OP_DA_Test() {
+	this->cpu.registers.setF(0x30);
+	cout << "BEFORE: " << " F" << HEX << this->cpu.registers.getF() << endl;
+	this->cpu.registers.printFlags();
+
+	// da code
+	if ((this->cpu.registers.getF() & 0b00010000) == 0b00010000) {
+		cout << "working as supposed" << endl;
+	} else {
+		cout << "not working as supposed" << endl;
+	}
+	//
+}
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction, delaytime = 1000 / 60;
 	
 	ofstream logFile;
 	logFile.open("logFile.log");
 
-	char key; bool keyEn = true;
+	char key; bool keyEn = true, keyHardEn = false;
 	char game = 'M'; // 'M' == MINESWEEPER
 
 	cout << "You can quit by pressing 'r'" << endl << endl;
@@ -207,7 +221,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 					break;
 				case 0x4d25: 
-					keyEn = false; // true;
+					keyEn = true; // true;
 					cout << "[call] @ 0x4d25" << endl;
 					cout << "==== Tiles are being copied here ====" << endl;
 					break;
@@ -229,9 +243,9 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 					break;
 				case 0x07c0:
-					keyEn = false; //true
+					keyEn = true; //true
 					cout << "[call] @ 0x07c0 -- copying numbers + letters" << endl;
-					// registers don't fit in the end
+					// this is not working correctly
 					break;
 				case 0x4d2e:
 					keyEn = true;
@@ -239,14 +253,38 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				case 0x4d37:
 					keyEn = true;
 					break;
+				case 0x072d:
+					keyEn = false;
+					cout << "[call] @ 0x072d" << endl;
+					break;
+				case 0x4d43:
+					keyEn = true;
+					break;
+				case 0x4d4f:
+					keyEn = true;
+					break;
+				case 0x02f0:
+					keyEn = false;
+					cout << "[call] @ 0x02f0" << endl;
+					break;
+				case 0x4d54:
+					keyEn = true;
+					break;
 
 				case 0x0800:
+					keyEn = true;
+					break;
+				case 0x0865:
+					keyEn = false;
+					cout << "[call] @ 0x0865" << endl;
+					break;
+				case 0x0839:
 					keyEn = true;
 					break;
 				}
 			}
 
-			if (keyEn) {
+			if (keyEn || keyHardEn) {
 				if (printVRAMAfterInstruction) {
 					cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
 					printVRAMAfterInstruction = false;
@@ -269,6 +307,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			cpu.UpdateTimers(c);
 			gpu.UpdateGraphics(c);
 			cpu.DoInterupts();
+
 		}
 		gpu.render();
 		this_thread::sleep_for(chrono::milliseconds(delaytime));
@@ -327,6 +366,9 @@ void GameBoy::tests(int mode) {
 	case 9:
 		add2x16bithl();
 		break;
+	case 10:
+		OP_DA_Test();
+		break;
 	}
 }
 
@@ -364,7 +406,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
@@ -375,6 +417,7 @@ void GameBoy::run() {
 // MODE 7		push and pop test
 // MODE 8		dec flag test
 // MODE 9		add 2 times 16 bit (hl)
+// MODE 10		opcode DA test
 
 int main(int argc, char *argv[]) {
     class GameBoy gameboy;

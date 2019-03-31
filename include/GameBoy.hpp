@@ -32,6 +32,7 @@ public:
 	void Debug_InputAndLog(SDL_Event &);
 	void decFlagTest();
 	void add2x16bithl();
+	void OP_DA_Test();
 
 	void tests(int);
 

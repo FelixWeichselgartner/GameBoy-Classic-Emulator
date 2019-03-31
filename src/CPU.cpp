@@ -10,14 +10,6 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
-/*----------------------------------------------------------------------------------------------
-note:
-
-for all relative jumps (e.g. 0x20)
-program counter is increased after this jump instruction
-according to bgb debugging this is neccessary
-*///--------------------------------------------------------------------------------------------
-
 //----------------------------------------------------------------------------------------------
 // Flags - F register is the flag register
 // Z = this->registers.F (Byte 7)
@@ -716,7 +708,7 @@ void CPU::executeInstruction(Byte opcode) {
 			save16bitToAddress(load16bit(), this->registers.getSP());
             break;
         case  0x9: // ADD HL, BC    add 16-bit BC to HL.
-            this->registers.setHL(this->registers.getHL() + this->registers.getBC());
+            this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getBC(), 'u'));
             break;
         case  0xA: // LD A, (BC)    load A from address pointed by BC.  
             this->registers.setA(ReadByte(this->registers.getBC()));
@@ -763,7 +755,6 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x18: // JR n          relative jump by signed immediate.
 			jumpRelAddress = load8bit();
 			this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
-			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
 			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE(), 'u'));
@@ -791,7 +782,6 @@ void CPU::executeInstruction(Byte opcode) {
 			if ((this->registers.getF() & 0b10000000) == 0x00) {
 				this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
 			}
-			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x21: // LD HL, nn     load 16-bit immediate into HL.
 			this->registers.setHL(load16bit());
@@ -820,7 +810,6 @@ void CPU::executeInstruction(Byte opcode) {
 			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
 				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
 			}
-			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
 			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getHL(), 'u'));
@@ -849,7 +838,6 @@ void CPU::executeInstruction(Byte opcode) {
 			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
 				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
 			}
-			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x31: // LD SP, nn     load 16-bit immediate into SP.
 			this->registers.setSP(load16bit());
@@ -871,17 +859,16 @@ void CPU::executeInstruction(Byte opcode) {
 			WriteByte(this->registers.getHL(), load8bit());
             break;
         case 0x37: // SCF           set carry flag.
-			this->registers.setF(this->registers.getF() | 0b00010000);
+			setFlag('C');
             break;
         case 0x38: // JR C, n       relative jump by signed immediate if last result caused carry.
 			jumpRelAddress = load8bit();
 			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
 				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
 			}
-			//this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x39: // ADD HL, SP    add 16-bit SP to HL.
-            this->registers.setHL(this->registers.getHL() + this->registers.getSP());
+            this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getSP(), 'u'));
             break;
         case 0x3A: // LDD A, (HL)   load A from address pointed to by HL, and decrement HL.
 			this->registers.setA(ReadByte(this->registers.getHL()));
@@ -1374,8 +1361,8 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xD3: // XX            operation removed in this CPU.
             break;
-        case 0xD4: // CALL NC, nn   call routine at 16-bit location if last result caused no carry.
-			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+        case 0xD4: // CALL C, nn   call routine at 16-bit location if last result caused carry.
+			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
 				call(load16bit());
 			}
             break;
@@ -1390,7 +1377,7 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0010);
             break;
         case 0xD8: // RET C         return if last result caused carry.
-			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
 				this->registers.setPC(pop16bit());
 			}
             break;
@@ -1400,7 +1387,7 @@ void CPU::executeInstruction(Byte opcode) {
             break; 
         case 0xDA: // JP C, nn      absolute jump to 16-bit location if last result caused carry.
 			jumpAddress = load16bit();
-			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
 				this->registers.setPC(jumpAddress);
 				this->jump = 0x01;
 			}
