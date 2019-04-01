@@ -395,11 +395,14 @@ unsigned short signed8to16(Byte n) {
 
 unsigned short CPU::add16bit(unsigned short a, unsigned short b, char type) {
 	unsigned short retval;
+	unsigned int sum;
 
 	if (type == 'u') { //unsigned
 		retval = a + b;
+		sum = (unsigned short)a + (unsigned short)b;
 	} else if (type == 's') { //signed
 		retval = a + (signed char)b;
+		sum = (unsigned short)a + (signed short)b;
 	}
 
 	// Z is set if result is zero, else reset
@@ -413,14 +416,14 @@ unsigned short CPU::add16bit(unsigned short a, unsigned short b, char type) {
 	resetFlag('N');
 
 	// H is set if overflow from bit 7, else reset
-	if ((retval ^ a ^ b) & 0x1000) {
+	if ((sum ^ a ^ b) & 0x1000) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
 	}
 
 	// C is set if overflow from bit 15, else reset
-	if (((int)a + (int)b) > (int) 65536) { // 65536 == pow(2, 16) - 1
+	if (sum > (int) (65536 - 1)) { // 65536 == pow(2, 16)
 		setFlag('C');
 	} else {
 		resetFlag('C');

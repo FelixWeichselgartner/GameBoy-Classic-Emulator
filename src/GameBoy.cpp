@@ -10,9 +10,6 @@
 using namespace std;
 #include <iomanip>
 
-#include <thread>
-#include <chrono>
-
 #include <time.h>
 
 #include "../lib/SDL2/include/SDL2/SDL.h"
@@ -20,6 +17,12 @@ using namespace std;
 #include <fstream>
 #include <string>
 //----------------------------------------------------------------------------------------------
+
+void delay(int milli_seconds) {
+	clock_t start_time = clock();
+	while (clock() < start_time + milli_seconds)
+		;
+}
 
 GameBoy::GameBoy() {
 	
@@ -275,10 +278,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 					break;
 				case 0x0865:
-					keyEn = false;
+					keyEn = true;
 					cout << "[call] @ 0x0865" << endl;
 					break;
-				case 0x0839:
+				case 0x083c:
 					keyEn = true;
 					break;
 				}
@@ -296,6 +299,8 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					break;
 				} else if (key == 'p') {
 					printVRAMAfterInstruction = true;
+				} else if (key == 's') {
+					cpu.rom.print(&cpu.ram, 0x8800, 0x8050);
 				}
 
 				PrintRegisters();
@@ -310,7 +315,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 		}
 		gpu.render();
-		this_thread::sleep_for(chrono::milliseconds(delaytime));
+		delay(delaytime);
 	}
 
 	cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
@@ -398,7 +403,7 @@ void GameBoy::run() {
 		}
 
 		gpu.render();
-		this_thread::sleep_for(chrono::milliseconds(delaytime));
+		delay(delaytime);
 	}
 
 	SDL_DestroyRenderer(gpu.getRenderer());
@@ -406,7 +411,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

@@ -48,7 +48,7 @@ void ROM::load(class RAM* ram) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::beg);
 		size = ADDR_VRAM_T_S;
