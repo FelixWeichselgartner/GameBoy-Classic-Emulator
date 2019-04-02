@@ -12,7 +12,7 @@ using namespace std;
 
 #include <time.h>
 
-#include "../lib/SDL2/include/SDL2/SDL.h"
+#include <SDL2/SDL.h>
 
 #include <fstream>
 #include <string>
@@ -39,7 +39,6 @@ void GameBoy::PrintRegisters() {
 	cout << "E" << HEX << (int)this->cpu.registers.getE() << "   ";
 	cout << "HL" << HEX16 << this->cpu.registers.getHL() << "   ";
 	cout << "SP" << HEX16 << this->cpu.registers.getSP() << endl;
-	//cout << "Memory[0xFF44] = " << (int)this->cpu.ReadByte(0xFF44) << endl;
 	//this->cpu.registers.printFlags();
 }
 
@@ -135,7 +134,7 @@ void GameBoy::add2x16bithl() {
 	this->cpu.registers.setF(0x40);
 	cout << "BEFORE:\tHL:" << HEX16 << this->cpu.registers.getHL() << " F: " << HEX << (int)this->cpu.registers.getF() << endl;
 	this->cpu.registers.printFlags();
-	this->cpu.registers.setHL(this->cpu.add16bit(this->cpu.registers.getHL(), this->cpu.registers.getHL(), 'u'));
+	this->cpu.registers.setHL(this->cpu.add16bit(this->cpu.registers.getHL(), this->cpu.registers.getHL()));
 	cout << "AFTER:\tHL:" << HEX16 << this->cpu.registers.getHL() << " F: " << HEX << (int)this->cpu.registers.getF() << endl;
 	this->cpu.registers.printFlags();
 }
@@ -154,6 +153,17 @@ void GameBoy::OP_DA_Test() {
 	//
 }
 
+void GameBoy::Signed8bitTo16bit() {
+	unsigned short z1 = 0x02f0;
+	Byte  z2 = 0xfb;
+	cout << "z1 = " << z1 << " z2 = (u)" << (int)z2 << " (s) " << (int)((signed char)z2) << endl;
+	cout << "conversion: " << HEX16 << (short)((signed char)z2) << endl;
+	cout << "sum: " << HEX16 << cpu.add16bitAdrSign(z1, z2) << endl;
+	cout << "expected result: 0x02ed - 2 (+1 for load8bit +1 for inc pc" << endl;
+}
+
+int checkInfiniteLoop = 0;
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction, delaytime = 1000 / 60;
 	
@@ -161,7 +171,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	logFile.open("logFile.log");
 
 	char key; bool keyEn = true, keyHardEn = false;
-	char game = 'M'; // 'M' == MINESWEEPER
+	char game = 'N'; // 'M' == MINESWEEPER
 
 	cout << "You can quit by pressing 'r'" << endl << endl;
 
@@ -176,8 +186,24 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 			}
 
+			if (this->cpu.registers.getPC() == 0x0010) {
+				cout << checkInfiniteLoop;
+				exit(1);
+			}
+
+			if (checkInfiniteLoop == 0) {
+				keyEn = false;
+			}
+
+			PrintRegistersFile(logFile);
+			if (checkInfiniteLoop > 102144) { // 110000 112500
+				cout << "hard key enabled" << endl;
+				keyHardEn = true;
+			}
+
 			if (game == 'M') {
 				switch (this->cpu.registers.getPC()) {
+					
 				case 0x06e6:
 					keyEn = false;
 					cout << "[call] @ 0x06e6" << endl;
@@ -209,6 +235,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 					break;
 
+					/*
 				case 0x08ef:
 					keyEn = false;
 					cout << "[call] @ 0x08ef" << endl;
@@ -278,10 +305,18 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 					break;
 				case 0x0865:
-					keyEn = true;
+					keyEn = false;
 					cout << "[call] @ 0x0865" << endl;
 					break;
 				case 0x083c:
+					keyEn = true;
+					break;
+					*/
+				case 0x018b: 
+					keyEn = false;
+					cout << "rst 0000" << endl;
+					break;
+				case 0x0040:
 					keyEn = true;
 					break;
 				}
@@ -300,7 +335,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				} else if (key == 'p') {
 					printVRAMAfterInstruction = true;
 				} else if (key == 's') {
-					cpu.rom.print(&cpu.ram, 0x8800, 0x8050);
+					cpu.rom.print(&cpu.ram, 0x8800, 0x8850);
 				}
 
 				PrintRegisters();
@@ -313,9 +348,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			gpu.UpdateGraphics(c);
 			cpu.DoInterupts();
 
+			checkInfiniteLoop++;
 		}
 		gpu.render();
-		delay(delaytime);
+		//delay(delaytime);
 	}
 
 	cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
@@ -374,6 +410,9 @@ void GameBoy::tests(int mode) {
 	case 10:
 		OP_DA_Test();
 		break;
+	case 11:
+		Signed8bitTo16bit();
+		break;
 	}
 }
 
@@ -390,6 +429,7 @@ void GameBoy::run() {
 		while (cyclesInstruction < MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {
 				if (windowEvent.type == SDL_QUIT) {
+					cout << "Gameboy-Classic-Emulator closed." << endl;
 					return;
 				}
 			}
@@ -423,8 +463,10 @@ void GameBoy::run() {
 // MODE 8		dec flag test
 // MODE 9		add 2 times 16 bit (hl)
 // MODE 10		opcode DA test
+// MODE 11		signed 8 bit to signed 16 bit
 
 int main(int argc, char *argv[]) {
+	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
     class GameBoy gameboy;
 	if (MODE) {
 		gameboy.tests(MODE);

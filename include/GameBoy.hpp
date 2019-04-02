@@ -33,6 +33,7 @@ public:
 	void decFlagTest();
 	void add2x16bithl();
 	void OP_DA_Test();
+	void Signed8bitTo16bit();
 
 	void tests(int);
 

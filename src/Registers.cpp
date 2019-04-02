@@ -17,22 +17,27 @@ Registers::Registers() {
 
 std::string toBinary(int n) {
 	std::string r;
+
 	while (n != 0) { 
 		r = (n % 2 == 0 ? "0" : "1") + r; 
 		n /= 2; 
 	}
+
 	while (r.length() < 8) {
 		r = "0" + r;
 	}
+
 	return r;
 }
 
 
 void Registers::printFlags() {
     std::cout << "the flags: " << std::endl;
+
     for (int i = 7; i >= 0; i--) {
         std::cout << i;
     }
+
     std::cout << std::endl;
     std::cout << "ZNHC0000" << std::endl;
     std::cout << toBinary((int) this->F) << std::endl;

@@ -1,3 +1,15 @@
 this was programmed with SDL version 2.0.9 - Visual C++ version
 
 https://www.libsdl.org/download-2.0.php
+
+However you can compile with cmake and mingw32-make:
+
+from i686-w64-mingw32 copy the content of 'include', 'lib' and 'bin' to your MinGW folder
+
+then run:
+```
+cmake . -G "MinGW Makefiles"
+```
+```
+mingw32-make
+``` 

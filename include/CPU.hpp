@@ -76,7 +76,11 @@ public:
 	// add two Byte values.
     Byte add(Byte, Byte, char);
 	// add two 16-bit values.
-	unsigned short add16bit(unsigned short, unsigned short, char);
+	unsigned short add16bit(unsigned short, unsigned short);
+	// add signed byte to unsigned short.
+	unsigned short add16bitSign(unsigned short, Byte);
+	// add two 16-bit values for addresses (that means without flags).
+	unsigned short add16bitAdrSign(unsigned short, Byte);
 	// add two Byte values + carry.
 	Byte adc(Byte, Byte);
 	// sub two Byte values.

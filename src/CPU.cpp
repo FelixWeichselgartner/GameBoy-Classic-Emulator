@@ -19,6 +19,19 @@ using namespace std;
 // Byte 3 = Byte 2 = Byte 1 = Byte 0 = not used
 //----------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------
+// split a 16-bit number in 2 x 8-bit numbers to save to memory
+#define LOW_BYTE(x)				(x & 0xff)
+#define HIGH_BYTE(x)			((x >> 8) & 0xff)
+//----------------------------------------------------------------------------------------------
+
+
+//----------------------------------------------------------------------------------------------
+// split an 8-bit number in 2 x 4 bit
+#define LOWER_HALFBYTE(x)       (x & 0x00001111)
+#define UPPER_HALFBYTE(x)		((x >> 4) & 0x00001111)
+//----------------------------------------------------------------------------------------------
+
 CPU::CPU() {
 	this->running = 0x01;
 	rom.load(&ram);
@@ -123,6 +136,7 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	// address 0xFF46:				do dma transfer	
 
 	if (address < ADDR_VRAM_T_S) {
+		cout << "trying to write to ROM space" << endl;
 		return;
 	} else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
 		this->ram.setMemory(address, value);
@@ -235,12 +249,6 @@ void CPU::daa() {
 		resetFlag('C');
 	}
 }
-
-//----------------------------------------------------------------------------------------------
-// split a 16-bit number in 2 x 8-bit numbers to save to memory
-#define LOW_BYTE(x)        (x & 0xff)
-#define HIGH_BYTE(x)       ((x >> 8) & 0xff)
-//----------------------------------------------------------------------------------------------
 
 void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
 	Byte firstHalf, secondHalf;
@@ -380,31 +388,13 @@ Byte CPU::add(Byte a, Byte b, char type) {
 	return retval;
 }
 
-unsigned short signed8to16(Byte n) {
-	unsigned short retval = n & 0b01111111;;
-
-	// check if minus or plus.
-	if ((n & 0b10000000) == 0b10000000) { // minus
-		retval |= 0x8000;
-	} else { // plus
-		retval &= 0x7fff;
-	}
-
-	return retval;
-}
-
-unsigned short CPU::add16bit(unsigned short a, unsigned short b, char type) {
+unsigned short CPU::add16bit(unsigned short a, unsigned short b) {
 	unsigned short retval;
 	unsigned int sum;
 
-	if (type == 'u') { //unsigned
-		retval = a + b;
-		sum = (unsigned short)a + (unsigned short)b;
-	} else if (type == 's') { //signed
-		retval = a + (signed char)b;
-		sum = (unsigned short)a + (signed short)b;
-	}
-
+	retval = a + b;
+	sum = (unsigned short)a + (unsigned short)b;
+	
 	// Z is set if result is zero, else reset
 	if (retval == (unsigned short)0x0000) {
 		setFlag('Z');
@@ -430,6 +420,40 @@ unsigned short CPU::add16bit(unsigned short a, unsigned short b, char type) {
 	}
 
 	return retval;
+}
+
+unsigned short CPU::add16bitSign(unsigned short a, Byte b) {
+	signed char n = (signed char)b;
+	unsigned short retval;
+	retval = a + n;
+
+	resetFlag('Z');
+	resetFlag('N');
+
+	if ((a ^ n ^ retval) & 0x1000) {
+		setFlag('H');
+	} else {
+		resetFlag('H');
+	}
+
+	if (n >= 0) {
+		if (a > retval) {
+			setFlag('C');
+		} else {
+			resetFlag('C');
+		}
+	} else {
+		if (a < retval) {
+			setFlag('C');
+		} else {
+			resetFlag('C');
+		}
+	}
+	return retval;
+}
+
+unsigned short CPU::add16bitAdrSign(unsigned short a, Byte b) {
+	return (unsigned short)(a + (short)((signed char)b));
 }
 
 Byte CPU::adc(Byte a, Byte b) {
@@ -686,7 +710,7 @@ void CPU::executeInstruction(Byte opcode) {
     switch((int)opcode) {
         case  0x0: // NOP           no operation.
             break;
-        case  0x1: // LD (BC), nn   load 16-bit immediate into BC.
+        case  0x1: // LD BC, nn   load 16-bit immediate into BC.
 			this->registers.setBC(load16bit());
             break;
         case  0x2: // LD (BC), A    saves A to address pointed by BC.
@@ -711,7 +735,7 @@ void CPU::executeInstruction(Byte opcode) {
 			save16bitToAddress(load16bit(), this->registers.getSP());
             break;
         case  0x9: // ADD HL, BC    add 16-bit BC to HL.
-            this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getBC(), 'u'));
+            this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getBC()));
             break;
         case  0xA: // LD A, (BC)    load A from address pointed by BC.  
             this->registers.setA(ReadByte(this->registers.getBC()));
@@ -760,7 +784,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
             break;
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
-			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE(), 'u'));
+			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE()));
             break;
         case 0x1A: // LD A, (DE)    load A from address pointed to by DE.
             this->registers.setA(ReadByte(this->registers.getDE()));
@@ -782,7 +806,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x20: // JR NZ, n      relative jump by signed immediate if last result was not zero.
 			jumpRelAddress = load8bit();
-			if ((this->registers.getF() & 0b10000000) == 0x00) {
+			if (!getFlag('Z')) {
 				this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
 			}
             break;
@@ -810,12 +834,12 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
 			jumpRelAddress = load8bit();
-			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
-				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
+			if (!getFlag('Z')) {
+				this->registers.setPC(add16bitAdrSign(this->registers.getPC(), jumpRelAddress));
 			}
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
-			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getHL(), 'u'));
+			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getHL()));
             break;
         case 0x2A: // LDI A, (HL)   load A from address pointed to by HL, and increment HL.
 			this->registers.setA(ReadByte(this->registers.getHL()));
@@ -838,8 +862,8 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x30: // JR NC, n      relative jump by signed immediate if last result caused no carry.
 			jumpRelAddress = load8bit();
-			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
-				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
+			if (!getFlag('Z')) {
+				this->registers.setPC(add16bitAdrSign(this->registers.getPC(), jumpRelAddress));
 			}
             break;
         case 0x31: // LD SP, nn     load 16-bit immediate into SP.
@@ -866,12 +890,12 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x38: // JR C, n       relative jump by signed immediate if last result caused carry.
 			jumpRelAddress = load8bit();
-			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
-				this->registers.setPC(add16bit(this->registers.getPC(), signed8to16(jumpRelAddress), 's'));
+			if (getFlag('C')) {
+				this->registers.setPC(add16bitAdrSign(this->registers.getPC(), jumpRelAddress));
 			}
             break;
         case 0x39: // ADD HL, SP    add 16-bit SP to HL.
-            this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getSP(), 'u'));
+            this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getSP()));
             break;
         case 0x3A: // LDD A, (HL)   load A from address pointed to by HL, and decrement HL.
 			this->registers.setA(ReadByte(this->registers.getHL()));
@@ -890,10 +914,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(load8bit());
             break;
         case 0x3F: // CCF           complement carry flag.
-			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
-				this->registers.setF(this->registers.getF() & 0b11101111);
+			if (getFlag('C')) {
+				resetFlag('C');
 			} else {
-				this->registers.setF(this->registers.getF() | 0b00010000);
+				setFlag('C');
 			}
             break;
         case 0x40: // LD B, B       copy B to B.
@@ -1281,7 +1305,7 @@ void CPU::executeInstruction(Byte opcode) {
             cp(this->registers.getA(), this->registers.getA());
             break;
         case 0xC0: // RET NZ        return if last result was not zero.
-			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
+			if (!getFlag('Z')) {
 				this->registers.setPC(pop16bit());
 			}
             break;
@@ -1290,7 +1314,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xC2: // JP NZ, nn     absolute jump to 16-bit location if last result was not zero.
 			jumpAddress = load16bit();
-			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
+			if (!getFlag('Z')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = 0x01;
 			}
@@ -1300,7 +1324,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jump = 0x01;
             break;
         case 0xC4: // CALL NZ, nn   call routine at 16-bit location if last result was not zero.
-			if ((this->registers.getF() & 0b10000000) != 0b10000000) {
+			if (!getFlag('Z')) {
 				call(load16bit());
 			}
             break;
@@ -1315,7 +1339,7 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0000);
             break;
         case 0xC8: // RET Z         return if last result was zero.
-			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
+			if (getFlag('Z')) {
 				this->registers.setPC(pop16bit());
 			}
             break;
@@ -1324,7 +1348,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xCA: // JP Z, nn      absolute jump to 16-bit location if last result was zero.
 			jumpAddress = load16bit();
-			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
+			if (getFlag('Z')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = 0x01;
 			}
@@ -1333,7 +1357,7 @@ void CPU::executeInstruction(Byte opcode) {
 			executeExtendedOpcodes();
             break;
         case 0xCC: // CALL Z, nn    call routine at 16-bit location if last result was zero.
-			if ((this->registers.getF() & 0b10000000) == 0b10000000) {
+			if (getFlag('Z')) {
 				call(load16bit());
 			}
             break;
@@ -1348,7 +1372,7 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0008);
             break;
         case 0xD0: // RET NC        return if last result caused no carry.
-			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+			if (!getFlag('C')) {
 				this->registers.setPC(pop16bit());
 			}
             break;
@@ -1357,7 +1381,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xD2: // JP NC, nn     absolute jump to 16-bit location if last result caused no carry.
 			jumpAddress = load16bit();
-			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+			if (!getFlag('C')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = 0x01;
 			}
@@ -1365,7 +1389,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xD3: // XX            operation removed in this CPU.
             break;
         case 0xD4: // CALL C, nn   call routine at 16-bit location if last result caused carry.
-			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
+			if (getFlag('C')) {
 				call(load16bit());
 			}
             break;
@@ -1380,7 +1404,7 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0010);
             break;
         case 0xD8: // RET C         return if last result caused carry.
-			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
+			if (getFlag('C')) {
 				this->registers.setPC(pop16bit());
 			}
             break;
@@ -1390,7 +1414,7 @@ void CPU::executeInstruction(Byte opcode) {
             break; 
         case 0xDA: // JP C, nn      absolute jump to 16-bit location if last result caused carry.
 			jumpAddress = load16bit();
-			if ((this->registers.getF() & 0b00010000) == 0b00010000) {
+			if (getFlag('C')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = 0x01;
 			}
@@ -1398,7 +1422,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xDB: // XX            operation removed in this CPU. 
             break;
         case 0xDC: // CALL C, nn    call routine at 16-bit location if last result caused no carry.
-			if ((this->registers.getF() & 0b00010000) != 0b00010000) {
+			if (!getFlag('C')) {
 				call(load16bit());
 			}
             break;
@@ -1435,7 +1459,7 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0020);
             break;
         case 0xE8: // ADD SP, d     add signed 8-bit immediate to SP.
-			this->registers.setSP(add16bit(this->registers.getSP(), signed8to16(load8bit()), 's'));
+			this->registers.setSP(add16bitSign(this->registers.getSP(), load8bit()));
             break;
         case 0xE9: // JP (HL)       jump to 16-bit value pointed by HL.
 			this->registers.setPC(this->registers.getHL());
@@ -1482,7 +1506,7 @@ void CPU::executeInstruction(Byte opcode) {
 			call(0x0030);
             break;
         case 0xF8: // LDHL SP, d    add signed 8-bit immediate to SP and save result in HL.
-			this->registers.setHL(add16bit(this->registers.getSP(), signed8to16(load8bit()), 's'));
+			this->registers.setHL(add16bitSign(this->registers.getSP(), load8bit()));
             break;
         case 0xF9: // LD SP, HL     copy HL to SP.
 			this->registers.setSP(this->registers.getHL());
@@ -1555,15 +1579,9 @@ Byte CPU::sra(Byte value) {
 	return retval;
 }
 
-//----------------------------------------------------------------------------------------------
-// split an 8-bit number in 2 x 4 bit
-#define LOWER_BYTE(x)        (x & 0x00001111)
-#define UPPER_BYTE(x)       ((x >> 4) & 0x00001111)
-//----------------------------------------------------------------------------------------------
-
 Byte CPU::swap(Byte value) {
-	Byte upperbyte = UPPER_BYTE(value);
-	Byte lowerbyte = LOWER_BYTE(value);
+	Byte upperbyte = UPPER_HALFBYTE(value);
+	Byte lowerbyte = LOWER_HALFBYTE(value);
 	Byte retval = (lowerbyte << 4) | upperbyte;
 
 	// Z is set if result is zero, else reset.

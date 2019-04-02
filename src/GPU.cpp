@@ -4,7 +4,7 @@
 #include "../include/GPU.hpp"
 #include "../include/CPU.hpp"
 
-#include "../lib/SDL2/include/SDL2/SDL.h"
+#include <SDL2/SDL.h>
 #include <iostream>
 #include <iomanip>
 using namespace std;
@@ -56,6 +56,9 @@ bool GPU::IsLCDEnabled() const {
 
 void GPU::SetLCDStatus() {
 	Byte status = this->cpuLink->ReadByte(0xFF41);
+	Byte currentline = this->cpuLink->ReadByte(0xFF44);
+	Byte currentmode = status & 0x03, mode = 0x00;
+	bool reqInt = false;
 
 	if (!IsLCDEnabled()) {
 		ScanLineCounter = 456;
@@ -65,11 +68,6 @@ void GPU::SetLCDStatus() {
 		this->cpuLink->WriteByte(0xFF41, status);
 		return;
 	} 
-
-	Byte currentline = this->cpuLink->ReadByte(0xFF44);
-	Byte currentmode = status & 0x03;
-	Byte mode = 0x00;
-	bool reqInt = false;
 	
 	if (currentline >= Y_RES) {
 		mode = 1;
@@ -154,21 +152,21 @@ void GPU::TestTiles() {
 Byte GPU::getColor(Byte colorNum, unsigned short address) {
 	Byte retval;
 	Byte palette = this->cpuLink->ReadByte(address);
-	int high = 0, low = 0;
+	int high = 0, low = 0, color;
 
 	if (colorNum >= 0 && colorNum <= 3) {
 		high = colorNum * 2 + 1;
 		low = colorNum * 2 + 0;
 	}
 
-	int color = ((int) testBit(palette, high) << 1) | (int) testBit(palette, low);
+	color = ((int) testBit(palette, high) << 1) | (int) testBit(palette, low);
 
 	switch (color) {
 		case 0: retval = 0; break; // WHITE = 0
 		case 1: retval = 1; break; // LIGHT_GREY = 1
 		case 2: retval = 2; break; // DARK_GREY = 2
 		case 3: retval = 3; break; // BLACK = 3
-		default: retval = NULL;  break;
+		default: retval = 0;  break;
 	}
 
 	return retval;
@@ -200,15 +198,19 @@ void GPU::RenderNintendoLogo() {
 }
 
 void GPU::RenderTiles(Byte lcdControl) {
+	Byte windowY, windowX, scrollY, scrollX, yPos, xPos, color;
+	Byte line, data1, data2;
+	signed short tileNum;
 	unsigned short tileData = 0, backgroundMemory = 0;
+	unsigned short tileCol, tileAddress, tileLocation, tileRow;
 	bool noSign = true, usingWindow = false;
+	int colorBit, colorNum;
 
-	Byte scrollY = this->cpuLink->ReadByte(0xFF42);
-	Byte scrollX = this->cpuLink->ReadByte(0xFF43);
-	Byte windowY = this->cpuLink->ReadByte(0xFF4A);
-	Byte windowX = this->cpuLink->ReadByte(0xFF4B) - 7;
-
-	Byte yPos = 0, xPos;
+	scrollY = this->cpuLink->ReadByte(0xFF42);
+	scrollX = this->cpuLink->ReadByte(0xFF43);
+	windowY = this->cpuLink->ReadByte(0xFF4A);
+	windowX = this->cpuLink->ReadByte(0xFF4B) - 7;
+	yPos = 0;
 
 	// checks if the window is enabled.
 	if (testBit(lcdControl, 5)) {
@@ -242,20 +244,11 @@ void GPU::RenderTiles(Byte lcdControl) {
 		yPos = this->cpuLink->ReadByte(0xFF44) - windowY;
 	}
 
-	Byte line, data1, data2;
-	unsigned short tileRow = ((Byte)yPos / 8) * 32;
-	unsigned short tileCol, tileAddress, tileLocation;
-	signed short tileNum;
-	int colorBit, colorNum;
+	tileRow = ((Byte)yPos / 8) * 32;
 
 	for (int i = 0; i < X_RES; i++) {
-		xPos = i + scrollX;
 
-		if (usingWindow) {
-			if (i >= windowX) {
-				xPos = i - windowX;
-			}
-		}
+		xPos = (usingWindow && i >= windowX) ? i - windowX : i + scrollX;
 
 		tileCol = xPos / 8;
 		tileAddress = backgroundMemory + tileRow + tileCol;
@@ -272,19 +265,11 @@ void GPU::RenderTiles(Byte lcdControl) {
 		line = (yPos % 8) * 2;
 		data1 = this->cpuLink->ReadByte(tileLocation + line);
 		data2 = this->cpuLink->ReadByte(tileLocation + line + 1);
-		//cout << HEX << data1 << HEX << data2;
 
 		colorBit = -((xPos % 8) - 7);
 		colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 
-		Byte color = getColor(colorNum, 0xFF47);
-
-		/*
-		cout << " " << "color: " << HEX << (int)color;
-		cout << " " << "colorBit: " << HEX << (int)colorBit;
-		cout << " " << "colorNum: " << HEX << (int)colorNum;
-		cout << " " << "(0xFF47): " << HEX << (int)this->cpuLink->ReadByte(0xFF47);
-		*/
+		color = getColor(colorNum, 0xFF47);
 
 		int y = this->cpuLink->ReadByte(0xFF44);
 
@@ -293,78 +278,56 @@ void GPU::RenderTiles(Byte lcdControl) {
 		} else {
 			display[y][i] = color;
 		}
-		//cout << endl;
 	}
 
 	return;
 }
 
 void GPU::RenderSprites(Byte lcdControl) {
+	Byte index, yPos, xPos, tileLocation, attributes;
+	Byte data1, data2, color;
+	bool flipXaxis, flipYaxis, use8x16tiles;
+	int scanline, ysize, line, colorBit, pixel, colorNum;
+	unsigned short address, colorAddress;
+	const int maxSprites = 40, bytesPerSprite = 4;
+
 	if (testBit(lcdControl, 1)) {
-		bool use8x16tiles = false;
+		use8x16tiles = false;
 		if (testBit(lcdControl, 2)) {
 			use8x16tiles = true;
 		}
 
-		const int maxSprites = 40, bytesPerSprite = 4;
 		for (int sprite = 0; sprite < maxSprites; sprite++) {
-			Byte index = sprite * bytesPerSprite;
-			Byte yPos = this->cpuLink->ReadByte(ADDR_OAM + index + 0) - 16;
-			Byte xPos = this->cpuLink->ReadByte(ADDR_OAM + index + 1) - 8;
-			Byte tileLocation = this->cpuLink->ReadByte(ADDR_OAM + index + 2);
-			Byte attributes = this->cpuLink->ReadByte(ADDR_OAM + index + 3);
-
-			bool flipXaxis = testBit(attributes, 5);
-			bool flipYaxis = testBit(attributes, 6);
-
-			int scanline = this->cpuLink->ReadByte(0xFF44);
-
-			int ysize;
-			if (use8x16tiles) {
-				ysize = 16;
-			}
-			else {
-				ysize = 8;
-			}
+			index					= sprite * bytesPerSprite;
+			yPos					= this->cpuLink->ReadByte(ADDR_OAM + index + 0) - 16;
+			xPos					= this->cpuLink->ReadByte(ADDR_OAM + index + 1) - 8;
+			tileLocation			= this->cpuLink->ReadByte(ADDR_OAM + index + 2);
+			attributes				= this->cpuLink->ReadByte(ADDR_OAM + index + 3);
+			flipXaxis				= testBit(attributes, 5);
+			flipYaxis				= testBit(attributes, 6);
+			scanline				= this->cpuLink->ReadByte(0xFF44);
+			ysize					= use8x16tiles ? 16 : 8;
 
 			if ((scanline >= yPos) && (scanline < (yPos + ysize))) {
-				int line = scanline - yPos;
-
-				if (flipYaxis) {
-					line = -(line - ysize);
-				}
-
-				line *= 2;
-
-				unsigned short address = (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
-				Byte data1 = this->cpuLink->ReadByte(address);
-				Byte data2 = this->cpuLink->ReadByte(address + 1);
+				line				= flipYaxis ? (ysize - line) * 2 : (scanline - yPos) * 2;
+				address				= (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
+				data1				= this->cpuLink->ReadByte(address);
+				data2				= this->cpuLink->ReadByte(address + 1);
 
 				for (int tilePixel = 7; tilePixel >= 0; tilePixel--) {
-					int colorBit = tilePixel;
+					colorBit		= flipXaxis ? 7 - tilePixel : tilePixel;
+					colorNum		= ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
+					colorAddress	= testBit(attributes, 4) ? 0xFF49 : 0xFF48;
+					color			= getColor(colorNum, colorAddress);
 
-					if (flipXaxis) {
-						colorBit = -(colorBit - 7);
-					}
-
-					int colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
-
-					unsigned short colorAddress = testBit(attributes, 4) ? 0xFF49 : 0xFF48;
-					int color = getColor(colorNum, colorAddress);
-
-					if (color == 0) { // transparant
+					if (!color) { // transparant
 						continue;
 					}
 
-					int xPixel = 0 - tilePixel + 7;
-					int pixel = xPixel + xPos;
+					pixel = 7 - tilePixel + xPos;
 
 					if ((scanline < 0) || (scanline > X_RES - 1) || (pixel < 0) || (pixel > Y_RES - 1)) {
 						continue;
-					}
-
-					if (testBit(attributes, 7)) {
-
 					}
 
 					display[scanline][pixel] = color;
@@ -395,17 +358,21 @@ void GPU::renderDisplay(Byte currentline) {
 
 	for (int i = 0; i < X_RES; i++) {
 		switch (display[currentline][i]) {
-		case 0:
-			SDL_SetRenderDrawColor(renderer, white);
-			break;
-		case 1: SDL_SetRenderDrawColor(renderer, light_grey);
-			break;
-		case 2: SDL_SetRenderDrawColor(renderer, dark_grey);
-			break;
-		case 3: SDL_SetRenderDrawColor(renderer, black);
-			break;
-		default: break;
+			case 0:
+				SDL_SetRenderDrawColor(renderer, white);
+				break;
+			case 1: 
+				SDL_SetRenderDrawColor(renderer, light_grey);
+				break;
+			case 2: 
+				SDL_SetRenderDrawColor(renderer, dark_grey);
+				break;
+			case 3: 
+				SDL_SetRenderDrawColor(renderer, black);
+				break;
+			default: break;
 		}
+
 		SDL_RenderDrawPoint(renderer, i, currentline);
 	}
 
@@ -422,15 +389,9 @@ void GPU::UpdateGraphics(int cycles) {
 
 		if (ScanLineCounter <= 0) {
 			this->cpuLink->WriteByte(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
-			//this->cpuLink->WriteByte(0xFF40, this->cpuLink->ReadByte(0xFF40) + 1);
 
 			ScanLineCounter = 456;
-
 			currentline = this->cpuLink->ReadByte(0xFF44);
-			//cout << "currentline: " << (int)currentline << endl;
-
-			// error: currentline no value;
-			// cout << "currentline: " << (int) currentline << endl;
 
 			if (currentline == Y_RES) {
 				cpuLink->RequestInterupt(0);
@@ -441,12 +402,9 @@ void GPU::UpdateGraphics(int cycles) {
 				renderDisplay(currentline);
 			}
 		}
-
-		return;
-	} else {
-		//cout << "lcd is disabled " << endl;
-		return;
 	}
+
+	return;
 }
 
 void GPU::render() {
