@@ -42,27 +42,34 @@ ROM::ROM() {
     
 }
 
+ROM::~ROM() {
+	delete[] rom;
+}
+
 void ROM::load(class RAM* ram) {
 	char* buffer;
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
+
 	if (gbfile.is_open()) {
+		gbfile.seekg(0, ios::end);
+		size = gbfile.tellg();
+		cout << "file length: " << HEX16 << size << endl;
+
 		gbfile.seekg(0, ios::beg);
-		size = ADDR_VRAM_T_S;
-		buffer = new char[size];
-		gbfile.read(buffer, size);
-		for (int i = 0; i < size; i++) {
-			ram->setMemory(i, (Byte)buffer[i]);
+		this->rom = new char[size];
+		gbfile.read(rom, size);
+		for (unsigned short i = 0x0100; i < ADDR_VRAM_T_S; i++) {
+			ram->setMemory(i, (Byte)rom[i]);
 		}
 		gbfile.close();
-		delete[] buffer;
 	} else {
 		cout << "unable to open file" << endl;
 	}
 
-	//cpBootstrap(ram);
+	cpBootstrap(ram);
 }
 
 string ROM::getGameName(class RAM* ram) {

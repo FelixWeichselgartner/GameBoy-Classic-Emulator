@@ -186,7 +186,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 			}
 
-			if (this->cpu.registers.getPC() == 0x0010) {
+			if (this->cpu.registers.getPC() == 0x0100) {
 				cout << checkInfiniteLoop;
 				exit(1);
 			}
@@ -196,8 +196,9 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			}
 
 			PrintRegistersFile(logFile);
-			if (checkInfiniteLoop > 102144) { // 110000 112500
+			if (checkInfiniteLoop > 10000) {
 				cout << "hard key enabled" << endl;
+				cout << HEX << (int)this->cpu.ram.getMemory(0xff44) << endl;
 				keyHardEn = true;
 			}
 
@@ -451,7 +452,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

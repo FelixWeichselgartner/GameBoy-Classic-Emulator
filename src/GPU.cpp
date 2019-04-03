@@ -309,7 +309,7 @@ void GPU::RenderSprites(Byte lcdControl) {
 			ysize					= use8x16tiles ? 16 : 8;
 
 			if ((scanline >= yPos) && (scanline < (yPos + ysize))) {
-				line				= flipYaxis ? (ysize - line) * 2 : (scanline - yPos) * 2;
+				line				= flipYaxis ? (ysize - (scanline - yPos)) * 2 : (scanline - yPos) * 2;
 				address				= (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
 				data1				= this->cpuLink->ReadByte(address);
 				data2				= this->cpuLink->ReadByte(address + 1);

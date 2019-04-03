@@ -61,9 +61,9 @@ bool testBit(Byte value, int bit) {
 }
 
 Byte resetBit(Byte value, int bit) {
-	Byte resetter = 0x01 << bit;
+	Byte mask = 0x01 << bit;
 
-	return value & !resetter;
+	return value & (~mask);
 }
 
 Byte setBit(Byte value, int bit) {

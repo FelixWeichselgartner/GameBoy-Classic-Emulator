@@ -12,9 +12,12 @@ class ROM {
 
 private:
 
+	char* rom;
+
 public:
 
     ROM();
+	~ROM();
 
 	void load(class RAM *);
 
