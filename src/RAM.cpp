@@ -8,7 +8,7 @@ RAM::RAM() {
 		this->memory[i] = 0;
 	}
 
-	/*
+	
 	memory[0xFF05] = 0x00;
 	memory[0xFF06] = 0x00;
 	memory[0xFF07] = 0x00;
@@ -40,7 +40,7 @@ RAM::RAM() {
 	memory[0xFF4A] = 0x00;
 	memory[0xFF4B] = 0x00;
 	memory[0xFFFF] = 0x00;
-	*/
+	
 }
 
 void RAM::setMemory(unsigned short address, Byte value) {

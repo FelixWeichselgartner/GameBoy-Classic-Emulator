@@ -34,8 +34,14 @@ using namespace std;
 
 CPU::CPU() {
 	this->running = 0x01;
-	rom.load(&ram);
+	this->jump = 0x00;
+	this->enableInterupts = 0x00;
 	this->TimerCounter = 1024;
+	this->cycles = 0;
+	this->DividerRegister = 0;
+	this->gb_halt = this->gb_stop = 0x00;
+
+	rom.load(&ram);
 }
 
 Byte CPU::getRunning() {
@@ -130,7 +136,7 @@ Byte CPU::ReadByte(unsigned short address) const {
 }
 
 void CPU::WriteByte(unsigned short address, Byte value) {
-	// address > 0x0800:				can't override rom
+	// address > 0x0800:			can't override rom
 	// address 0xE000 to 0xFE00		writing in ECHO ram also writes in ram
 	// address 0xFEA0 to 0xFEFF		restricted area
 	// address 0xFF46:				do dma transfer	
@@ -143,10 +149,12 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 		this->ram.setMemory(address - 0x2000, value);
 	} else if ((address >= ADDR_UNUSABLE) && (address < (ADDR_IO - 1))) {
 		return;
-	} else if (address == 0xFF46) {
-		DoDMATransfer(value);
 	} else if (address == 0xFF04) {
 		this->ram.setMemory(address, 0x00);
+	} else if (address == 0xFF44) {
+		this->ram.setMemory(address, 0x00);
+	} else if (address == 0xFF46) {
+		DoDMATransfer(value);
 	} else if (address == ADDR_TMC) {
 		Byte currentFrequency = getClockFrequency();
 		this->ram.setMemory(address, value);
@@ -357,12 +365,14 @@ Byte CPU::add(Byte a, Byte b, char type) {
 
 	if (type == 'u') { //unsigned
 		retval = a + b;
-	}else if (type == 's') { //signed
+	} else if (type == 's') { //signed
 		retval = a + (signed char)b;
+	} else {
+		exit(1);
 	}
 
 	// Z is set if result is zero, else reset
-    if (retval == (Byte) 0x00) {
+    if (retval == 0x00) {
 		setFlag('Z');
 	} else {
 		resetFlag('Z');
@@ -2430,42 +2440,6 @@ int CPUstepCount = 0;
 
 int CPU::CPUstep() {
 	this->cycles = 0;
-
-	if (this->registers.getPC() == 0x0100) {
-		cout << "ROM emulation started" << endl;
-		rom.print(&ram, 0x8000, 0x8030);
-	} else if (this->registers.getPC() == 0x0098) {
-		cout << "==== Graphics routine started ====" << endl;
-	} else if (this->registers.getPC() == 0x004a) {
-		cout << "==== Setup background tilemap ====" << endl;
-	} else {
-		//cout << "current adress: " << HEX << this->registers.getPC() << endl;
-	}
-
-	/*
-	if (CPUstepCount > 10000) {
-		rom.print(&ram, 0x8000, 0x9FFF);
-	}
-	*/
-
-	
-	/*
-	if (CPUstepCount > 10000) {
-		cout << "current adress: " << HEX << this->registers.getPC() << endl;
-		//cout << "C:  " << HEX << (int) this->registers.getC()  << endl;
-		//cout << "SP: " << HEX << this->registers.getSP() << endl;
-		cout << "HL: " << HEX << this->registers.getHL() << endl;
-		cout << "BC: " << hex << setw(4) << setfill('0') << this->registers.getBC();
-		cout << " A: " << (int)this->registers.getA();
-		cout << " C: " << (int)this->registers.getC();
-		cout << " L: " << (int)this->registers.getL();
-		cout << "   Zero Flag: " << boolalpha << ((this->registers.getF() & 0b10000000) != 0) << endl;
-		
-		//rom.print(&ram, ADDR_VRAM_T_S, ADDR_EXT_RAM - 1);
-	}
-	*/
-	
-
 	CPUstepCount++;
 
 	executeInstruction(ReadByte(this->registers.getPC()));

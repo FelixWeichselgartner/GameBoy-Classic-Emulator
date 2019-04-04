@@ -8,8 +8,6 @@
 #include "ROM.hpp"
 
 typedef unsigned char Byte;
-
-#define MAXCYCLES 69905
 //----------------------------------------------------------------------------------------------
 
 bool testBit(Byte, int);
@@ -23,10 +21,14 @@ private:
 
 	Byte running, gb_stop, gb_halt;
 	Byte jump, enableInterupts;
-	int clockSpeed = 4194304;
 	int cycles, TimerCounter, DividerRegister;
 
 public:
+
+	// constants.
+	const int clockSpeed = 4194304;
+	const float fps = (float)59.7;
+	const int MAXCYCLES = (int)(clockSpeed / fps);
 
     // general purpose registers + stack pointer & program counter.
     class Registers registers;

@@ -42,18 +42,18 @@ Bit 0 - BG Display(for CGB see below) (0 = Off, 1 = On)
 // format sdl2:
 // red, green, blue, alpha
 
-// black
-#define BLACK 0xFF000000
-#define black 0x00, 0x00, 0x00, 0xFF
-// dark gray
-#define DARK_GREY 0xFF555555
-#define dark_grey 0x55, 0x55, 0x55, 0xFF
-// light gray
-#define LIGHT_GREY 0xFFAAAAAA
-#define light_grey 0xAA, 0xAA, 0xAA, 0xFF
 // white
-#define WHITE 0xFFFFFFFF
+#define WHITE 0
 #define white 0xFF, 0xFF, 0xFF, 0xFF
+// light gray
+#define LIGHT_GREY 1
+#define light_grey 0xAA, 0xAA, 0xAA, 0xFF
+// dark gray
+#define DARK_GREY 2
+#define dark_grey 0x55, 0x55, 0x55, 0xFF
+// black
+#define BLACK 3
+#define black 0x00, 0x00, 0x00, 0xFF
 //----------------------------------------------------------------------------------------------
 
 
@@ -72,7 +72,7 @@ private:
 	const int pixelsPerTile = 8;
 	const int scaleWidth = 4, scaleHeight = 4;
 	const int windowWidth = X_RES * scaleWidth, windowHeight = Y_RES * scaleHeight;
-	Byte display[Y_RES][X_RES];
+	Byte display[Y_RES][X_RES] = { 0 };
 
 public:
 

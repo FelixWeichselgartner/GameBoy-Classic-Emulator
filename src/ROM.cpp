@@ -39,7 +39,8 @@ void cpBootstrap(class RAM *ram) {
 }
 
 ROM::ROM() {
-    
+	this->rom = NULL;
+	this->RomSize = 0;
 }
 
 ROM::~ROM() {
@@ -47,7 +48,6 @@ ROM::~ROM() {
 }
 
 void ROM::load(class RAM* ram) {
-	char* buffer;
 	streampos size;
 
 	ifstream gbfile;
@@ -59,10 +59,15 @@ void ROM::load(class RAM* ram) {
 		cout << "file length: " << HEX16 << size << endl;
 
 		gbfile.seekg(0, ios::beg);
-		this->rom = new char[size];
-		gbfile.read(rom, size);
-		for (unsigned short i = 0x0100; i < ADDR_VRAM_T_S; i++) {
-			ram->setMemory(i, (Byte)rom[i]);
+		RomSize = (int)size;
+		this->rom = new char[RomSize];
+		if (this->rom != NULL) {
+			gbfile.read(rom, size);
+			for (unsigned short i = 0x0000; i < ADDR_VRAM_T_S; i++) {
+				ram->setMemory(i, (Byte)rom[i]);
+			}
+		} else {
+			cout << "unable to reserve heap memory" << endl;
 		}
 		gbfile.close();
 	} else {
@@ -73,9 +78,9 @@ void ROM::load(class RAM* ram) {
 }
 
 string ROM::getGameName(class RAM* ram) {
-	string name;
+	string name = "";
 	for (int n = 0x134; n < 0x0142; n++) {
-		name = name + (char) ram->getMemory(n);
+		name += (char) ram->getMemory(n);
 	}
 	return name;
 }

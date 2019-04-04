@@ -13,6 +13,7 @@ class ROM {
 private:
 
 	char* rom;
+	int RomSize;
 
 public:
 
