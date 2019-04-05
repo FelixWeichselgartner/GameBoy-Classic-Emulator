@@ -53,11 +53,13 @@ ROM::~ROM() {
 	delete[] rom;
 }
 
-void ROM::load(class RAM* ram) {
+void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+
+	unsigned short StartCopyAddress = enableBootstrap ? 0x0100 : 0x0000;
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
@@ -69,7 +71,7 @@ void ROM::load(class RAM* ram) {
 		this->rom = new char[RomSize];
 		if (this->rom != NULL) {
 			gbfile.read(rom, size);
-			for (unsigned short i = 0x0100; i < ADDR_VRAM_T_S; i++) {
+			for (unsigned short i = StartCopyAddress; i < ADDR_VRAM_T_S; i++) {
 				ram->setMemory(i, (Byte)rom[i]);
 			}
 		} else {
@@ -80,7 +82,11 @@ void ROM::load(class RAM* ram) {
 		cout << "unable to open file" << endl;
 	}
 
-	cpBootstrap(ram);
+	if (enableBootstrap) {
+		cpBootstrap(ram);
+	}
+
+	return;
 }
 
 string ROM::getGameName(class RAM* ram) {

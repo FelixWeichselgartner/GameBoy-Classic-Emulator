@@ -21,6 +21,7 @@ private:
 
 	Byte running, gb_stop, gb_halt;
 	Byte jump, enableInterupts;
+	bool enableBootstrap;
 	int cycles, TimerCounter, DividerRegister;
 
 public:
@@ -45,6 +46,11 @@ public:
 
 	// getter for clock speed.
 	int getClockSpeed() const;
+
+	// setter and getter for enableBootstrap.
+	bool getEnableBootstrap() const;
+	void setEnableBootstrap(bool);
+
 
 	Byte getFlag(char);
 	void setFlag(char);

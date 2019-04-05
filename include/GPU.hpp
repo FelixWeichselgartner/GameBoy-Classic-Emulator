@@ -91,11 +91,6 @@ public:
 
 	Byte getColor(Byte, unsigned short);
 
-
-	int getcolor(int, uint16_t);
-	void render_tiles(uint8_t);
-
-
 	void RenderNintendoLogo();
 	void RenderTiles(Byte);
 	void RenderSprites(Byte);

@@ -189,15 +189,7 @@ void GPU::RenderNintendoLogo() {
 	return;
 }
 
-bool enable = false;
-
 void GPU::RenderTiles(Byte lcdControl) {
-
-	if (false) {
-		render_tiles(lcdControl);
-		return;
-	}
-
 	Byte windowY, windowX, scrollY, scrollX, yPos, xPos, color;
 	Byte line, data1, data2;
 	signed short tileNum;
@@ -211,8 +203,6 @@ void GPU::RenderTiles(Byte lcdControl) {
 	windowY = this->cpuLink->ReadByte(0xFF4A);
 	windowX = this->cpuLink->ReadByte(0xFF4B) - 7;
 	yPos = 0;
-
-	enable = false;
 
 	// checks if the window is enabled.
 	usingWindow = (testBit(lcdControl, 5) && (windowY <= this->cpuLink->ReadByte(0xFF44))) ? true : false;
@@ -238,8 +228,6 @@ void GPU::RenderTiles(Byte lcdControl) {
 
 		xPos = (usingWindow && i >= windowX) ? i - windowX : i + scrollX;
 		tileAddress = backgroundMemory + tileRow + xPos / 8;
-		
-		//cout << tileAddress << endl;
 
 		if (noSign) {
 			tileNum = (Byte)this->cpuLink->ReadByte(tileAddress);
@@ -252,36 +240,13 @@ void GPU::RenderTiles(Byte lcdControl) {
 		line = (yPos % 8) * 2;
 		data1 = this->cpuLink->ReadByte(tileLocation + line);
 		data2 = this->cpuLink->ReadByte(tileLocation + line + 1);
-
-		/*
-		switch (tileLocation) {
-			case 0x8000: break;
-			case 0x8010: cout << "well its not going in here" << endl; break;
-			case 0x8190: cout << "however its going in here" << endl; break;
-		}
-		*/
-
 		colorBit = 7 - (xPos % 8);
 		colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 		color = getColor(colorNum, 0xFF47);
 		y = this->cpuLink->ReadByte(0xFF44);
 
-		if (enable && false) {
-			cout << "@ x: " << i << " -> data1: " << tileLocation + line << " data2: " << tileLocation + line + 1 << " colorBit: " << colorBit << endl;
-			cout << toBinary(colorNum) << endl;
-
-			cpuLink->rom.print(&cpuLink->ram, 0x8000, 0x80FF);
-		}
-
 		if (!((y < 0) || (y > Y_RES - 1) || (i < 0) || (i > X_RES - 1))) {
 			display[y][i] = color;
-			if (color != 0x00) {
-				enable = true;
-				//cout << "tileAddress: " << tileAddress << endl; //9910
-				//cout << "tileNum: " << tileNum << endl;
-				
-				//cout << "y: " << y << " i: " << i << " color: " << HEX << (int)color << endl;
-			}
 		}
 	}
 

@@ -42,8 +42,14 @@ CPU::CPU() {
 	this->cycles = 0;
 	this->DividerRegister = 0;
 	this->gb_halt = this->gb_stop = 0x00;
+	this->enableBootstrap = false;
+	if (enableBootstrap) {
+		this->registers.setPC(0x0000);
+	} else {
+		this->registers.setPC(0x0150);
+	}
 
-	rom.load(&ram);
+	rom.load(&ram, enableBootstrap);
 }
 
 Byte CPU::getRunning() {
@@ -56,6 +62,14 @@ void CPU::setRunning(Byte running) {
 
 int CPU::getClockSpeed() const {
 	return this->clockSpeed;
+}
+
+bool CPU::getEnableBootstrap() const {
+	return this->enableBootstrap;
+}
+
+void CPU::setEnableBootstrap(bool enableBootstrap) {
+	this->enableBootstrap = enableBootstrap;
 }
 
 bool testBit(Byte value, int bit) {
@@ -142,10 +156,6 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	// address 0xE000 to 0xFE00		writing in ECHO ram also writes in ram
 	// address 0xFEA0 to 0xFEFF		restricted area
 	// address 0xFF46:				do dma transfer	
-
-	if (address >= 0x9900 && address <= 0x992f) { //1009
-		cout << "im think im searching for this @ " << HEX16 << this->registers.getPC() << " v: " << HEX << (int)value << " with CPUStepCounter: " << HEX16 << CPUstepCount << endl;
-	}
 
 	if (address < ADDR_VRAM_T_S) {
 		cout << "trying to write to ROM space @ " << HEX16 << this->registers.getPC() << " with CPUStepCounter: " << CPUstepCount << endl;

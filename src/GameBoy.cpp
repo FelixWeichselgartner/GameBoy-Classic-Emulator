@@ -90,7 +90,7 @@ void GameBoy::AdditionTest() {
 }
 
 void GameBoy::RomTest() {
-	this->cpu.rom.load(&this->cpu.ram);
+	this->cpu.rom.load(&this->cpu.ram, false);
 	// Entry point to start of game code
 	this->cpu.rom.print(&this->cpu.ram, 0x0000, 0x014F);
 	// game code starts here
@@ -174,7 +174,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	ofstream logFile;
 	logFile.open("logFile.log");
 
-	char key; bool keyEn = true, keyHardEn = false;
+	char key; bool keyEn = true, keyHardEn = true;
 	char game = 'N'; // 'M' == MINESWEEPER
 
 	cout << "You can quit by pressing 'r'" << endl << endl;
@@ -190,9 +190,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 			}
 
-			if (this->cpu.registers.getPC() == 0x0100) {
-				cout << checkInfiniteLoop;
-				//exit(1);
+			if (this->cpu.registers.getPC() == 0x0100 && cpu.getEnableBootstrap()) {
+				cout << "switch back rom 0x0000 - 0x0100" << endl;
+				this->cpu.rom.dltBootstrap(&cpu.ram);
+				cpu.setEnableBootstrap(false);
 			}
 
 			if (checkInfiniteLoop == 0) {
@@ -200,132 +201,11 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			}
 
 			PrintRegistersFile(logFile);
-			if (checkInfiniteLoop >= 0x1000) { //82
+			if (checkInfiniteLoop >= 1000000) { //82
 				cout << "hard key is enabled" << endl;
 				cout << "counter: " << dec << checkInfiniteLoop << endl;
 				//cout << HEX << (int)this->cpu.ram.getMemory(0xff44) << endl;
 				keyHardEn = true;
-			}
-
-			if (game == 'M') {
-				switch (this->cpu.registers.getPC()) {
-					
-				case 0x06e6:
-					keyEn = false;
-					cout << "[call] @ 0x06e6" << endl;
-					break;
-				case 0x0157:
-					keyEn = true;
-					break;
-				case 0x05fd:
-					keyEn = false;
-					cout << "[call] @ 0x05fd" << endl;
-					break;
-				case 0x015a:
-					keyEn = true; 
-					break;
-				case 0x5879:
-					keyEn = false;
-					cout << "[call] @ 0x5879" << endl;
-					break;
-				case 0x015d:
-					keyEn = true;
-					break;
-				case 0x06ff:
-					if (keyEn) {
-						keyEn = false;
-						cout << "[call] @ 0x06ff" << endl;
-					}
-					break;
-				case 0x0166:
-					keyEn = true;
-					break;
-
-					/*
-				case 0x08ef:
-					keyEn = false;
-					cout << "[call] @ 0x08ef" << endl;
-					break;
-				case 0x4cd4:
-					keyEn = true;
-					break;
-				case 0x0708:
-					keyEn = false;
-					cout << "[call] @ 0x0708" << endl;
-					break;
-				case 0x4cd7:
-					keyEn = true;
-					break;
-				case 0x4d25: 
-					keyEn = true; // true;
-					cout << "[call] @ 0x4d25" << endl;
-					cout << "==== Tiles are being copied here ====" << endl;
-					break;
-				case 0x4cda:
-					keyEn = true;
-					break;
-				case 0x0297:
-					keyEn = false;
-					cout << "[call] @ 0x0297" << endl;
-					break;
-				case 0x4cdd:
-					keyEn = true;
-					break;
-				case 0x02e5:
-					keyEn = false;
-					cout << "[call] @ 0x02e5" << endl;
-					break;
-				case 0x4ce0:
-					keyEn = true;
-					break;
-				case 0x07c0:
-					keyEn = true; //true
-					cout << "[call] @ 0x07c0 -- copying numbers + letters" << endl;
-					// this is not working correctly
-					break;
-				case 0x4d2e:
-					keyEn = true;
-					break;
-				case 0x4d37:
-					keyEn = true;
-					break;
-				case 0x072d:
-					keyEn = false;
-					cout << "[call] @ 0x072d" << endl;
-					break;
-				case 0x4d43:
-					keyEn = true;
-					break;
-				case 0x4d4f:
-					keyEn = true;
-					break;
-				case 0x02f0:
-					keyEn = false;
-					cout << "[call] @ 0x02f0" << endl;
-					break;
-				case 0x4d54:
-					keyEn = true;
-					break;
-
-				case 0x0800:
-					keyEn = true;
-					break;
-				case 0x0865:
-					keyEn = false;
-					cout << "[call] @ 0x0865" << endl;
-					break;
-				case 0x083c:
-					keyEn = true;
-					break;
-					*/
-				case 0x018b: 
-					keyEn = false;
-					cout << "rst 0000" << endl;
-					break;
-				case 0x0040:
-					keyEn = true;
-					break;
-				}
 			}
 
 			if (keyEn || keyHardEn) {
@@ -357,7 +237,6 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			checkInfiniteLoop++;
 		}
 		gpu.render();
-		//delay(delaytime);
 	}
 
 	cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
@@ -428,7 +307,6 @@ void GameBoy::run() {
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
 
-	bool BootstrapActive = true;
 	clock_t starttime;
 
 	while (this->cpu.getRunning()) {
@@ -444,10 +322,10 @@ void GameBoy::run() {
 				}
 			}
 
-			if (this->cpu.registers.getPC() == 0x0100 && BootstrapActive) {
+			if (this->cpu.registers.getPC() == 0x0100 && cpu.getEnableBootstrap()) {
 				cout << "switch back rom 0x0000 - 0x0100" << endl;
 				this->cpu.rom.dltBootstrap(&cpu.ram);
-				BootstrapActive = false;
+				cpu.setEnableBootstrap(false);
 			}
 
 			c = cpu.CPUstep();

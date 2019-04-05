@@ -32,7 +32,7 @@ class RAM {
 
 private:
 
-    Byte memory[65536];
+	Byte memory[65536] = { 0 };
 
 public:
 
