@@ -3,6 +3,7 @@
 #include "../include/RAM.hpp"
 #include "../include/GPU.hpp"
 #include "../include/CPU.hpp"
+#include "../include/format.hpp"
 
 #include <SDL2/SDL.h>
 #include <iostream>
@@ -14,7 +15,7 @@ GPU::GPU(class CPU* cpuLink) {
 	this->cpuLink = cpuLink;
 	this->ramLink = &cpuLink->ram;
 	windowName = this->cpuLink->rom.getGameName(this->ramLink);
-	ScanLineCounter = 456;
+	ScanLineCounter = 0;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		cout << "[Error] SDL coult not be initialised! SDL Error: " << SDL_GetError() << endl;
@@ -150,7 +151,6 @@ void GPU::TestTiles() {
 }
 
 Byte GPU::getColor(Byte colorNum, unsigned short address) {
-	Byte retval;
 	Byte palette = this->cpuLink->ReadByte(address);
 	int high = 0, low = 0, color;
 
@@ -161,15 +161,7 @@ Byte GPU::getColor(Byte colorNum, unsigned short address) {
 
 	color = ((int) testBit(palette, high) << 1) | (int) testBit(palette, low);
 
-	switch (color) {
-		case 0: retval = 0; break; // WHITE = 0
-		case 1: retval = 1; break; // LIGHT_GREY = 1
-		case 2: retval = 2; break; // DARK_GREY = 2
-		case 3: retval = 3; break; // BLACK = 3
-		default: retval = 0;  break;
-	}
-
-	return retval;
+	return color;
 }
 
 void GPU::RenderNintendoLogo() {
@@ -197,7 +189,15 @@ void GPU::RenderNintendoLogo() {
 	return;
 }
 
+bool enable = false;
+
 void GPU::RenderTiles(Byte lcdControl) {
+
+	if (false) {
+		render_tiles(lcdControl);
+		return;
+	}
+
 	Byte windowY, windowX, scrollY, scrollX, yPos, xPos, color;
 	Byte line, data1, data2;
 	signed short tileNum;
@@ -211,6 +211,8 @@ void GPU::RenderTiles(Byte lcdControl) {
 	windowY = this->cpuLink->ReadByte(0xFF4A);
 	windowX = this->cpuLink->ReadByte(0xFF4B) - 7;
 	yPos = 0;
+
+	enable = false;
 
 	// checks if the window is enabled.
 	usingWindow = (testBit(lcdControl, 5) && (windowY <= this->cpuLink->ReadByte(0xFF44))) ? true : false;
@@ -230,32 +232,56 @@ void GPU::RenderTiles(Byte lcdControl) {
 		yPos = scrollY + this->cpuLink->ReadByte(0xFF44);
 	}
 
-	tileRow = ((Byte)yPos / 8) * 32;
+	tileRow = (yPos / 8) * 32;
 
 	for (int i = 0; i < X_RES; i++) {
 
 		xPos = (usingWindow && i >= windowX) ? i - windowX : i + scrollX;
 		tileAddress = backgroundMemory + tileRow + xPos / 8;
-		tileLocation = tileData;
+		
+		//cout << tileAddress << endl;
 
 		if (noSign) {
 			tileNum = (Byte)this->cpuLink->ReadByte(tileAddress);
-			tileLocation += tileNum * 16;
+			tileLocation = tileData + tileNum * 16;
 		} else {
 			tileNum = (signed char)this->cpuLink->ReadByte(tileAddress);
-			tileLocation += (tileNum + 128) * 16;
+			tileLocation = tileData + (tileNum + 128) * 16;
 		}
 
 		line = (yPos % 8) * 2;
 		data1 = this->cpuLink->ReadByte(tileLocation + line);
 		data2 = this->cpuLink->ReadByte(tileLocation + line + 1);
+
+		/*
+		switch (tileLocation) {
+			case 0x8000: break;
+			case 0x8010: cout << "well its not going in here" << endl; break;
+			case 0x8190: cout << "however its going in here" << endl; break;
+		}
+		*/
+
 		colorBit = 7 - (xPos % 8);
 		colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 		color = getColor(colorNum, 0xFF47);
 		y = this->cpuLink->ReadByte(0xFF44);
 
+		if (enable && false) {
+			cout << "@ x: " << i << " -> data1: " << tileLocation + line << " data2: " << tileLocation + line + 1 << " colorBit: " << colorBit << endl;
+			cout << toBinary(colorNum) << endl;
+
+			cpuLink->rom.print(&cpuLink->ram, 0x8000, 0x80FF);
+		}
+
 		if (!((y < 0) || (y > Y_RES - 1) || (i < 0) || (i > X_RES - 1))) {
 			display[y][i] = color;
+			if (color != 0x00) {
+				enable = true;
+				//cout << "tileAddress: " << tileAddress << endl; //9910
+				//cout << "tileNum: " << tileNum << endl;
+				
+				//cout << "y: " << y << " i: " << i << " color: " << HEX << (int)color << endl;
+			}
 		}
 	}
 
@@ -356,15 +382,15 @@ void GPU::UpdateGraphics(int cycles) {
 	SetLCDStatus();
 
 	if (IsLCDEnabled()) {
-		ScanLineCounter -= cycles;
+		ScanLineCounter += cycles;
 
-		if (ScanLineCounter <= 0) {
+		if (ScanLineCounter >= 100) {
 			this->cpuLink->ram.setMemory(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
 			currentline = this->cpuLink->ReadByte(0xFF44);
 
-			ScanLineCounter = 456;
+			ScanLineCounter = 0;
 
-			if (currentline == Y_RES) {
+			if (currentline == Y_RES - 1) {
 				cpuLink->RequestInterupt(0);
 			} else if (currentline > 153) {
 				this->cpuLink->ram.setMemory(0xFF44, 0);

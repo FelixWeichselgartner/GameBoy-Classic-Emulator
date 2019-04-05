@@ -33,8 +33,14 @@ Byte bootstrap[] = {
 };
 
 void cpBootstrap(class RAM *ram) {
-	for (int i = 0; i < 256; i++) {
-		ram->setMemory((Byte)i, bootstrap[i]);
+	for (int i = 0; i < 0x0100; i++) {
+		ram->setMemory(i, bootstrap[i]);
+	}
+}
+
+void ROM::dltBootstrap(class RAM* ram) {
+	for (int i = 0; i < 0x0100; i++) {
+		ram->setMemory(i, rom[i]);
 	}
 }
 
@@ -63,7 +69,7 @@ void ROM::load(class RAM* ram) {
 		this->rom = new char[RomSize];
 		if (this->rom != NULL) {
 			gbfile.read(rom, size);
-			for (unsigned short i = 0x0000; i < ADDR_VRAM_T_S; i++) {
+			for (unsigned short i = 0x0100; i < ADDR_VRAM_T_S; i++) {
 				ram->setMemory(i, (Byte)rom[i]);
 			}
 		} else {

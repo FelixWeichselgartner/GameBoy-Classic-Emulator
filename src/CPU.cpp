@@ -10,6 +10,8 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
+unsigned long long CPUstepCount = 0;
+
 //----------------------------------------------------------------------------------------------
 // Flags - F register is the flag register
 // Z = this->registers.F (Byte 7)
@@ -141,8 +143,12 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	// address 0xFEA0 to 0xFEFF		restricted area
 	// address 0xFF46:				do dma transfer	
 
+	if (address >= 0x9900 && address <= 0x992f) { //1009
+		cout << "im think im searching for this @ " << HEX16 << this->registers.getPC() << " v: " << HEX << (int)value << " with CPUStepCounter: " << HEX16 << CPUstepCount << endl;
+	}
+
 	if (address < ADDR_VRAM_T_S) {
-		cout << "trying to write to ROM space" << endl;
+		cout << "trying to write to ROM space @ " << HEX16 << this->registers.getPC() << " with CPUStepCounter: " << CPUstepCount << endl;
 		return;
 	} else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
 		this->ram.setMemory(address, value);
@@ -844,7 +850,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x28: // JR Z, n       relative jump by signed immediate if last result was zero.
 			jumpRelAddress = load8bit();
-			if (!getFlag('Z')) {
+			if (getFlag('Z')) {
 				this->registers.setPC(add16bitAdrSign(this->registers.getPC(), jumpRelAddress));
 			}
             break;
@@ -872,7 +878,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x30: // JR NC, n      relative jump by signed immediate if last result caused no carry.
 			jumpRelAddress = load8bit();
-			if (!getFlag('Z')) {
+			if (!getFlag('C')) {
 				this->registers.setPC(add16bitAdrSign(this->registers.getPC(), jumpRelAddress));
 			}
             break;
@@ -2435,8 +2441,6 @@ void CPU::executeExtendedOpcodes() {
 			break;
 	}
 }
-
-int CPUstepCount = 0;
 
 int CPU::CPUstep() {
 	this->cycles = 0;

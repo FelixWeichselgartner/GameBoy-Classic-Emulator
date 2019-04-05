@@ -19,9 +19,13 @@ using namespace std;
 //----------------------------------------------------------------------------------------------
 
 void delay(int milli_seconds) {
-	clock_t start_time = clock();
-	while (clock() < start_time + milli_seconds)
-		;
+	if (milli_seconds < 0) {
+		return;
+	} else {
+		clock_t start_time = clock();
+		while (clock() < start_time + milli_seconds)
+			;
+	}
 }
 
 GameBoy::GameBoy() {
@@ -196,9 +200,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			}
 
 			PrintRegistersFile(logFile);
-			if (checkInfiniteLoop >= 10000) {
-				cout << "hard key enabled" << endl;
-				cout << HEX << (int)this->cpu.ram.getMemory(0xff44) << endl;
+			if (checkInfiniteLoop >= 0x1000) { //82
+				cout << "hard key is enabled" << endl;
+				cout << "counter: " << dec << checkInfiniteLoop << endl;
+				//cout << HEX << (int)this->cpu.ram.getMemory(0xff44) << endl;
 				keyHardEn = true;
 			}
 
@@ -423,9 +428,13 @@ void GameBoy::run() {
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
 
+	bool BootstrapActive = true;
+	clock_t starttime;
+
 	while (this->cpu.getRunning()) {
 
 		cyclesInstruction = 0;
+		starttime = clock();
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {
@@ -433,6 +442,12 @@ void GameBoy::run() {
 					cout << "Gameboy-Classic-Emulator closed." << endl;
 					return;
 				}
+			}
+
+			if (this->cpu.registers.getPC() == 0x0100 && BootstrapActive) {
+				cout << "switch back rom 0x0000 - 0x0100" << endl;
+				this->cpu.rom.dltBootstrap(&cpu.ram);
+				BootstrapActive = false;
 			}
 
 			c = cpu.CPUstep();
@@ -444,7 +459,8 @@ void GameBoy::run() {
 		}
 
 		gpu.render();
-		delay(delaytime);
+		delay(delaytime - difftime(clock(), starttime));
+		//cout << "timediff: " << difftime(clock(), starttime);
 	}
 
 	SDL_DestroyRenderer(gpu.getRenderer());

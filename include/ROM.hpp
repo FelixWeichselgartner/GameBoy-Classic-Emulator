@@ -20,7 +20,8 @@ public:
     ROM();
 	~ROM();
 
-	void load(class RAM *);
+	void load(class RAM*);
+	void dltBootstrap(class RAM*);
 
 	std::string getGameName(class RAM* ram);
     
