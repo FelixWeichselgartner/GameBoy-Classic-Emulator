@@ -29,7 +29,7 @@ void delay(int milli_seconds) {
 }
 
 GameBoy::GameBoy() {
-	
+	cpu.setJoypadLink(&joypad);
 }
 
 void GameBoy::PrintRegisters() {
@@ -322,9 +322,72 @@ void GameBoy::run() {
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {
-				if (windowEvent.type == SDL_QUIT) {
-					cout << "Gameboy-Classic-Emulator closed." << endl;
-					return;
+				switch (windowEvent.type) {
+					case SDL_QUIT:
+						return;
+					case SDL_KEYDOWN:
+						switch (windowEvent.key.keysym.sym) {
+							case SDLK_a:
+								cout << "a" << endl;
+								this->joypad.KeyPressed(4);
+								break;
+							case SDLK_s:
+								this->joypad.KeyPressed(5);
+								break;
+							case SDLK_RETURN:
+								this->joypad.KeyPressed(7);
+								break;
+							case SDLK_SPACE:
+								this->joypad.KeyPressed(6);
+								break;
+							case SDLK_RIGHT:	// right
+								cout << "right pressed" << endl;
+								this->joypad.KeyPressed(0);
+								break;
+							case SDLK_LEFT:		// left
+								cout << "left pressed" << endl;
+								this->joypad.KeyPressed(1);
+								break;
+							case SDLK_UP:		// up
+								this->joypad.KeyPressed(2);
+								break;
+							case SDLK_DOWN:		// down
+								this->joypad.KeyPressed(3);
+								break;
+						}
+						break;
+					case SDL_KEYUP:
+						switch (windowEvent.key.keysym.sym) {
+							case SDLK_a:
+								cout << "a" << endl;
+								this->joypad.KeyReleased(4);
+								break;
+							case SDLK_s:
+								this->joypad.KeyReleased(5);
+								break;
+							case SDLK_RETURN:
+								this->joypad.KeyReleased(7);
+								break;
+							case SDLK_SPACE:
+								this->joypad.KeyReleased(6);
+								break;
+							case SDLK_RIGHT:	// right
+								cout << "right released" << endl;
+								this->joypad.KeyReleased(0);
+								break;
+							case SDLK_LEFT:		// left
+								cout << "left released" << endl;
+								this->joypad.KeyReleased(1);
+								break;
+							case SDLK_UP:		// up
+								this->joypad.KeyReleased(2);
+								break;
+							case SDLK_DOWN:		// down
+								this->joypad.KeyReleased(3);
+								break;
+							}
+						break;
+					
 				}
 			}
 
@@ -343,7 +406,7 @@ void GameBoy::run() {
 		}
 
 		gpu.render();
-		delay(delaytime - difftime(clock(), starttime));
+		delay(delaytime - (int)difftime(clock(), starttime));
 		//cout << "timediff: " << difftime(clock(), starttime);
 	}
 
@@ -352,7 +415,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
@@ -374,5 +437,6 @@ int main(int argc, char *argv[]) {
 	} else {
 		gameboy.run();
 	}
+	cout << "Gameboy-Classic-Emulator closed." << endl;
     return 0;
 }

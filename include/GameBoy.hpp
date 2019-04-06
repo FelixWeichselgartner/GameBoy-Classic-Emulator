@@ -18,6 +18,7 @@ private:
 
     class CPU cpu;
     class GPU gpu = GPU(&cpu);
+	class Joypad joypad = Joypad(&cpu);
 
 public:
 

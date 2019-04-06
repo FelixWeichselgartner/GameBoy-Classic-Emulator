@@ -35,6 +35,7 @@ unsigned long long CPUstepCount = 0;
 //----------------------------------------------------------------------------------------------
 
 CPU::CPU() {
+	this->joypadLink = NULL;
 	this->running = 0x01;
 	this->jump = 0x00;
 	this->enableInterupts = 0x00;
@@ -50,6 +51,10 @@ CPU::CPU() {
 	}
 
 	rom.load(&ram, enableBootstrap);
+}
+
+void CPU::setJoypadLink(class Joypad* joypadLink) {
+	this->joypadLink = joypadLink;
 }
 
 Byte CPU::getRunning() {
@@ -148,7 +153,22 @@ void CPU::resetFlag(char type) {
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
-	return this->ram.getMemory(address);
+	if (address == ADDR_IO) {
+		
+		if (joypadLink == NULL) {
+			cout << "joypadLink is NULL" << endl;
+			exit(1);
+		}
+		//cout << "joypadLink: " << joypadLink << endl;
+		//cout << "address" << endl;
+		//Byte stuff = joypadLink->getJoypadState();
+		//cout << "stuff: " << HEX << stuff << endl;
+		return joypadLink->getJoypadState();
+		//return stuff;
+		
+	} else {
+		return this->ram.getMemory(address);
+	}
 }
 
 void CPU::WriteByte(unsigned short address, Byte value) {

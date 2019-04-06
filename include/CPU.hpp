@@ -6,6 +6,7 @@
 #include "Registers.hpp"
 #include "RAM.hpp"
 #include "ROM.hpp"
+#include "Joypad.hpp"
 
 typedef unsigned char Byte;
 //----------------------------------------------------------------------------------------------
@@ -35,10 +36,13 @@ public:
     class Registers registers;
     class RAM ram;
 	class ROM rom;
+	class Joypad* joypadLink;
 
 public:
 
     CPU();
+
+	void setJoypadLink(class Joypad*);
 
 	// setter and getter for running.
 	Byte getRunning();
