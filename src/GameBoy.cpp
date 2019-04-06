@@ -42,7 +42,8 @@ void GameBoy::PrintRegisters() {
 	cout << "D" << HEX << (int)this->cpu.registers.getD() << " ";
 	cout << "E" << HEX << (int)this->cpu.registers.getE() << "   ";
 	cout << "HL" << HEX16 << this->cpu.registers.getHL() << "   ";
-	cout << "SP" << HEX16 << this->cpu.registers.getSP() << endl;
+	cout << "SP" << HEX16 << this->cpu.registers.getSP() << "   ";
+	cout << "lY" << HEX << (int)this->cpu.ReadByte(0xff44) << endl;
 	//this->cpu.registers.printFlags();
 }
 
@@ -174,7 +175,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	ofstream logFile;
 	logFile.open("logFile.log");
 
-	char key; bool keyEn = true, keyHardEn = true;
+	char key; bool keyEn = true, keyHardEn = false;
 	char game = 'N'; // 'M' == MINESWEEPER
 
 	cout << "You can quit by pressing 'r'" << endl << endl;
@@ -200,8 +201,12 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				keyEn = false;
 			}
 
+			if (this->cpu.registers.getPC() == 0x0038) {
+				keyHardEn = true;
+			}
+
 			PrintRegistersFile(logFile);
-			if (checkInfiniteLoop >= 1000000) { //82
+			if (checkInfiniteLoop >= 200000) { //82 //0x1144x
 				cout << "hard key is enabled" << endl;
 				cout << "counter: " << dec << checkInfiniteLoop << endl;
 				//cout << HEX << (int)this->cpu.ram.getMemory(0xff44) << endl;
@@ -225,6 +230,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 
 				PrintRegisters();
+				cout << "counter: " << checkInfiniteLoop << endl;
 				PrintRegistersFile(logFile);
 			}
 
@@ -346,7 +352,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

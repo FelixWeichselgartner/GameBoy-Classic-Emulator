@@ -357,8 +357,10 @@ void GPU::UpdateGraphics(int cycles) {
 
 			if (currentline == Y_RES - 1) {
 				cpuLink->RequestInterupt(0);
-			} else if (currentline > 153) {
+			} else if (currentline > 0x99) {
 				this->cpuLink->ram.setMemory(0xFF44, 0);
+			} else if (currentline == 0x90) {
+				this->cpuLink->RequestInterupt(0);
 			} else if (currentline < Y_RES) {
 				DrawScanLine();
 				renderDisplay(currentline);

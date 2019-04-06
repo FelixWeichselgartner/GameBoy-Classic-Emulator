@@ -1436,6 +1436,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
 			this->enableInterupts = 0x01;
+			this->jump = 0x01;
 			this->registers.setPC(pop16bit());
             break; 
         case 0xDA: // JP C, nn      absolute jump to 16-bit location if last result caused carry.
@@ -2497,7 +2498,7 @@ void CPU::DoInterupts() {
 
 		if (req > 0) {
 			for (int i = 0; i < 8; i++) {
-				if (testBit(req, i)) {
+				if (testBit(req, i) && testBit(enabled, i)) {
 					ServiceInterupts(i);
 				}
 			}
