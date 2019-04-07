@@ -2,21 +2,28 @@
 
 Joypad::Joypad(class CPU* cpuLink) {
 	this->cpuLink = cpuLink;
-	this->JoypadState = 0x00;
+	this->JoypadState = 0xFF;
 }
 
 #include <iostream>
 
 Byte Joypad::getJoypadState() const {
-	Byte retval = this->cpuLink->ram.getMemory(0xFF00) ^ 0xFF;
-	Byte topJoypad, bottomJoypad;
+	Byte retval = this->cpuLink->ram.getMemory(ADDR_IO);
 
 	if (!testBit(retval, 4)) {
-		topJoypad = (JoypadState >> 4) | 0xF0;
-		retval &= topJoypad;
+		for (int i = 4; i < 8; i++) {
+			if ((JoypadState >> i) & 1)
+				retval |= (1 << (i - 4));
+			else
+				retval &= ~(1 << (i - 4));
+		}
 	} else if (!testBit(retval, 5)) {
-		bottomJoypad = (JoypadState & 0x0F) | 0xF0;
-		retval &= bottomJoypad;
+		for (int i = 0; i < 4; i++) {
+			if ((JoypadState >> i) & 1)
+				retval |= (1 << i);
+			else
+				retval &= ~(1 << i);
+		}
 	}
 
 	//std::cout << toBinary(retval) << std::endl;
@@ -25,21 +32,25 @@ Byte Joypad::getJoypadState() const {
 
 void Joypad::KeyPressed(int key) {
 	bool previouslyUnset = !testBit(JoypadState, key);
-	JoypadState = resetBit(JoypadState, key);
-	bool button = key > 3;
-	Byte keyReq = this->cpuLink->ReadByte(ADDR_IO);
-	bool requestInterupt;
 
-	if (button && testBit(keyReq, 5)) {
-		requestInterupt = true;
-	} else if (!button && testBit(keyReq, 4)) {
-		requestInterupt = true;
-	} else {
-		requestInterupt = false;
-	}
+	std::cout << "previouslyUnset: " << (int)previouslyUnset << std::endl;
+
+	JoypadState = resetBit(JoypadState, key);
+
+	std::cout << "JoypadState: " << toBinary(JoypadState) << std::endl;
+
+	bool button = key > 3;
+	Byte keyReq = this->cpuLink->ram.getMemory(ADDR_IO);
+	bool requestInterupt = (button && !testBit(keyReq, 5)) || (!button && !testBit(keyReq, 4));
+
+	std::cout << "requestInterupt: " << (int)requestInterupt << std::endl;
 
 	if (requestInterupt && !previouslyUnset) {
+		std::cout << "request interupt 4" << std::endl;
 		this->cpuLink->RequestInterupt(4);
+	}
+	else {
+		std::cout << "not request interupt 4" << std::endl;
 	}
 
 	return;

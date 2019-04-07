@@ -349,7 +349,7 @@ void GPU::UpdateGraphics(int cycles) {
 	if (IsLCDEnabled()) {
 		ScanLineCounter += cycles;
 
-		if (ScanLineCounter >= 100) {
+		if (ScanLineCounter >= 456) {
 			this->cpuLink->ram.setMemory(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
 			currentline = this->cpuLink->ReadByte(0xFF44);
 

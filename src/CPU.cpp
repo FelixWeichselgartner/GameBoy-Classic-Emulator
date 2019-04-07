@@ -154,18 +154,16 @@ void CPU::resetFlag(char type) {
 
 Byte CPU::ReadByte(unsigned short address) const {
 	if (address == ADDR_IO) {
-		
-		if (joypadLink == NULL) {
-			cout << "joypadLink is NULL" << endl;
-			exit(1);
+
+		/*
+		for (int i = 0; i < 4; i++) {
+			if (!testBit(joypadLink->getJoypadState(), i)) {
+				cout << "button i: " << i << " was pressed!" << endl;
+			}
 		}
-		//cout << "joypadLink: " << joypadLink << endl;
-		//cout << "address" << endl;
-		//Byte stuff = joypadLink->getJoypadState();
-		//cout << "stuff: " << HEX << stuff << endl;
+		*/
+
 		return joypadLink->getJoypadState();
-		//return stuff;
-		
 	} else {
 		return this->ram.getMemory(address);
 	}
@@ -441,12 +439,14 @@ unsigned short CPU::add16bit(unsigned short a, unsigned short b) {
 	retval = a + b;
 	sum = (unsigned short)a + (unsigned short)b;
 	
+	/*
 	// Z is set if result is zero, else reset
 	if (retval == (unsigned short)0x0000) {
 		setFlag('Z');
 	} else {
 		resetFlag('Z');
 	}
+	*/
 
 	// N is set to zero
 	resetFlag('N');
@@ -2561,6 +2561,7 @@ void CPU::ServiceInterupts(int interupt) {
 			this->registers.setPC(INTERUPT_TIMER);
 			break;
 		case 4:
+			cout << "service interupt joypad" << endl;
 			this->registers.setPC(INTERUPT_JOYPAD);
 		default:
 			break;

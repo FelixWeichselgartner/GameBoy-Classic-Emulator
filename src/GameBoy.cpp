@@ -186,8 +186,72 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {
-				if (windowEvent.type == SDL_QUIT) {
+				switch (windowEvent.type) {
+				case SDL_QUIT:
 					return;
+				case SDL_KEYDOWN:
+					switch (windowEvent.key.keysym.sym) {
+					case SDLK_a:
+						cout << "a" << endl;
+						this->joypad.KeyPressed(4);
+						break;
+					case SDLK_s:
+						this->joypad.KeyPressed(5);
+						break;
+					case SDLK_RETURN:
+						this->joypad.KeyPressed(7);
+						break;
+					case SDLK_SPACE:
+						this->joypad.KeyPressed(6);
+						break;
+					case SDLK_RIGHT:	// right
+						cout << "right pressed" << endl;
+						this->joypad.KeyPressed(0);
+						break;
+					case SDLK_LEFT:		// left
+						cout << "left pressed" << endl;
+						this->joypad.KeyPressed(1);
+						break;
+					case SDLK_UP:		// up
+						this->joypad.KeyPressed(2);
+						break;
+					case SDLK_DOWN:		// down
+						this->joypad.KeyPressed(3);
+						break;
+					}
+					break;
+				case SDL_KEYUP:
+					switch (windowEvent.key.keysym.sym) {
+					case SDLK_a:
+						cout << "a" << endl;
+						this->joypad.KeyReleased(4);
+						break;
+					case SDLK_s:
+						this->joypad.KeyReleased(5);
+						break;
+					case SDLK_RETURN:
+						this->joypad.KeyReleased(7);
+						break;
+					case SDLK_SPACE:
+						this->joypad.KeyReleased(6);
+						break;
+					case SDLK_RIGHT:	// right
+						cout << "right released" << endl;
+						this->joypad.KeyReleased(0);
+						break;
+					case SDLK_LEFT:		// left
+						cout << "left released" << endl;
+						this->joypad.KeyReleased(1);
+						break;
+					case SDLK_UP:		// up
+						this->joypad.KeyReleased(2);
+						break;
+					case SDLK_DOWN:		// down
+						this->joypad.KeyReleased(3);
+						break;
+					}
+					break;
+
 				}
 			}
 
@@ -201,16 +265,17 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				keyEn = false;
 			}
 
-			if (this->cpu.registers.getPC() == 0x0038) {
+			if (this->cpu.registers.getPC() == 0x5412) {
 				keyHardEn = true;
 			}
 
 			PrintRegistersFile(logFile);
-			if (checkInfiniteLoop >= 200000) { //82 //0x1144x
+			if (checkInfiniteLoop >= 0x14a75 - 10) { //14a75 //14581 stack pointer minesweeper
 				cout << "hard key is enabled" << endl;
 				cout << "counter: " << dec << checkInfiniteLoop << endl;
 				//cout << HEX << (int)this->cpu.ram.getMemory(0xff44) << endl;
 				keyHardEn = true;
+				//cout << toBinary(this->cpu.ReadByte(0xff00));
 			}
 
 			if (keyEn || keyHardEn) {
@@ -332,12 +397,15 @@ void GameBoy::run() {
 								this->joypad.KeyPressed(4);
 								break;
 							case SDLK_s:
+								cout << "s" << endl;
 								this->joypad.KeyPressed(5);
 								break;
 							case SDLK_RETURN:
+								cout << "return" << endl;
 								this->joypad.KeyPressed(7);
 								break;
 							case SDLK_SPACE:
+								cout << "space" << endl;
 								this->joypad.KeyPressed(6);
 								break;
 							case SDLK_RIGHT:	// right
@@ -349,9 +417,11 @@ void GameBoy::run() {
 								this->joypad.KeyPressed(1);
 								break;
 							case SDLK_UP:		// up
+								cout << "up" << endl;
 								this->joypad.KeyPressed(2);
 								break;
 							case SDLK_DOWN:		// down
+								cout << "down" << endl;
 								this->joypad.KeyPressed(3);
 								break;
 						}

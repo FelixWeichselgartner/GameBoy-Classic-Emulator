@@ -57,9 +57,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
-
-	unsigned short StartCopyAddress = enableBootstrap ? 0x0100 : 0x0000;
+	gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
@@ -71,7 +69,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 		this->rom = new char[RomSize];
 		if (this->rom != NULL) {
 			gbfile.read(rom, size);
-			for (unsigned short i = StartCopyAddress; i < ADDR_VRAM_T_S; i++) {
+			for (unsigned short i = enableBootstrap ? 0x0100 : 0x0000; i < ADDR_VRAM_T_S; i++) {
 				ram->setMemory(i, (Byte)rom[i]);
 			}
 		} else {
