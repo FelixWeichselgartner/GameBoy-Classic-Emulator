@@ -27,7 +27,6 @@ unsigned long long CPUstepCount = 0;
 #define HIGH_BYTE(x)			((x >> 8) & 0xff)
 //----------------------------------------------------------------------------------------------
 
-
 //----------------------------------------------------------------------------------------------
 // split an 8-bit number in 2 x 4 bit
 #define LOWER_HALFBYTE(x)       (x & 0x00001111)
@@ -160,6 +159,12 @@ Byte CPU::ReadByte(unsigned short address) const {
 			if (!testBit(joypadLink->getJoypadState(), i)) {
 				cout << "button i: " << i << " was pressed!" << endl;
 			}
+		}
+		*/
+
+		/*
+		if (CPUstepCount > 300000) {
+			cout << toBinary(joypadLink->getJoypadState()) << endl;
 		}
 		*/
 
@@ -2474,6 +2479,9 @@ void CPU::executeExtendedOpcodes() {
 }
 
 int CPU::CPUstep() {
+	if (CPUstepCount > 2000000)
+		cout << "cpu step key req: " << toBinary(this->ram.getMemory(0xff00)) << endl;
+
 	this->cycles = 0;
 	CPUstepCount++;
 
