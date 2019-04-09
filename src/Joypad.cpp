@@ -11,7 +11,6 @@ Joypad::Joypad(class CPU* cpuLink) {
 
 Byte Joypad::getJoypadState() const {
 	Byte retval = this->cpuLink->ram.getMemory(ADDR_IO);
-	//cout << "in get joypad state: " << toBinary(retval) << endl;
 
 	// gameboy: for direction:
 	// 3 = down, 2 = up, 1 = left, 0 = down.
@@ -39,21 +38,21 @@ Byte Joypad::getJoypadState() const {
 }
 
 void Joypad::KeyPressed(int key) {
+	// 0 (set) -> true, 1 (unset) -> false.
 	bool previouslySet = !testBit(JoypadState, key);
+	JoypadState = resetBit(JoypadState, key);
 	Byte keyReq = this->cpuLink->ram.getMemory(ADDR_IO);
 	bool button = key > 3;
+	bool requestInterupt = (button && testBit(keyReq, BUTTON)) || (!button && testBit(keyReq, DIRECTION));
 
+	// debug
+	cout << "previouslySet: " << boolalpha << previouslySet << endl;
 	cout << "key req" << toBinary(this->cpuLink->ram.getMemory(0xff00)) << endl;
 	cout << "button boolean: " << boolalpha << button << endl;
 	cout << "button req: " << boolalpha << testBit(keyReq, BUTTON) << " dir req: " << boolalpha << testBit(keyReq, DIRECTION) << endl;
-
-	JoypadState = resetBit(JoypadState, key);
-
-	bool requestInterupt = (button && !testBit(keyReq, BUTTON)) || (!button && !testBit(keyReq, DIRECTION));
-
 	cout << "requestInterupt: " << boolalpha << requestInterupt << endl;
 
-	if (requestInterupt && previouslySet) {
+	if (requestInterupt && !previouslySet) {
 		cout << "request interupt 4" << endl;
 		this->cpuLink->RequestInterupt(4);
 	}

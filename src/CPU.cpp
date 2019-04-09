@@ -46,7 +46,7 @@ CPU::CPU() {
 	if (enableBootstrap) {
 		this->registers.setPC(0x0000);
 	} else {
-		this->registers.setPC(0x0150);
+		this->registers.setPC(0x0100);
 	}
 
 	rom.load(&ram, enableBootstrap);
@@ -163,10 +163,9 @@ Byte CPU::ReadByte(unsigned short address) const {
 		*/
 
 		/*
-		if (CPUstepCount > 300000) {
-			cout << toBinary(joypadLink->getJoypadState()) << endl;
-		}
-		*/
+		if (CPUstepCount > 5000000 && address == 0xff00)
+			cout << "read 0xff00 @ " << this->registers.getPC() << endl;
+			*/
 
 		return joypadLink->getJoypadState();
 	} else {
@@ -179,6 +178,13 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	// address 0xE000 to 0xFE00		writing in ECHO ram also writes in ram
 	// address 0xFEA0 to 0xFEFF		restricted area
 	// address 0xFF46:				do dma transfer	
+
+	// joypad
+	
+	/*
+	if (CPUstepCount > 5000000 && address == 0xff00)
+		cout << "read 0xff00 @ " << this->registers.getPC() << endl;
+	*/
 
 	if (address < ADDR_VRAM_T_S) {
 		cout << "trying to write to ROM space @ " << HEX16 << this->registers.getPC() << " with CPUStepCounter: " << CPUstepCount << endl;
@@ -396,7 +402,7 @@ Byte CPU::cpl(Byte a) {
 	// H is set
 	setFlag('H');
 
-	return !a;
+	return ~a;
 }
 
 Byte CPU::add(Byte a, Byte b, char type) {
@@ -2479,9 +2485,6 @@ void CPU::executeExtendedOpcodes() {
 }
 
 int CPU::CPUstep() {
-	if (CPUstepCount > 2000000)
-		cout << "cpu step key req: " << toBinary(this->ram.getMemory(0xff00)) << endl;
-
 	this->cycles = 0;
 	CPUstepCount++;
 
