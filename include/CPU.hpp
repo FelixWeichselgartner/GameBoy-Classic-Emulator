@@ -35,7 +35,7 @@ public:
     // general purpose registers + stack pointer & program counter.
     class Registers registers;
     class RAM ram;
-	class ROM rom;
+	class ROM rom = ROM(&ram);
 	class Joypad* joypadLink;
 
 public:

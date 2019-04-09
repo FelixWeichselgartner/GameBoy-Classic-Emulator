@@ -1,8 +1,12 @@
 //----------------------------------------------------------------------------------------------
 #include "../include/RAM.hpp"
+#include <cstdlib>
 //----------------------------------------------------------------------------------------------
 
 RAM::RAM() {
+	this->RamBanks = NULL;
+	this->CurrentRamBank = 0;
+
 	memory[0xFF05] = 0x00;
 	memory[0xFF06] = 0x00;
 	memory[0xFF07] = 0x00;
@@ -36,10 +40,30 @@ RAM::RAM() {
 	memory[0xFFFF] = 0x00;
 }
 
+Byte RAM::getMemory(unsigned short address) const {
+	return this->memory[address];
+}
+
 void RAM::setMemory(unsigned short address, Byte value) {
     this->memory[address] = value;
 }
 
-Byte RAM::getMemory(unsigned short address) const {
-    return this->memory[address];
+Byte RAM::getCurrentRamBank() const {
+	return this->CurrentRamBank;
+}
+
+void RAM::setCurrentRamBank(Byte value) {
+	this->CurrentRamBank = value;
+}
+
+bool RAM::getRamEnable() const {
+	return this->EnableRamBanking;
+}
+
+void RAM::setRamEnable(bool en) {
+	this->EnableRamBanking = en;
+}
+
+void RAM::ChangeRamBank(Byte value) {
+	CurrentRamBank = value & 0x03;
 }

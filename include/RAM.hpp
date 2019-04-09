@@ -34,13 +34,26 @@ private:
 
 	Byte memory[65536] = { 0 };
 
+	// ram banking.
+	Byte *RamBanks;
+	Byte CurrentRamBank;
+	bool EnableRamBanking;
+
 public:
 
     RAM();
 
+	Byte getMemory(unsigned short) const;
     void setMemory(unsigned short, Byte);
-    Byte getMemory(unsigned short) const;
 
+	Byte getCurrentRamBank() const;
+	void setCurrentRamBank(Byte);
+
+	bool getRamEnable() const;
+	void setRamEnable(bool);
+
+	void ChangeRamBank(Byte);
+	
 };
 //----------------------------------------------------------------------------------------------
 

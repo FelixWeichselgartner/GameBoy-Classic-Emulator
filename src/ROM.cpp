@@ -45,19 +45,30 @@ void ROM::dltBootstrap(class RAM* ram) {
 }
 
 ROM::ROM() {
+	
+}
+
+ROM::ROM(class RAM* ram) {
 	this->rom = NULL;
 	this->RomSize = 0;
+	this->RBM_1 = this->RBM_2 = false;
+	this->CurrentRomBank = 1;
+	this->ram = ram;
 }
 
 ROM::~ROM() {
 	delete[] rom;
 }
 
+Byte ROM::getMemory(unsigned short address) const {
+	return this->rom[address];
+}
+
 void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
@@ -80,11 +91,98 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 		cout << "unable to open file" << endl;
 	}
 
+	InitialiseRomBaking();
+
 	if (enableBootstrap) {
 		cpBootstrap(ram);
 	}
 
 	return;
+}
+
+void ROM::InitialiseRomBaking() {
+	switch (rom[0x0147]) {
+		case 1: RBM_1 = true; break;
+		case 2: RBM_1 = true; break;
+		case 3: RBM_1 = true; break;
+		case 4: RBM_2 = true; break;
+		case 5: RBM_2 = true; break;
+		default: break;
+	}
+}
+
+Byte ROM::getCurrentRomBank() const {
+	return this->CurrentRomBank;
+}
+
+Byte ROM::getRomBankingMode() const {
+	return this->RomBankingMode;
+}
+
+void ROM::ChangeLowRomBank(Byte value) {
+	if (RBM_2) {
+		CurrentRomBank = value & 0x0F;
+	} else {
+		CurrentRomBank = (CurrentRomBank & 0xE0) | (value & 0x1F);
+	}
+
+	if (CurrentRomBank == 0x00) {
+		CurrentRomBank++;
+	}
+
+	return;
+}
+
+void ROM::ChangeHighRomBank(Byte value) {
+	CurrentRomBank = (CurrentRomBank & 0x1F) | (value & 0xE0);
+	if (CurrentRomBank == 0x00) {
+		CurrentRomBank++;
+	}
+
+	return;
+}
+
+void ROM::ChangeRomRamMode(Byte value) {
+	if (this->RomBankingMode = (value & 0x01) == 0x00) {
+		this->ram->setCurrentRamBank(0x00);
+	}
+	
+	return;
+}
+
+void ROM::EnableRamBank(unsigned short address, Byte value) {
+	if (RBM_2 && (address & 0x000F) == 0x000F) {
+		return;
+	} else {
+		switch (value & 0x0F) {
+			case 0x0A: this->ram->setRamEnable(true);
+			case 0x00: this->ram->setRamEnable(false);
+		}
+		return;
+	}
+}
+
+void ROM::HandleBanking(unsigned short address, Byte value) {
+	// ram enable.
+	if (address < 0x2000 && (RBM_1 || RBM_2)) {
+		EnableRamBank(address, value);
+	}
+	// change rom bank.
+	else if (address >= 0x2000 && address < 0x4000 && (RBM_1 ||RBM_2)) {
+		ChangeLowRomBank(value);
+	}
+	// rom or ram bank change.
+	else if (address >= 0x4000 && address < 0x6000 && RBM_1) {
+		if (RomBankingMode) {
+			ChangeHighRomBank(value);
+		} else {
+			this->ram->ChangeRamBank(value);
+		}
+	}
+	// rom and ram banking.
+	else if (address >= 0x6000 && address < 0x8000 || RBM_1) {
+		ChangeRomRamMode(value);
+	}
 }
 
 string ROM::getGameName(class RAM* ram) {

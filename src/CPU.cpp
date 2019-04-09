@@ -79,11 +79,7 @@ void CPU::setEnableBootstrap(bool enableBootstrap) {
 bool testBit(Byte value, int bit) {
 	Byte checker = 0x01 << bit;
 
-	if ((value & checker) == checker) {
-		return true;
-	} else {
-		return false;
-	}
+	return (value & checker) == checker;
 }
 
 Byte resetBit(Byte value, int bit) {
@@ -152,7 +148,16 @@ void CPU::resetFlag(char type) {
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
-	if (address == ADDR_IO) {
+	// rom memory bank.
+	if (address >= ADDR_ROM_1 && address < ADDR_VRAM_T_S) {
+		return this->rom.getMemory(address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000));
+	} 
+	// ram memory bank.
+	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
+		return this->ram.getMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
+	}
+	// joypad register.
+	else if (address == ADDR_IO) {
 
 		/*
 		for (int i = 0; i < 4; i++) {
@@ -168,17 +173,14 @@ Byte CPU::ReadByte(unsigned short address) const {
 			*/
 
 		return joypadLink->getJoypadState();
-	} else {
+	} 
+	// normal memory.
+	else {
 		return this->ram.getMemory(address);
 	}
 }
 
 void CPU::WriteByte(unsigned short address, Byte value) {
-	// address > 0x0800:			can't override rom
-	// address 0xE000 to 0xFE00		writing in ECHO ram also writes in ram
-	// address 0xFEA0 to 0xFEFF		restricted area
-	// address 0xFF46:				do dma transfer	
-
 	// joypad
 	
 	/*
@@ -186,21 +188,34 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 		cout << "read 0xff00 @ " << this->registers.getPC() << endl;
 	*/
 
+	// rom banking.
 	if (address < ADDR_VRAM_T_S) {
-		cout << "trying to write to ROM space @ " << HEX16 << this->registers.getPC() << " with CPUStepCounter: " << CPUstepCount << endl;
+		this->rom.HandleBanking(address, value);
 		return;
-	} else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
+	} 
+	// ram banking.
+	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1 && this->ram.getRamEnable()) {
+		this->ram.setMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000), value);
+	}
+	
+	else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
 		this->ram.setMemory(address, value);
 		this->ram.setMemory(address - 0x2000, value);
-	} else if ((address >= ADDR_UNUSABLE) && (address < (ADDR_IO - 1))) {
+	} else if ((address >= ADDR_UNUSABLE) && (address < (ADDR_IO - 1))) { // recheck upper bound
 		return;
 	} else if (address == 0xFF04) {
 		this->ram.setMemory(address, 0x00);
-	} else if (address == 0xFF44) {
+	} 
+	// set current line to 0.
+	else if (address == 0xFF44) {
 		this->ram.setMemory(address, 0x00);
-	} else if (address == 0xFF46) {
+	} 
+	// do the dma transfer.
+	else if (address == 0xFF46) {
 		DoDMATransfer(value);
-	} else if (address == ADDR_TMC) {
+	} 
+	// timer handling.
+	else if (address == ADDR_TMC) {
 		Byte currentFrequency = getClockFrequency();
 		this->ram.setMemory(address, value);
 		Byte newFrequency = getClockFrequency();
@@ -208,7 +223,9 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 		if (currentFrequency != newFrequency) {
 			setClockFrequency();
 		}
-	} else {
+	} 
+	// return normal memory.
+	else {
 		this->ram.setMemory(address, value);
 	}
 
@@ -449,15 +466,6 @@ unsigned short CPU::add16bit(unsigned short a, unsigned short b) {
 
 	retval = a + b;
 	sum = (unsigned short)a + (unsigned short)b;
-	
-	/*
-	// Z is set if result is zero, else reset
-	if (retval == (unsigned short)0x0000) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-	*/
 
 	// N is set to zero
 	resetFlag('N');
