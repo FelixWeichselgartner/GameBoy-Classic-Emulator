@@ -1,7 +1,5 @@
 ## GameBoy-Classic-Emulator by Felix Weichselgartner
 
-*********************************************************
-
 Copyright (c) 2019 Felix Weichselgartner
 
 All rights are reserved.
@@ -16,7 +14,54 @@ contact information:
 
 info@felix-weichselgartner.de
 
-*********************************************************
+
+## Installation:
+
+Download the emulator:
+```
+git clone https://github.com/FelixWeichselgartner/GameBoy-Classic-Emulator.git
+cd GameBoy-Classic-Emulator/
+```
+
+# For Linux:
+
+Make sure you have the current version of SDL2 installed.
+```
+sudo apt-get install libsdl2-dev
+```
+
+Install it:
+```
+cmake .
+make
+```
+
+And run:
+```
+./GameBoy-Classic-Emulator
+```
+
+# Windows:
+
+Installing on windows is a bit more trickier than on linux.
+
+Make sure you have SDL2 installed in your MinGW folder (https://www.libsdl.org/download-2.0.php).
+
+You can compile it with:
+```
+cmake . -G "MinGW Makefiles"
+mingw32-make
+``` 
+
+And run:
+```
+.\GameBoy-Classic-Emulator.exe
+```
+
+However for me the SDL window never showed up here.
+
+Probably the best method to compile on windows is to use Microsoft Visual Studio.
+
 
 ## Resources:
 

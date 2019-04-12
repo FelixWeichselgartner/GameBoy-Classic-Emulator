@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.10)
 project(GameBoy-Classic-Emulator)
 
 #set(SDL2_DIR "${CMAKE_SOURCE_DIR}/lib/SDL2/lib/cmake/SDL2")
