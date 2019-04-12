@@ -1,7 +1,9 @@
 //----------------------------------------------------------------------------------------------
 #include <iostream>
 #include <iomanip>
+using namespace std;
 
+#include "../include/format.hpp"
 #include "../include/Registers.hpp"
 #include "../include/RAM.hpp"
 //----------------------------------------------------------------------------------------------
@@ -32,15 +34,15 @@ std::string toBinary(int n) {
 
 
 void Registers::printFlags() {
-    std::cout << "the flags: " << std::endl;
+    cout << "the flags (0x" << HEX << (int)this->F << "): " << endl;
 
     for (int i = 7; i >= 0; i--) {
         std::cout << i;
     }
 
-    std::cout << std::endl;
-    std::cout << "ZNHC0000" << std::endl;
-    std::cout << toBinary((int) this->F) << std::endl;
+    cout << endl;
+    cout << "ZNHC0000" << endl;
+    cout << toBinary((int) this->F) << endl;
 }
 
     

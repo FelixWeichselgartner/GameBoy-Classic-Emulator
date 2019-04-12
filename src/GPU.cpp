@@ -65,7 +65,7 @@ void GPU::SetLCDStatus() {
 	if (!IsLCDEnabled()) {
 		ScanLineCounter = 456;
 		this->cpuLink->ram.setMemory(0xFF44, 0x00);
-		status = setBit(status & 252, 0);
+		status = setBit(status & 0b11111100, 0);
 		this->cpuLink->WriteByte(0xFF41, status);
 		return;
 	} 

@@ -168,7 +168,13 @@ void GameBoy::Signed8bitTo16bit() {
 	cout << "expected result: 0x02ed - 2 (+1 for load8bit +1 for inc pc" << endl;
 }
 
-int checkInfiniteLoop = 0;
+void GameBoy::land_test_e6() {
+	this->cpu.registers.setA(0x80);
+	this->cpu.registers.setF(0xc0);
+	this->cpu.registers.setA(this->cpu.land(this->cpu.registers.getA(), 0x7f));
+	cout << "0x80 & 07f = " << HEX << (int)this->cpu.registers.getA() << endl;
+	this->cpu.registers.printFlags();
+}
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction;
@@ -180,6 +186,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 	bool printVRAMAfterInstruction = false, keyEn = false, keyHardEn = false;
 	char key;
+	char game = 'A';
 
 	clock_t starttime;
 
@@ -256,11 +263,24 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				cout << "switch back rom 0x0000 - 0x0100" << endl;
 				this->cpu.rom.dltBootstrap(&cpu.ram);
 				cpu.setEnableBootstrap(false);
+				keyEn = true;
+			}
+			
+			if (this->cpu.registers.getPC() == 0x1b9d) {
+				keyEn = true;
 			}
 
-			
-			if (this->cpu.registers.getPC() == 0x29b8 && counter > 5000000) {
+			if (this->cpu.registers.getPC() == 0x1c63 && game == 'A' || counter > 0xfd60 - 20) {
+				keyEn = true;
+			}
+
+			if (counter > 0x1b94a - 150 && game == 'R') {
+				// jumps in false rom bank 0x5876
 				keyHardEn = true;
+			}
+
+			if (counter > 5000000 || this->cpu.registers.getPC() == 0x1c63) {
+				keyEn = true;
 			}
 
 			if (keyEn || keyHardEn) {
@@ -277,10 +297,12 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					printVRAMAfterInstruction = true;
 				} else if (key == 's') {
 					cpu.rom.print(&cpu.ram, 0x8800, 0x8850);
+				} else if (key == 'f') {
+					cpu.rom.print(&cpu.ram, 0xff00, 0xffff);
 				}
 
 				PrintRegisters();
-				cout << "counter: " << checkInfiniteLoop << endl;
+				cout << "counter: " << counter << endl;
 				PrintRegistersFile(logFile);
 			}
 			
@@ -351,6 +373,9 @@ void GameBoy::tests(int mode) {
 		break;
 	case 11:
 		Signed8bitTo16bit();
+		break;
+	case 12:
+		land_test_e6();
 		break;
 	}
 }
@@ -456,7 +481,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
@@ -469,6 +494,7 @@ void GameBoy::run() {
 // MODE 9		add 2 times 16 bit (hl)
 // MODE 10		opcode DA test
 // MODE 11		signed 8 bit to signed 16 bit
+// MODE 12		land test - op e6
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;

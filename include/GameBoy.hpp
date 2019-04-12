@@ -35,6 +35,7 @@ public:
 	void add2x16bithl();
 	void OP_DA_Test();
 	void Signed8bitTo16bit();
+	void land_test_e6();
 
 	void tests(int);
 

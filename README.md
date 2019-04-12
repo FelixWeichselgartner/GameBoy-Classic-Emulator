@@ -23,7 +23,7 @@ git clone https://github.com/FelixWeichselgartner/GameBoy-Classic-Emulator.git
 cd GameBoy-Classic-Emulator/
 ```
 
-# For Linux:
+### For Linux:
 
 Make sure you have the current version of SDL2 installed.
 ```
@@ -41,7 +41,7 @@ And run:
 ./GameBoy-Classic-Emulator
 ```
 
-# Windows:
+### Windows:
 
 Installing on windows is a bit more trickier than on linux.
 
@@ -68,6 +68,7 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 * http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
 * http://www.codeslinger.co.uk/pages/projects/gameboy/opcodes.html
 * https://cturt.github.io/cinoop.html
+* http://gbdev.gg8.se/wiki/articles/Main_Page
 * http://imrannazar.com/Gameboy-Z80-Opcode-Map
 * https://rednex.github.io/rgbds/gbz80.7.html#INC_r8
 * http://www.chibiakumas.com/z80/Gameboy.php
@@ -79,5 +80,4 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 * https://blog.ryanlevick.com/DMG-01/public/book/introduction.html
 * https://fms.komkon.org/GameBoy/Tech/Software.html
 * http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM
-* http://gbdev.gg8.se/wiki/articles/Main_Page
 * http://bgb.bircd.org/pandocs.txt

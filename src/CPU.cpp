@@ -180,7 +180,23 @@ Byte CPU::ReadByte(unsigned short address) const {
 	}
 }
 
+int t = 0;
+
 void CPU::WriteByte(unsigned short address, Byte value) {
+
+	// 0xff41 lcd stat
+	
+	/*
+	if (address == 0xff41) {
+		cout << "lcd stat is set @ " << CPUstepCount << " with " << HEX << (int)value << "h" << endl;
+	}
+	*/
+
+	if (address == 0xfffa) {
+		cout << "0xfffa is set @ " << CPUstepCount << " with " << HEX << (int)value << "h" << endl;
+	}
+	
+
 	// joypad
 	
 	/*
@@ -644,7 +660,7 @@ Byte CPU::land(Byte a, Byte b) {
 	setFlag('H');
 
 	// C is reset
-	setFlag('C');
+	resetFlag('C');
 
 	return retval;
 }

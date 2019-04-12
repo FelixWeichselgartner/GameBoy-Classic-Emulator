@@ -68,7 +68,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
@@ -101,13 +101,61 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 }
 
 void ROM::InitialiseRomBaking() {
+	/*
+	memory bank controller modes (http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header):
+
+	00h  ROM ONLY                 19h  MBC5
+	01h  MBC1                     1Ah  MBC5+RAM
+	02h  MBC1+RAM                 1Bh  MBC5+RAM+BATTERY
+	03h  MBC1+RAM+BATTERY         1Ch  MBC5+RUMBLE
+	05h  MBC2                     1Dh  MBC5+RUMBLE+RAM
+	06h  MBC2+BATTERY             1Eh  MBC5+RUMBLE+RAM+BATTERY
+	08h  ROM+RAM                  20h  MBC6
+	09h  ROM+RAM+BATTERY          22h  MBC7+SENSOR+RUMBLE+RAM+BATTERY
+	0Bh  MMM01
+	0Ch  MMM01+RAM
+	0Dh  MMM01+RAM+BATTERY
+	0Fh  MBC3+TIMER+BATTERY
+	10h  MBC3+TIMER+RAM+BATTERY   FCh  POCKET CAMERA
+	11h  MBC3                     FDh  BANDAI TAMA5
+	12h  MBC3+RAM                 FEh  HuC3
+	13h  MBC3+RAM+BATTERY         FFh  HuC1+RAM+BATTERY
+	*/
+
 	switch (rom[0x0147]) {
-		case 1: RBM_1 = true; break;
-		case 2: RBM_1 = true; break;
-		case 3: RBM_1 = true; break;
-		case 4: RBM_2 = true; break;
-		case 5: RBM_2 = true; break;
-		default: break;
+		case 0:
+			break;
+		case 1: 
+			RBM_1 = true; 
+			break;
+		case 2: 
+			RBM_1 = true; 
+			break;
+		case 3: 
+			RBM_1 = true; 
+			break;
+		case 4: 
+			RBM_2 = true; 
+			break;
+		case 5: 
+			RBM_2 = true; 
+			break;
+		default: 
+			cout << "The Mode " << HEX << (int)rom[0x0147] << "h is currently not supported" << endl;
+			exit(1);
+			break;
+	}
+
+	if (RBM_1) {
+		cout << "Game uses MBC1." << endl;
+	}
+
+	if (RBM_2) {
+		cout << "Game uses MBC2." << endl;
+	}
+
+	if (!RBM_1 && !RBM_2) {
+		cout << "Game uses no MBC." << endl;
 	}
 }
 
@@ -201,7 +249,7 @@ void ROM::print(class RAM* ram, unsigned short start, unsigned short end) {
 		cout << HEX << i << " ";
 	}
 	cout << endl;
-	for (int i = start, c = 0; i < start + (end - start ) / 16; i++, c++) {
+	for (int i = start, c = 0; i < start + (end + 1 - start ) / 16; i++, c++) {
 		cout << setw(8) << hex << setfill('0') << start + c * 16 << ": ";
 		for (int k = 0; k < 16; k++) {
 			cout << HEX << (int)ram->getMemory(start + c * 16 + k) << " ";
