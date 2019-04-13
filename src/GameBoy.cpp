@@ -186,7 +186,11 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 	bool printVRAMAfterInstruction = false, keyEn = false, keyHardEn = false;
 	char key;
-	char game = 'A';
+	char game = cpu.rom.getGameName(&cpu.ram).at(0);
+	cout << "GAME: " << cpu.rom.getGameName(&cpu.ram) << " == " << game << endl;
+	bool skip = false;
+	int skipCounter = 1;
+	game = ' ';
 
 	clock_t starttime;
 
@@ -225,6 +229,9 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 						break;
 					case SDLK_DOWN:
 						this->joypad.KeyPressed(JOY_DOWN);
+						break;
+					case SDLK_LSHIFT:
+						keyEn = true;
 						break;
 					}
 					break;
@@ -265,45 +272,73 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				cpu.setEnableBootstrap(false);
 				keyEn = true;
 			}
+
+			if (game == ' ' && (cpu.registers.getPC() == 0xc3e8)) {
+				keyEn = true;
+			}
+
+			if (skip && (skipCounter % 32 == 0)) {
+				keyEn = true;
+				skip = false;
+			}
 			
-			if (this->cpu.registers.getPC() == 0x1b9d) {
-				keyEn = true;
-			}
+			if (!skip) {
+				/*
+				if (this->cpu.registers.getPC() == 0x1b9d) {
+					keyEn = true;
+				}
+				*/
 
-			if (this->cpu.registers.getPC() == 0x1c63 && game == 'A' || counter > 0xfd60 - 20) {
-				keyEn = true;
-			}
-
-			if (counter > 0x1b94a - 150 && game == 'R') {
-				// jumps in false rom bank 0x5876
-				keyHardEn = true;
-			}
-
-			if (counter > 5000000 || this->cpu.registers.getPC() == 0x1c63) {
-				keyEn = true;
-			}
-
-			if (keyEn || keyHardEn) {
-				if (printVRAMAfterInstruction) {
-					cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
-					printVRAMAfterInstruction = false;
+				if ((this->cpu.registers.getPC() == 0x1c63 || counter > 0xfd60 - 20) && game == 'A') {
+					keyEn = true;
 				}
 
-				key = cin.get();
-				if (key == 'r') {
-					cpu.setRunning(false);
-					break;
-				} else if (key == 'p') {
-					printVRAMAfterInstruction = true;
-				} else if (key == 's') {
-					cpu.rom.print(&cpu.ram, 0x8800, 0x8850);
-				} else if (key == 'f') {
-					cpu.rom.print(&cpu.ram, 0xff00, 0xffff);
+				if (counter > 0x1b94a - 150 && game == 'R') {
+					// jumps in false rom bank 0x5876
+					keyHardEn = true;
 				}
 
-				PrintRegisters();
-				cout << "counter: " << counter << endl;
-				PrintRegistersFile(logFile);
+				if ((counter > 5000000 || this->cpu.registers.getPC() == 0x1c63) && false) {
+					keyEn = true;
+				}
+
+				if (keyEn || keyHardEn) {
+					if (printVRAMAfterInstruction) {
+						cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
+						printVRAMAfterInstruction = false;
+					}
+
+					key = cin.get();
+					if (key == 'r') {
+						cpu.setRunning(false);
+						break;
+					}
+					else if (key == 'p') {
+						printVRAMAfterInstruction = true;
+					}
+					else if (key == 's') {
+						cpu.rom.print(&cpu.ram, 0x8800, 0x8850);
+					}
+					else if (key == 'f') {
+						cpu.rom.print(&cpu.ram, 0xff00, 0xffff);
+					}
+					else if (key == 'k') {
+						// skip 32 instructions
+						cout << "skipping" << endl;
+						keyEn = false;
+						skip = true;
+					}
+					else if (key == 'd') {
+						keyEn = false;
+					}
+
+					PrintRegisters();
+					cout << "counter: " << counter << endl;
+					PrintRegistersFile(logFile);
+				}
+			} else {
+				skipCounter++;
+				cout << skip << endl;
 			}
 			
 
@@ -472,7 +507,7 @@ void GameBoy::run() {
 		}
 
 		gpu.render();
-		delay(delaytime - (int)difftime(clock(), starttime));
+		//delay(delaytime - (int)difftime(clock(), starttime));
 		//cout << "timediff: " << difftime(clock(), starttime);
 	}
 
@@ -481,7 +516,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

@@ -167,10 +167,10 @@ Byte CPU::ReadByte(unsigned short address) const {
 		}
 		*/
 
-		/*
-		if (CPUstepCount > 5000000 && address == 0xff00)
-			cout << "read 0xff00 @ " << this->registers.getPC() << endl;
-			*/
+		
+		if (CPUstepCount > 5000000 && address == 0xff00 && this->registers.getPC() == 0x29cf) 
+			cout << "read 0xff00 @ " << this->registers.getPC() << ": " << toBinary(joypadLink->getJoypadState()) << endl;
+	
 
 		return joypadLink->getJoypadState();
 	} 
@@ -192,10 +192,11 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	}
 	*/
 
+	/*
 	if (address == 0xfffa) {
 		cout << "0xfffa is set @ " << CPUstepCount << " with " << HEX << (int)value << "h" << endl;
 	}
-	
+	*/
 
 	// joypad
 	
@@ -1405,8 +1406,9 @@ void CPU::executeInstruction(Byte opcode) {
 			jump = 0x01;
             break;
         case 0xC4: // CALL NZ, nn   call routine at 16-bit location if last result was not zero.
+			jumpAddress = load16bit();
 			if (!getFlag('Z')) {
-				call(load16bit());
+				call(jumpAddress);
 			}
             break;
         case 0xC5: // PUSH BC       push 16-bit BC onto stack.
@@ -1438,8 +1440,9 @@ void CPU::executeInstruction(Byte opcode) {
 			executeExtendedOpcodes();
             break;
         case 0xCC: // CALL Z, nn    call routine at 16-bit location if last result was zero.
+			jumpAddress = load16bit();
 			if (getFlag('Z')) {
-				call(load16bit());
+				call(jumpAddress);
 			}
             break;
         case 0xCD: // CALL nn       call routine at 16-bit location.
@@ -1504,8 +1507,9 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xDB: // XX            operation removed in this CPU. 
             break;
         case 0xDC: // CALL C, nn    call routine at 16-bit location if last result caused no carry.
+			jumpAddress = load16bit();
 			if (!getFlag('C')) {
-				call(load16bit());
+				call(jumpAddress);
 			}
             break;
         case 0xDD: // XX            operation removed in this CPU.
@@ -1628,7 +1632,7 @@ Byte CPU::sla(Byte value) {
 	resetFlag('H');
 
 	// C is set according to result.
-	if (value & 0b1000000) {
+	if (testBit(value, 7)) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -1652,7 +1656,7 @@ Byte CPU::sra(Byte value) {
 	resetFlag('H');
 
 	// C is set according to result.
-	if (value & 0b0000001) {
+	if (testBit(value, 0)) {
 		setFlag('C');
 	} else {
 		resetFlag('C');

@@ -46,18 +46,20 @@ void Joypad::KeyPressed(int key) {
 	bool requestInterupt = (button && testBit(keyReq, BUTTON)) || (!button && testBit(keyReq, DIRECTION));
 
 	// debug
+	/*
 	cout << "previouslySet: " << boolalpha << previouslySet << endl;
 	cout << "key req" << toBinary(this->cpuLink->ram.getMemory(0xff00)) << endl;
 	cout << "button boolean: " << boolalpha << button << endl;
 	cout << "button req: " << boolalpha << testBit(keyReq, BUTTON) << " dir req: " << boolalpha << testBit(keyReq, DIRECTION) << endl;
 	cout << "requestInterupt: " << boolalpha << requestInterupt << endl;
+	*/
 
 	if (requestInterupt && !previouslySet) {
-		cout << "request interupt 4" << endl;
+		//cout << "request interupt 4" << endl;
 		this->cpuLink->RequestInterupt(4);
 	}
 	else {
-		cout << "not request interupt 4" << endl;
+		//cout << "not request interupt 4" << endl;
 	}
 
 	return;
