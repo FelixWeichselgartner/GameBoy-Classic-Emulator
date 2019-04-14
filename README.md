@@ -63,6 +63,16 @@ However for me the SDL window never showed up here.
 Probably the best method to compile on windows is to use Microsoft Visual Studio.
 
 
+## Known Issues:
+
+* on Ubuntu screen is flickering in the upper line (however not on windows).
+* joypad input not working.
+* for tetris there seems to be some kind of random key input.
+* MBC1 is not working. Games that use rom banking don't load.
+* blarggs test roms: failing in every one I tried so far.
+* cmake and mingw32 compiling on windows does not bring a sdl2 window at execution.
+* emulator is running in slower speed -> at least in the bootstrap sequence.
+
 ## Resources:
 
 * http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf

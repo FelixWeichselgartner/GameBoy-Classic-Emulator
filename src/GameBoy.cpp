@@ -180,6 +180,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
 	unsigned long long counter = 0;
+	bool screen = false;
 
 	ofstream logFile;
 	logFile.open("logFile.log");
@@ -233,6 +234,11 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					case SDLK_LSHIFT:
 						keyEn = true;
 						break;
+					case SDLK_F6:
+						if (!screen)
+							gpu.screenshot();
+						screen = true;
+						break;
 					}
 					break;
 				case SDL_KEYUP:
@@ -260,6 +266,9 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 						break;
 					case SDLK_DOWN:
 						this->joypad.KeyReleased(JOY_DOWN);
+						break;
+					case SDLK_F6:
+						screen = false;
 						break;
 					}
 					break;
@@ -420,6 +429,7 @@ void GameBoy::run() {
 
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
+	bool screen = false;
 
 	clock_t starttime;
 
@@ -459,6 +469,11 @@ void GameBoy::run() {
 							case SDLK_DOWN:
 								this->joypad.KeyPressed(JOY_DOWN);
 								break;
+							case SDLK_F6:
+								if (!screen)
+									gpu.screenshot();
+								screen = true;
+								break;
 							}
 							break;
 					case SDL_KEYUP:
@@ -486,6 +501,9 @@ void GameBoy::run() {
 								break;
 							case SDLK_DOWN:
 								this->joypad.KeyReleased(JOY_DOWN);
+								break;
+							case SDLK_F6:
+								screen = false;
 								break;
 						}
 						break;

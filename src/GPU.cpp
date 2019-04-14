@@ -374,3 +374,24 @@ void GPU::render() {
 
 	return;
 }
+
+/**
+ * @brief  saves the current SDL2 window to a bmp file.
+ * @note   uses time() to get a unique name for each screenshot.
+ * @retval None
+ */
+void GPU::screenshot() {
+	int w, h;
+	time_t c;
+	time(&c);
+	stringstream ss;
+	string name;
+	ss << c;
+	name = ss.str() + ".bmp";
+	cout << "Your screenshot was saved as " << name << "." << endl;
+	SDL_GetRendererOutputSize(renderer, &w, &h);
+	SDL_Surface *shot = SDL_CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+	SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, shot->pixels, shot->pitch);
+	SDL_SaveBMP(shot, name.c_str());
+	SDL_FreeSurface(shot);
+}
