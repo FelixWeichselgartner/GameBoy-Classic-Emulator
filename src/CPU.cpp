@@ -167,10 +167,10 @@ Byte CPU::ReadByte(unsigned short address) const {
 		}
 		*/
 
-		
+		/*
 		if (CPUstepCount > 5000000 && address == 0xff00 && this->registers.getPC() == 0x29cf) 
 			cout << "read 0xff00 @ " << this->registers.getPC() << ": " << toBinary(joypadLink->getJoypadState()) << endl;
-	
+		*/
 
 		return joypadLink->getJoypadState();
 	} 

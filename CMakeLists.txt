@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(GameBoy-Classic-Emulator)
 
-#set(SDL2_DIR "${CMAKE_SOURCE_DIR}/lib/SDL2/lib/cmake/SDL2")
-
 find_package(SDL2 REQUIRED)
 
 include_directories(GameBoy-Classic-Emulator ${SDL2_INCLUDE_DIRS})
