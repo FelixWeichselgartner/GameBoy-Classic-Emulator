@@ -137,7 +137,7 @@ public:
 	Byte set(Byte, int);
 
 	// execute extended opcodes.
-	void executeExtendedOpcodes();
+	int executeExtendedOpcodes();
 
 	// one cpu step.
 	int CPUstep();

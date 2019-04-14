@@ -81,3 +81,4 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 * https://fms.komkon.org/GameBoy/Tech/Software.html
 * http://gbdev.gg8.se/wiki/articles/Gameboy_Bootstrap_ROM
 * http://bgb.bircd.org/pandocs.txt
+* https://gekkio.fi/blog/2016-10-10-game-boy-test-rom-dos-and-donts.html
