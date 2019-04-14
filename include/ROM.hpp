@@ -16,7 +16,7 @@ private:
 	int RomSize;
 
 	// rom banking.
-	bool RBM_1, RBM_2;
+	bool MBC_1, MBC_2;
 	Byte CurrentRomBank, RomBankingMode;
 
 	// ram link.

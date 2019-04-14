@@ -298,7 +298,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 				*/
 
-				if ((this->cpu.registers.getPC() == 0x1c63 || counter > 0xfd60 - 20) && game == 'A') {
+				if (this->cpu.registers.getPC() == 0x1c63 && game == 'A') {
 					keyEn = true;
 				}
 
@@ -534,7 +534,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

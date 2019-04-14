@@ -51,7 +51,7 @@ ROM::ROM() {
 ROM::ROM(class RAM* ram) {
 	this->rom = NULL;
 	this->RomSize = 0;
-	this->RBM_1 = this->RBM_2 = false;
+	this->MBC_1 = this->MBC_2 = false;
 	this->CurrentRomBank = 1;
 	this->ram = ram;
 }
@@ -68,7 +68,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
@@ -126,19 +126,19 @@ void ROM::InitialiseRomBaking() {
 		case 0:
 			break;
 		case 1: 
-			RBM_1 = true; 
+			MBC_1 = true; 
 			break;
 		case 2: 
-			RBM_1 = true; 
+			MBC_1 = true; 
 			break;
 		case 3: 
-			RBM_1 = true; 
+			MBC_1 = true; 
 			break;
 		case 4: 
-			RBM_2 = true; 
+			MBC_2 = true; 
 			break;
 		case 5: 
-			RBM_2 = true; 
+			MBC_2 = true; 
 			break;
 		default: 
 			cout << "The Mode " << HEX << (int)rom[0x0147] << "h is currently not supported" << endl;
@@ -146,15 +146,15 @@ void ROM::InitialiseRomBaking() {
 			break;
 	}
 
-	if (RBM_1) {
+	if (MBC_1) {
 		cout << "Game uses MBC1." << endl;
 	}
 
-	if (RBM_2) {
+	if (MBC_2) {
 		cout << "Game uses MBC2." << endl;
 	}
 
-	if (!RBM_1 && !RBM_2) {
+	if (!MBC_1 && !MBC_2) {
 		cout << "Game uses no MBC." << endl;
 	}
 }
@@ -168,11 +168,15 @@ Byte ROM::getRomBankingMode() const {
 }
 
 void ROM::ChangeLowRomBank(Byte value) {
-	if (RBM_2) {
+	if (MBC_2) {
 		CurrentRomBank = value & 0x0F;
-	} else {
-		CurrentRomBank = (CurrentRomBank & 0xE0) | (value & 0x1F);
+
+		if (CurrentRomBank == 0x00) {
+			CurrentRomBank++;
+		}
 	}
+
+	CurrentRomBank = (CurrentRomBank & 224) | (value & 31);
 
 	if (CurrentRomBank == 0x00) {
 		CurrentRomBank++;
@@ -191,7 +195,8 @@ void ROM::ChangeHighRomBank(Byte value) {
 }
 
 void ROM::ChangeRomRamMode(Byte value) {
-	if (this->RomBankingMode = (value & 0x01) == 0x00) {
+	this->RomBankingMode = value & 0x01;
+	if (this->RomBankingMode) {
 		this->ram->setCurrentRamBank(0x00);
 	}
 	
@@ -199,7 +204,7 @@ void ROM::ChangeRomRamMode(Byte value) {
 }
 
 void ROM::EnableRamBank(unsigned short address, Byte value) {
-	if (RBM_2 && (address & 0x000F) == 0x000F) {
+	if (MBC_2 && (address & 0x000F) == 0x000F) {
 		return;
 	} else {
 		switch (value & 0x0F) {
@@ -212,15 +217,15 @@ void ROM::EnableRamBank(unsigned short address, Byte value) {
 
 void ROM::HandleBanking(unsigned short address, Byte value) {
 	// ram enable.
-	if (address < 0x2000 && (RBM_1 || RBM_2)) {
+	if (address < 0x2000 && (MBC_1 || MBC_2)) {
 		EnableRamBank(address, value);
 	}
 	// change rom bank.
-	else if (address >= 0x2000 && address < 0x4000 && (RBM_1 ||RBM_2)) {
+	else if (address >= 0x2000 && address < 0x4000 && (MBC_1 || MBC_2)) {
 		ChangeLowRomBank(value);
 	}
 	// rom or ram bank change.
-	else if (address >= 0x4000 && address < 0x6000 && RBM_1) {
+	else if (address >= 0x4000 && address < 0x6000 && MBC_1) {
 		if (RomBankingMode) {
 			ChangeHighRomBank(value);
 		} else {
@@ -228,7 +233,7 @@ void ROM::HandleBanking(unsigned short address, Byte value) {
 		}
 	}
 	// rom and ram banking.
-	else if (address >= 0x6000 && address < 0x8000 || RBM_1) {
+	else if (address >= 0x6000 && address < 0x8000 || MBC_1) {
 		ChangeRomRamMode(value);
 	}
 }

@@ -184,13 +184,17 @@ int t = 0;
 
 void CPU::WriteByte(unsigned short address, Byte value) {
 
-	// 0xff41 lcd stat
-	
-	/*
-	if (address == 0xff41) {
-		cout << "lcd stat is set @ " << CPUstepCount << " with " << HEX << (int)value << "h" << endl;
+	if (address < 0x8000) {
+		cout << "write < 0x8000 -> pc: " << HEX16 << this->registers.getPC() << "step: " << CPUstepCount << endl;
 	}
-	*/
+
+	if (false) {
+		// 0xff41 lcd stat	
+		if (address == 0xff41) {
+			cout << "lcd stat is set @ " << HEX16 << this->registers.getPC() << "(" << CPUstepCount << ") with " << HEX << (int)value << "h" << endl;
+		}
+	}
+	
 
 	/*
 	if (address == 0xfffa) {
@@ -858,7 +862,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(rrc(this->registers.getA()));
             break;
         case 0x10: // STOP          stop processor.
-			this->gb_stop = 0x01;
+			this->gb_halt = 0x01;
             break;
         case 0x11: // LD DE, nn     load 16-bit immediate into DE.
 			this->registers.setDE(load16bit());
@@ -1493,8 +1497,9 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xD3: // XX            operation removed in this CPU.
             break;
         case 0xD4: // CALL C, nn   call routine at 16-bit location if last result caused carry.
+			jumpAddress = load16bit();
 			if (getFlag('C')) {
-				call(load16bit());
+				call(jumpAddress);
 			}
             break;
         case 0xD5: // PUSH DE       push 16-bit DE onto stack.
@@ -2538,7 +2543,7 @@ int CPU::CPUstep() {
 	this->cycles = 0;
 	CPUstepCount++;
 
-	executeInstruction(ReadByte(this->registers.getPC()));
+	executeInstruction(gb_halt ? 0x00 : ReadByte(this->registers.getPC()));
 
 	// may not increase program counter after jumps.
 	if (!this->jump) {
@@ -2573,7 +2578,8 @@ void CPU::RequestInterupt(int id) {
 void CPU::DoInterupts() {
 	Byte req, enabled;
 
-	if (enableInterupts) {
+	if (enableInterupts || gb_halt) {
+		gb_halt = 0x00;
 		req = ReadByte(ADDR_INTR_REQ);
 		enabled = ReadByte(ADDR_INTR_EN);
 
