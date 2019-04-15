@@ -49,16 +49,14 @@ void GameBoy::PrintRegisters() {
 }
 
 void GameBoy::PrintRegistersFile(ofstream &file) {
-	file << "[PC]: " << HEX16 << this->cpu.registers.getPC() << "\t [OPCODE]: ";
-	file << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << "\t\t<-   ";
-	file << "A" << HEX << (int)this->cpu.registers.getA() << " ";
-	file << "F" << HEX << (int)this->cpu.registers.getF() << "   ";
-	file << "B" << HEX << (int)this->cpu.registers.getB() << " ";
-	file << "C" << HEX << (int)this->cpu.registers.getC() << "   ";
-	file << "D" << HEX << (int)this->cpu.registers.getD() << " ";
-	file << "E" << HEX << (int)this->cpu.registers.getE() << "   ";
-	file << "HL" << HEX16 << this->cpu.registers.getHL() << "   ";
-	file << "SP" << HEX16 << this->cpu.registers.getSP() << endl;
+	file << "pc:" << HEX16 << this->cpu.registers.getPC() << " ";
+	file << "op:" << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << " ";
+	file << "af:" << HEX16 << this->cpu.registers.getAF() << " ";
+	file << "bc:" << HEX16 << this->cpu.registers.getBC() << " ";
+	file << "de:" << HEX16 << this->cpu.registers.getDE() << " ";
+	file << "hl:" << HEX16 << this->cpu.registers.getHL() << " ";
+	file << "sp:" << HEX16 << this->cpu.registers.getSP() << " ";
+	file << "ly:" << HEX << (int)this->cpu.ReadByte(0xff44) << endl;
 }
 
 // seems to be working
@@ -350,7 +348,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				cout << skip << endl;
 			}
 			
-
+			PrintRegistersFile(logFile);
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);
@@ -534,7 +532,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

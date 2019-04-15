@@ -17,6 +17,7 @@ GPU::GPU(class CPU* cpuLink) {
 	this->ramLink = &cpuLink->ram;
 	windowName = this->cpuLink->rom.getGameName(this->ramLink);
 	ScanLineCounter = 0;
+	this->GpuMode = GPU_MODE_HBLANK;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		cout << "[Error] SDL coult not be initialised! SDL Error: " << SDL_GetError() << endl;
@@ -354,9 +355,10 @@ void GPU::UpdateGraphics(int cycles) {
 			this->cpuLink->ram.setMemory(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
 			currentline = this->cpuLink->ReadByte(0xFF44);
 
-			ScanLineCounter = 0;
+			ScanLineCounter -= 456;
 
 			if (currentline == Y_RES) {
+				//cout << "~~~~~~~~~~~~ request interrupt" << endl;
 				cpuLink->RequestInterupt(0);
 			} else if (currentline > 0x99) {
 				this->cpuLink->ram.setMemory(0xFF44, 0);
@@ -368,6 +370,73 @@ void GPU::UpdateGraphics(int cycles) {
 	}
 
 	return;
+}
+
+void GPU::IncScanline() {
+	this->cpuLink->ram.setMemory(0xff44, this->cpuLink->ReadByte(0xff44) + 1);
+}
+
+Byte GPU::getScanline() {
+	return this->cpuLink->ReadByte(0xff44);
+}
+
+void GPU::setScanline(Byte s) {
+	this->cpuLink->WriteByte(0xff44, s);
+}
+
+void GPU::UpdateGraphics2(int cycles) {
+	ScanLineCounter += cycles;
+
+	//cout << "scanline counter: " << dec << ScanLineCounter << " gpu mode: " << GpuMode << endl;
+
+	switch (GpuMode) {
+	case GPU_MODE_HBLANK:
+		if (ScanLineCounter >= 204) {
+			IncScanline();
+
+			if (getScanline() == Y_RES - 1) {
+				//cout << "~~~~~~~~~~~~ request interrupt" << endl;
+				this->cpuLink->RequestInterupt(0);
+
+				GpuMode = GPU_MODE_VBLANK;
+			}
+			else {
+				GpuMode = GPU_MODE_OAM;
+			}
+
+			ScanLineCounter -= 204;
+		}
+		break;
+	case GPU_MODE_VBLANK:
+		if (ScanLineCounter >= 456) {
+			IncScanline();
+
+			if (getScanline() > 153) {
+				setScanline(0x00);
+				GpuMode = GPU_MODE_OAM;
+			}
+
+			ScanLineCounter -= 456;
+		}
+		break;
+	case GPU_MODE_OAM:
+		if (ScanLineCounter >= 80) {
+			GpuMode = GPU_MODE_VRAM;
+
+			ScanLineCounter -= 80;
+		}
+		break;
+	case GPU_MODE_VRAM:
+		if (ScanLineCounter >= 172) {
+			GpuMode = GPU_MODE_HBLANK;
+
+			//cout << "draw scanline" << endl;
+			DrawScanLine();
+
+			ScanLineCounter -= 172;
+		}
+		break;
+	}
 }
 
 void GPU::render() {

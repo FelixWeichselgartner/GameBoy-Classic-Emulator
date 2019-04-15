@@ -10,18 +10,21 @@
 //----------------------------------------------------------------------------------------------
 // screen resolution:
 
-/*
-// amount of pixels in horizontal direction.
-#define LCD_HOR_LINES 
-// amount of pixels in vertical direction.
-#define LCD_VERT_LINES 154
-*/
 // amount of pixels in x direction.
 #define X_RES 160
 // amount of pixels in y direction.
 #define Y_RES 144
+//----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
+// GPU MODES:
+
+#define GPU_MODE_HBLANK 0
+#define GPU_MODE_VBLANK 1
+#define GPU_MODE_OAM	2
+#define GPU_MODE_VRAM	3
+//----------------------------------------------------------------------------------------------
+
 
 /*----------------------------------------------------------------------------------------------
 // lcd control register @ 0xFF40
@@ -73,6 +76,7 @@ private:
 	const int scaleWidth = 4, scaleHeight = 4;
 	const int windowWidth = X_RES * scaleWidth, windowHeight = Y_RES * scaleHeight;
 	Byte display[Y_RES][X_RES] = { 0 };
+	int GpuMode;
 
 public:
 
@@ -98,7 +102,13 @@ public:
 	void DrawScanLine();
 
 	void renderDisplay(Byte);
+
+	void IncScanline();
+	Byte getScanline();
+	void setScanline(Byte);
+
 	void UpdateGraphics(int);
+	void UpdateGraphics2(int);
 
 	void render();
 

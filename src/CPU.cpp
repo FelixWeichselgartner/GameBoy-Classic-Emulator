@@ -296,7 +296,7 @@ Byte CPU::dec(Byte value) {
 	
 	setFlag('N');
 
-	if (retval == 0x0F) {
+	if ((retval & 0x0F) == 0x0F) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
@@ -720,7 +720,7 @@ void CPU::cp(Byte A, Byte X) {
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	if (((A ^ X ^ sub) & 0x10) == 0x01) {
+	if (((A ^ X ^ sub) & 0x10) != 0x00) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
@@ -768,7 +768,27 @@ void CPU::call(unsigned short address) {
 	this->jump = true;
 }
 
-Byte CyclesPerOPCode[0x100] = {
+Byte CyclesPerOPCode[0x100]{
+//   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+	 1,  3,  2,  2,  1,  1,  2,  1,  5,  2,  2,  2,  1,  1,  2,  1, 	// 0x00
+	 0,  3,  2,  2,  1,  1,  2,  1,  3,  2,  2,  2,  1,  1,  2,  1, 	// 0x10
+	 2,  3,  2,  2,  1,  1,  2,  1,  2,  2,  2,  2,  1,  1,  2,  1, 	// 0x20
+	 2,  3,  2,  2,  3,  3,  3,  1,  2,  2,  2,  2,  1,  1,  2,  1, 	// 0x30
+	 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x40
+	 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x50
+	 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x60
+	 2,  2,  2,  2,  2,  2,  0,  2,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x70
+	 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x80
+	 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x90
+	 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0xA0
+	 1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0xB0
+	 2,  3,  3,  4,  3,  4,  2,  4,  2,  4,  3,  0,  3,  6,  2,  4, 	// 0xC0
+	 2,  3,  3,  0,  3,  4,  2,  4,  2,  4,  3,  0,  3,  0,  2,  4, 	// 0xD0
+	 3,  3,  2,  0,  0,  4,  2,  4,  4,  1,  4,  0,  0,  0,  2,  4, 	// 0xE0
+	 3,  3,  2,  1,  0,  4,  2,  4,  3,  2,  4,  1,  0,  0,  2,  4  	// 0xF0
+};
+
+Byte CyclesPerOPCodeOld[0x100] = {
 //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
 	 4, 12,  8,  8,  4,  4,  8,  4, 20,  8,  8,  8,  4,  4,  8,  4,		// 0x00
 	 4, 12,  8,  8,  4,  4,  8,  4,  8,  8,  8,  8,  4,  4,  8,  4,		// 0x10
@@ -809,7 +829,7 @@ Byte CyclesPerCBOPCode[0x100] = {
 };
 
 void CPU::executeInstruction(Byte opcode) {
-	this->cycles += CyclesPerOPCode[opcode];
+	this->cycles += CyclesPerOPCode[opcode] * 4;
 	unsigned short	jumpAddress;
 	Byte			jumpRelAddress;
 
@@ -2619,6 +2639,7 @@ void CPU::ServiceInterupts(int interupt) {
 
 	switch (interupt) {
 		case 0:
+			//cout << "########## service interrupt vblank" << endl;
 			this->registers.setPC(INTERUPT_VBLANK);
 			break;
 		case 1:
@@ -2628,7 +2649,7 @@ void CPU::ServiceInterupts(int interupt) {
 			this->registers.setPC(INTERUPT_TIMER);
 			break;
 		case 4:
-			cout << "service interupt joypad" << endl;
+			//cout << "service interrupt joypad" << endl;
 			this->registers.setPC(INTERUPT_JOYPAD);
 		default:
 			break;
