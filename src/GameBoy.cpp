@@ -288,6 +288,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				keyEn = true;
 				skip = false;
 			}
+
+			if (this->cpu.registers.getPC() == 0x1ba3 && false) {
+				keyEn = true;
+			}
 			
 			if (!skip) {
 				/*
@@ -296,9 +300,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 				*/
 
-				if (this->cpu.registers.getPC() == 0x1c63 && game == 'A') {
-					keyEn = true;
-				}
+				
 
 				if (counter > 0x1b94a - 150 && game == 'R') {
 					// jumps in false rom bank 0x5876
@@ -532,7 +534,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

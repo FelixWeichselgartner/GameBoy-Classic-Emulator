@@ -68,6 +68,14 @@ void RAM::setRamEnable(bool en) {
 	this->EnableRamBanking = en;
 }
 
+Byte RAM::getRamBankMemory(unsigned short address) const {
+	return this->RamBanks[address];
+}
+
+void RAM::setRamBankMemory(unsigned short address, Byte value) {
+	this->RamBanks[address] = value;
+}
+
 void RAM::ChangeRamBank(Byte value) {
 	CurrentRamBank = value & 0x03;
 }

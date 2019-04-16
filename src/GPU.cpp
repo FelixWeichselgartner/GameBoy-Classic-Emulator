@@ -207,7 +207,7 @@ void GPU::RenderTiles(Byte lcdControl) {
 	yPos = 0;
 
 	// checks if the window is enabled.
-	usingWindow = (testBit(lcdControl, 5) && (windowY <= this->cpuLink->ReadByte(0xFF44))) ? true : false;
+	usingWindow = (testBit(lcdControl, 5) && (windowY <= this->cpuLink->ReadByte(0xFF44)));
 
 	if (testBit(lcdControl, 4)) {
 		tileData = ADDR_VRAM_T_S;
@@ -385,6 +385,14 @@ void GPU::setScanline(Byte s) {
 }
 
 void GPU::UpdateGraphics2(int cycles) {
+	/*
+	SetLCDStatus();
+
+	if (!IsLCDEnabled()) {
+		return;
+	}
+	*/
+
 	ScanLineCounter += cycles;
 
 	//cout << "scanline counter: " << dec << ScanLineCounter << " gpu mode: " << GpuMode << endl;

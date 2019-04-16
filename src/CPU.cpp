@@ -154,7 +154,7 @@ Byte CPU::ReadByte(unsigned short address) const {
 	} 
 	// ram memory bank.
 	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
-		return this->ram.getMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
+		return this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
 	}
 	// joypad register.
 	else if (address == ADDR_IO) {
@@ -184,7 +184,7 @@ int t = 0;
 
 void CPU::WriteByte(unsigned short address, Byte value) {
 
-	if (address < 0x8000) {
+	if (address < 0x8000 && false) {
 		cout << "write < 0x8000 -> pc: " << HEX16 << this->registers.getPC() << "step: " << CPUstepCount << endl;
 	}
 
@@ -216,7 +216,7 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	} 
 	// ram banking.
 	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1 && this->ram.getRamEnable()) {
-		this->ram.setMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000), value);
+		this->ram.setRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000), value);
 	}
 	
 	else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
@@ -261,7 +261,7 @@ Byte CPU::load8bit() {
 unsigned short CPU::load16bit() {
 	unsigned short retval = 0x0000;
 	retval = load8bit();
-	retval = retval | (load8bit() << 8);
+	retval |= (load8bit() << 8);
 	return retval;
 }
 
@@ -766,6 +766,11 @@ void CPU::call(unsigned short address) {
 	push16bit(this->registers.getPC());
 	this->registers.setPC(address);
 	this->jump = true;
+}
+
+void CPU::rst(unsigned short address) {
+	this->registers.setPC(this->registers.getPC() + 1);
+	call(address);
 }
 
 Byte CyclesPerOPCode[0x100]{
@@ -1462,8 +1467,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(add(this->registers.getA(), load8bit(), 'u'));
             break;
         case 0xC7: // RST 0         call routine at address 0000h
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0000);
+			rst(0x0000);
             break;
         case 0xC8: // RET Z         return if last result was zero.
 			if (getFlag('Z')) {
@@ -1496,8 +1500,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(adc(this->registers.getA(), load8bit()));
             break;
         case 0xCF: // RST 8         call routine at adress 0008h.
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0008);
+			rst(0x0008);
             break;
         case 0xD0: // RET NC        return if last result caused no carry.
 			if (!getFlag('C')) {
@@ -1529,8 +1532,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(sub(this->registers.getA(), load8bit()));
             break;
         case 0xD7: // RST 10        call routine at address 0010h.
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0010);
+			rst(0x0010);
             break;
         case 0xD8: // RET C         return if last result caused carry.
 			if (getFlag('C')) {
@@ -1563,8 +1565,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(sbc(this->registers.getA(), load8bit()));
             break;
         case 0xDF: // RST 18        call routine at address 0018h.
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0018);
+			rst(0x0018);
             break;
         case 0xE0: // LDH (n), A    save A at address pointed to by (FF00h + 8-bit immediate)
 			WriteByte(ADDR_IO + load8bit(), this->registers.getA());
@@ -1586,8 +1587,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(land(this->registers.getA(), load8bit()));
             break;
         case 0xE7: // RST 20        call routine at address 0020h.
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0020);
+			rst(0x0020);
             break;
         case 0xE8: // ADD SP, d     add signed 8-bit immediate to SP.
 			this->registers.setSP(add16bitSign(this->registers.getSP(), load8bit()));
@@ -1609,8 +1609,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(lxor(this->registers.getA(), load8bit()));
             break;
         case 0xEF: // RST 28        call routine at address 0028h.
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0028);
+			rst(0x0028);
             break;
         case 0xF0: // LDH A, (n)    load A from address pointed to by (FF00h + 8-bit immediate).
 			this->registers.setA(ReadByte(ADDR_IO + load8bit()));
@@ -1633,8 +1632,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(lor(this->registers.getA(), load8bit()));
             break;
         case 0xF7: // RST 30        call routine at address 0030h.
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0030);
+			rst(0x0030);
             break;
         case 0xF8: // LDHL SP, d    add signed 8-bit immediate to SP and save result in HL.
 			this->registers.setHL(add16bitSign(this->registers.getSP(), load8bit()));
@@ -1656,8 +1654,7 @@ void CPU::executeInstruction(Byte opcode) {
 			cp(this->registers.getA(), load8bit());
             break;
         case 0xFF: // RST 38        call routine at address 0038h.
-			this->registers.setPC(this->registers.getPC() + 1);
-			call(0x0038);
+			rst(0x0038);
             break;
     }
 }
@@ -2563,7 +2560,10 @@ int CPU::CPUstep() {
 	this->cycles = 0;
 	CPUstepCount++;
 
-	executeInstruction(gb_halt ? 0x00 : ReadByte(this->registers.getPC()));
+	//executeInstruction(gb_halt ? 0x00 : ReadByte(this->registers.getPC()));
+	if (!gb_halt) {
+		executeInstruction(ReadByte(this->registers.getPC()));
+	}
 
 	// may not increase program counter after jumps.
 	if (!this->jump) {
@@ -2636,6 +2636,8 @@ void CPU::ServiceInterupts(int interupt) {
 	WriteByte(ADDR_INTR_REQ, req);
 
 	push16bit(this->registers.getPC());
+
+	//cout << "service interrupt" << endl;
 
 	switch (interupt) {
 		case 0:

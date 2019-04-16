@@ -117,6 +117,8 @@ public:
 	unsigned short pop16bit();
 	// call routine.
 	void call(unsigned short);
+	// rst
+	void rst(unsigned short);
 	
 	// execute instructions according to opcode.
     void executeInstruction(Byte);

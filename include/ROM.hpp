@@ -17,6 +17,7 @@ private:
 
 	// rom banking.
 	bool MBC_1, MBC_2;
+	bool RomBanking;
 	Byte CurrentRomBank, RomBankingMode;
 
 	// ram link.

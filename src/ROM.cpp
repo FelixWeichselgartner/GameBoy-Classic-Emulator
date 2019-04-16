@@ -54,6 +54,7 @@ ROM::ROM(class RAM* ram) {
 	this->MBC_1 = this->MBC_2 = false;
 	this->CurrentRomBank = 1;
 	this->ram = ram;
+	this->RomBanking = true;
 }
 
 ROM::~ROM() {
@@ -68,7 +69,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
@@ -170,13 +171,9 @@ Byte ROM::getRomBankingMode() const {
 void ROM::ChangeLowRomBank(Byte value) {
 	if (MBC_2) {
 		CurrentRomBank = value & 0x0F;
-
-		if (CurrentRomBank == 0x00) {
-			CurrentRomBank++;
-		}
+	} else {
+		CurrentRomBank = (CurrentRomBank & 224) | (value & 31);
 	}
-
-	CurrentRomBank = (CurrentRomBank & 224) | (value & 31);
 
 	if (CurrentRomBank == 0x00) {
 		CurrentRomBank++;
@@ -195,8 +192,8 @@ void ROM::ChangeHighRomBank(Byte value) {
 }
 
 void ROM::ChangeRomRamMode(Byte value) {
-	this->RomBankingMode = value & 0x01;
-	if (this->RomBankingMode) {
+	this->RomBanking = value & 0x01;
+	if (this->RomBanking) {
 		this->ram->setCurrentRamBank(0x00);
 	}
 	
@@ -204,15 +201,14 @@ void ROM::ChangeRomRamMode(Byte value) {
 }
 
 void ROM::EnableRamBank(unsigned short address, Byte value) {
-	if (MBC_2 && (address & 0x000F) == 0x000F) {
-		return;
-	} else {
+	if (!(MBC_2 && (address & 0x0010) == 0x0010)) {
 		switch (value & 0x0F) {
-			case 0x0A: this->ram->setRamEnable(true);
-			case 0x00: this->ram->setRamEnable(false);
+		case 0x0A: this->ram->setRamEnable(true);
+		case 0x00: this->ram->setRamEnable(false);
 		}
-		return;
 	}
+
+	return;
 }
 
 void ROM::HandleBanking(unsigned short address, Byte value) {
@@ -226,7 +222,7 @@ void ROM::HandleBanking(unsigned short address, Byte value) {
 	}
 	// rom or ram bank change.
 	else if (address >= 0x4000 && address < 0x6000 && MBC_1) {
-		if (RomBankingMode) {
+		if (RomBanking) { //RomBanking
 			ChangeHighRomBank(value);
 		} else {
 			this->ram->ChangeRamBank(value);

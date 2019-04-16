@@ -52,6 +52,9 @@ public:
 	bool getRamEnable() const;
 	void setRamEnable(bool);
 
+	Byte getRamBankMemory(unsigned short) const;
+	void setRamBankMemory(unsigned short, Byte);
+
 	void ChangeRamBank(Byte);
 	
 };
