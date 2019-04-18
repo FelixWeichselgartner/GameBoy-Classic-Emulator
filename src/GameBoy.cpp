@@ -291,7 +291,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				skip = false;
 			}
 
-			if (this->cpu.registers.getPC() == 0x018e) {
+			if (this->cpu.registers.getPC() == 0x017b) {
 				keyEn = true;
 			}
 
