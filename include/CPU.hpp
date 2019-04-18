@@ -21,7 +21,7 @@ class CPU {
 private:
 
 	Byte running, gb_stop, gb_halt;
-	Byte jump, enableInterupts;
+	Byte jump, InterruptMasterEnable;
 	bool enableBootstrap;
 	int cycles, TimerCounter, DividerRegister;
 

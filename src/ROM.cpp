@@ -69,7 +69,8 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("mooneye/emulator-only/mbc1/bits_ram_en.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
@@ -203,8 +204,8 @@ void ROM::ChangeRomRamMode(Byte value) {
 void ROM::EnableRamBank(unsigned short address, Byte value) {
 	if (!(MBC_2 && (address & 0x0010) == 0x0010)) {
 		switch (value & 0x0F) {
-		case 0x0A: this->ram->setRamEnable(true);
-		case 0x00: this->ram->setRamEnable(false);
+			case 0x0A: this->ram->setRamEnable(true); break;
+			case 0x00: this->ram->setRamEnable(false); break;
 		}
 	}
 
@@ -251,7 +252,7 @@ void ROM::print(class RAM* ram, unsigned short start, unsigned short end) {
 	}
 	cout << endl;
 	for (int i = start, c = 0; i < start + (end + 1 - start ) / 16; i++, c++) {
-		cout << setw(8) << hex << setfill('0') << start + c * 16 << ": ";
+		cout << HEX16 << start + c * 16 << ": ";
 		for (int k = 0; k < 16; k++) {
 			cout << HEX << (int)ram->getMemory(start + c * 16 + k) << " ";
 		}

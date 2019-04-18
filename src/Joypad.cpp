@@ -55,7 +55,7 @@ void Joypad::KeyPressed(int key) {
 	*/
 
 	if (requestInterupt && !previouslySet) {
-		//cout << "request interupt 4" << endl;
+		cout << "request joypad interupt" << endl;
 		this->cpuLink->RequestInterupt(4);
 	}
 	else {

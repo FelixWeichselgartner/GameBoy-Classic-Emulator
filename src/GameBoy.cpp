@@ -50,7 +50,7 @@ void GameBoy::PrintRegisters() {
 
 void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "pc:" << HEX16 << this->cpu.registers.getPC() << " ";
-	file << "op:" << HEX << (int)this->cpu.ram.getMemory(this->cpu.registers.getPC()) << " ";
+	file << "op:" << HEX << (int)this->cpu.ReadByte(this->cpu.registers.getPC()) << " ";
 	file << "af:" << HEX16 << this->cpu.registers.getAF() << " ";
 	file << "bc:" << HEX16 << this->cpu.registers.getBC() << " ";
 	file << "de:" << HEX16 << this->cpu.registers.getDE() << " ";
@@ -191,6 +191,8 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int skipCounter = 1;
 	game = ' ';
 
+	cout << "ram enable: " << boolalpha << this->cpu.ram.getRamEnable() << endl;
+
 	clock_t starttime;
 
 	while (this->cpu.getRunning()) {
@@ -289,7 +291,15 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				skip = false;
 			}
 
-			if (this->cpu.registers.getPC() == 0x1ba3 && false) {
+			if (this->cpu.registers.getPC() == 0x018e) {
+				keyEn = true;
+			}
+
+			if (this->cpu.registers.getPC() == 0x0060 && false) {
+				keyEn = true;
+			}
+
+			if (counter > 0x90 && false) {
 				keyEn = true;
 			}
 			
@@ -534,7 +544,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

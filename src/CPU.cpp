@@ -37,7 +37,7 @@ CPU::CPU() {
 	this->joypadLink = NULL;
 	this->running = 0x01;
 	this->jump = 0x00;
-	this->enableInterupts = 0x00;
+	this->InterruptMasterEnable = 0x00;
 	this->TimerCounter = 1024;
 	this->cycles = 0;
 	this->DividerRegister = 0;
@@ -148,13 +148,24 @@ void CPU::resetFlag(char type) {
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
+	bool a = false;
+	if (address == 0xa000 && false) {
+		cout << "@@@@@@@@@@@@@@@@@@@@@@@@ now ############################" << endl;
+		cout << "current ram bank: " << HEX << (int) this->ram.getCurrentRamBank() << endl;
+		a = true;
+	}
+
 	// rom memory bank.
 	if (address >= ADDR_ROM_1 && address < ADDR_VRAM_T_S) {
 		return this->rom.getMemory(address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000));
 	} 
 	// ram memory bank.
 	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
-		return this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
+		if (a)
+			cout << HEX << (int)this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000)) << endl;
+		if (this->ram.getRamEnable())
+			return this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
+		else return 0xFF; //not quite sure if this is correct
 	}
 	// joypad register.
 	else if (address == ADDR_IO) {
@@ -202,6 +213,8 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	}
 	*/
 
+	//cout << "ram bank: " << HEX << (int)this->ram.getCurrentRamBank() << endl;
+
 	// joypad
 	
 	/*
@@ -215,16 +228,23 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 		return;
 	} 
 	// ram banking.
-	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1 && this->ram.getRamEnable()) {
-		this->ram.setRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000), value);
+	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
+		if (this->ram.getRamEnable())
+			this->ram.setRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000), value);
+		else
+			cout << "didnt write @ address: " << HEX16 << address << " value: " << HEX << (int)value << endl;
 	}
-	
+	// echo is copy of oam.
 	else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
 		this->ram.setMemory(address, value);
 		this->ram.setMemory(address - 0x2000, value);
-	} else if ((address >= ADDR_UNUSABLE) && (address < (ADDR_IO - 1))) { // recheck upper bound
+	} 
+	// unused area.
+	else if ((address >= ADDR_UNUSABLE) && (address < (ADDR_IO - 1))) {
 		return;
-	} else if (address == 0xFF04) {
+	} 
+	// divider register.
+	else if (address == 0xFF04) {
 		this->ram.setMemory(address, 0x00);
 	} 
 	// set current line to 0.
@@ -1540,7 +1560,7 @@ void CPU::executeInstruction(Byte opcode) {
 			}
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
-			this->enableInterupts = 0x01;
+			this->InterruptMasterEnable = 0x01;
 			this->jump = 0x01;
 			this->registers.setPC(pop16bit());
             break; 
@@ -1620,7 +1640,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xF2: // XX            operation removed in this CPU.
             break;
         case 0xF3: // DI            disable interrupts
-			this->enableInterupts = 0x00;
+			this->InterruptMasterEnable = 0x00;
             break;
         case 0xF4: // XX            operation removed in this CPU.
             break;
@@ -1644,7 +1664,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(ReadByte(load16bit()));
             break;
         case 0xFB: // EI            enable interrupts.
-			this->enableInterupts = 0x01;
+			this->InterruptMasterEnable = 0x01;
             break;
         case 0xFC: // XX            operation removed in this CPU.
             break;
@@ -2598,7 +2618,12 @@ void CPU::RequestInterupt(int id) {
 void CPU::DoInterupts() {
 	Byte req, enabled;
 
-	if (enableInterupts || gb_halt) {
+	/*
+	if (CPUstepCount > 200000)
+		cout << "IntMEn" << boolalpha << (InterruptMasterEnable == 0x01) << endl;
+		*/
+
+	if (InterruptMasterEnable || gb_halt) {
 		gb_halt = 0x00;
 		req = ReadByte(ADDR_INTR_REQ);
 		enabled = ReadByte(ADDR_INTR_EN);
@@ -2629,7 +2654,7 @@ JOYPAD:		0x60
 void CPU::ServiceInterupts(int interupt) {
 	Byte req;
 
-	enableInterupts = 0x00;
+	InterruptMasterEnable = 0x00;
 	req = ReadByte(ADDR_INTR_REQ);
 
 	req = resetBit(req, interupt);
@@ -2651,7 +2676,7 @@ void CPU::ServiceInterupts(int interupt) {
 			this->registers.setPC(INTERUPT_TIMER);
 			break;
 		case 4:
-			//cout << "service interrupt joypad" << endl;
+			cout << "service interrupt joypad" << endl;
 			this->registers.setPC(INTERUPT_JOYPAD);
 		default:
 			break;
