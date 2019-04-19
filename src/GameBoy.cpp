@@ -174,6 +174,15 @@ void GameBoy::land_test_e6() {
 	this->cpu.registers.printFlags();
 }
 
+void GameBoy::sub_test() {
+	this->cpu.registers.setF(0x00);
+	cpu.registers.printFlags();
+	this->cpu.registers.setA(0x03);
+	this->cpu.sub(this->cpu.registers.getA(), 0x05);
+	cout << "0x03 - 0x05 = " << HEX << (int)this->cpu.registers.getA() << endl;
+	cpu.registers.printFlags();
+}
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
@@ -282,20 +291,16 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				keyEn = true;
 			}
 
-			if (game == ' ' && (cpu.registers.getPC() == 0xc3e8)) {
-				keyEn = true;
-			}
-
 			if (skip && (skipCounter % 32 == 0)) {
 				keyEn = true;
 				skip = false;
 			}
 
-			if (this->cpu.registers.getPC() == 0x017b) {
+			if (this->cpu.registers.getPC() == 0x0009 && false) {
 				keyEn = true;
 			}
 
-			if (this->cpu.registers.getPC() == 0x0060 && false) {
+			if (this->cpu.registers.getPC() == 0x2349 && this->cpu.registers.getA() != 0 && false) {
 				keyEn = true;
 			}
 
@@ -353,7 +358,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 					PrintRegisters();
 					cout << "counter: " << counter << endl;
-					PrintRegistersFile(logFile);
+					//PrintRegistersFile(logFile);
 				}
 			} else {
 				skipCounter++;
@@ -430,6 +435,9 @@ void GameBoy::tests(int mode) {
 		break;
 	case 12:
 		land_test_e6();
+		break;
+	case 13:
+		sub_test();
 		break;
 	}
 }
@@ -544,7 +552,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
@@ -558,6 +566,7 @@ void GameBoy::run() {
 // MODE 10		opcode DA test
 // MODE 11		signed 8 bit to signed 16 bit
 // MODE 12		land test - op e6
+// MODE 13		sub test
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;

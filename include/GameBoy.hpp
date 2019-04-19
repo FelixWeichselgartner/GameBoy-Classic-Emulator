@@ -36,6 +36,7 @@ public:
 	void OP_DA_Test();
 	void Signed8bitTo16bit();
 	void land_test_e6();
+	void sub_test();
 
 	void tests(int);
 

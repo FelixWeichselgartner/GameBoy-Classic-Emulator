@@ -148,11 +148,9 @@ void CPU::resetFlag(char type) {
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
-	bool a = false;
-	if (address == 0xa000 && false) {
+	if (address == 0xff80 && false) {
 		cout << "@@@@@@@@@@@@@@@@@@@@@@@@ now ############################" << endl;
-		cout << "current ram bank: " << HEX << (int) this->ram.getCurrentRamBank() << endl;
-		a = true;
+		cout << "joypad: " << toBinary(this->ram.getMemory(0xff80)) << endl;
 	}
 
 	// rom memory bank.
@@ -161,8 +159,6 @@ Byte CPU::ReadByte(unsigned short address) const {
 	} 
 	// ram memory bank.
 	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
-		if (a)
-			cout << HEX << (int)this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000)) << endl;
 		if (this->ram.getRamEnable())
 			return this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
 		else return 0xFF; //not quite sure if this is correct
@@ -485,7 +481,7 @@ Byte CPU::add(Byte a, Byte b, char type) {
 	resetFlag('N');
 
     // H is set if overflow from bit 3, else reset
-    if ((((a & 0xf) + (b & 0xf)) & 0x10) == 0x10) {
+    if (((a & 0xf) + (b & 0xf)) & 0x10) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
@@ -584,7 +580,7 @@ Byte CPU::adc(Byte a, Byte b) {
 	resetFlag('N');
 
 	// H is set if overflow from bit 3, else reset
-	if ((((a & 0xf) + (b & 0xf)) & 0x10) == 0x10) {
+	if (((a & 0xf) + (b & 0xf)) & 0x10) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
@@ -614,7 +610,7 @@ Byte CPU::sub(Byte a, Byte b) {
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	if (((a ^ b ^ retval) & 0x10) == 0x01) {
+	if ((a ^ b ^ retval) & 0x10) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
@@ -652,7 +648,7 @@ Byte CPU::sbc(Byte a, Byte b) {
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	if (((a ^ b ^ retval) & 0x10) == 0x01) {
+	if ((a ^ b ^ retval) & 0x10) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
@@ -783,13 +779,12 @@ unsigned short CPU::pop16bit() {
 }
 
 void CPU::call(unsigned short address) {
-	push16bit(this->registers.getPC());
+	push16bit(this->registers.getPC() + 1);
 	this->registers.setPC(address);
 	this->jump = true;
 }
 
 void CPU::rst(unsigned short address) {
-	this->registers.setPC(this->registers.getPC() + 1);
 	call(address);
 }
 
@@ -1458,6 +1453,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xC0: // RET NZ        return if last result was not zero.
 			if (!getFlag('Z')) {
 				this->registers.setPC(pop16bit());
+				jump = 0x01;
 			}
             break;
         case 0xC1: // POP BC        pop 16-bit value from stack into BC.
@@ -1492,10 +1488,12 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xC8: // RET Z         return if last result was zero.
 			if (getFlag('Z')) {
 				this->registers.setPC(pop16bit());
+				jump = 0x01;
 			}
             break;
         case 0xC9: // RET           return to calling routine.
 			this->registers.setPC(pop16bit());
+			jump = 0x01;
             break;
         case 0xCA: // JP Z, nn      absolute jump to 16-bit location if last result was zero.
 			jumpAddress = load16bit();
@@ -1525,6 +1523,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xD0: // RET NC        return if last result caused no carry.
 			if (!getFlag('C')) {
 				this->registers.setPC(pop16bit());
+				jump = 0x01;
 			}
             break;
         case 0xD1: // POP DE        pop 16-bit value from stack into DE.
@@ -1557,6 +1556,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xD8: // RET C         return if last result caused carry.
 			if (getFlag('C')) {
 				this->registers.setPC(pop16bit());
+				jump = 0x01;
 			}
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
@@ -1645,7 +1645,6 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xF4: // XX            operation removed in this CPU.
             break;
         case 0xF5: // PUSH AF       push 16-bit AF onto stack.
-			//this->registers.setAF(this->registers.getA() << 8 | this->registers.getF());		// yet don't now if this is needed.
 			push16bit(this->registers.getAF());
             break;
         case 0xF6: // OR n          logical OR 8-bit immediate against A.
@@ -2404,22 +2403,22 @@ int CPU::executeExtendedOpcodes() {
 			this->registers.setA(set(this->registers.getA(), 0));
 			break;
 		case 0xC8: // SET 1, B
-			this->registers.setB(set(this->registers.getB(), 0));
+			this->registers.setB(set(this->registers.getB(), 1));
 			break;
 		case 0xC9: // SET 1, C
-			this->registers.setC(set(this->registers.getC(), 0));
+			this->registers.setC(set(this->registers.getC(), 1));
 			break;
 		case 0xCA: // SET 1, D
-			this->registers.setD(set(this->registers.getD(), 0));
+			this->registers.setD(set(this->registers.getD(), 1));
 			break;
 		case 0xCB: // SET 1, E
-			this->registers.setE(set(this->registers.getE(), 0));
+			this->registers.setE(set(this->registers.getE(), 1));
 			break;
 		case 0xCC: // SET 1, H
-			this->registers.setH(set(this->registers.getH(), 0));
+			this->registers.setH(set(this->registers.getH(), 1));
 			break;
 		case 0xCD: // SET 1, L
-			this->registers.setB(set(this->registers.getL(), 0));
+			this->registers.setB(set(this->registers.getL(), 1));
 			break;
 		case 0xCE: // SET 1, (HL)
 			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 1));
@@ -2566,9 +2565,7 @@ int CPU::executeExtendedOpcodes() {
 			this->registers.setL(set(this->registers.getL(), 7));
 			break;
 		case 0xFE: // SET 7, (HL)
-			cout << "before: " << toBinary(ReadByte(0xff40)) << endl;
 			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 7));
-			cout << "after:  " << toBinary(ReadByte(0xff40)) << endl;
 			break;
 		case 0xFF: // SET 7, A
 			this->registers.setA(set(this->registers.getA(), 7));
