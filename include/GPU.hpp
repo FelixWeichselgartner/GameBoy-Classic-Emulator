@@ -73,7 +73,7 @@ private:
 	std::string windowName;
 	int ScanLineCounter;
 	const int pixelsPerTile = 8;
-	const int scaleWidth = 4, scaleHeight = 4;
+	const int scaleWidth = 2, scaleHeight = 2;
 	const int windowWidth = X_RES * scaleWidth, windowHeight = Y_RES * scaleHeight;
 	Byte display[Y_RES][X_RES] = { 0 };
 	int GpuMode;

@@ -4,14 +4,16 @@
 //----------------------------------------------------------------------------------------------
 #include "../include/CPU.hpp"
 
-#define JOY_START	7
-#define JOY_SELECT	6
-#define JOY_B		5
-#define JOY_A		4
-#define JOY_DOWN	3
-#define JOY_UP		2
-#define JOY_LEFT	1
-#define JOY_RIGHT	0
+enum {
+	JOY_RIGHT,
+	JOY_LEFT,
+	JOY_UP,
+	JOY_DOWN,
+	JOY_A,
+	JOY_B,
+	JOY_SELECT,
+	JOY_START
+};
 
 #define DIRECTION	4
 #define BUTTON		5

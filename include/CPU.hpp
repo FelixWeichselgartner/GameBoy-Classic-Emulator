@@ -132,11 +132,11 @@ public:
 	// shift Byte right.
 	Byte srl(Byte);
 	// test bit of Byte.
-	void bit(Byte, int);
+	void bit(int, Byte);
 	// clear (reset) bit of Byte.
-	Byte res(Byte, int);
+	Byte res(int, Byte);
 	// set bit of Byte.
-	Byte set(Byte, int);
+	Byte set(int, Byte);
 
 	// execute extended opcodes.
 	int executeExtendedOpcodes();

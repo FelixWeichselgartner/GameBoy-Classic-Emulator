@@ -148,9 +148,10 @@ void CPU::resetFlag(char type) {
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
-	if (address == 0xff80 && false) {
+	if (false && address == 0xff80 && (ram.getMemory(0xff80) != 0 ||true) && (true || this->registers.getPC() != 0x234b && this->registers.getPC() != 0x234c)) {
 		cout << "@@@@@@@@@@@@@@@@@@@@@@@@ now ############################" << endl;
-		cout << "joypad: " << toBinary(this->ram.getMemory(0xff80)) << endl;
+		cout << "joypad: " << toBinary(this->ram.getMemory(0xff80)) << " @ pc: " << this->registers.getPC() << endl;
+		externVar = false;
 	}
 
 	// rom memory bank.
@@ -190,6 +191,9 @@ Byte CPU::ReadByte(unsigned short address) const {
 int t = 0;
 
 void CPU::WriteByte(unsigned short address, Byte value) {
+
+	if (address == 0xff9c && false)
+		cout << "@ " << HEX16 << this->registers.getPC() << endl;
 
 	if (address < 0x8000 && false) {
 		cout << "write < 0x8000 -> pc: " << HEX16 << this->registers.getPC() << "step: " << CPUstepCount << endl;
@@ -324,37 +328,40 @@ Byte CPU::dec(Byte value) {
 void CPU::daa() {
 	unsigned short s = this->registers.getA();
 
-	if ((this->registers.getF() & 0b01000000) == 0b01000000) {
-		if ((this->registers.getF() & 0b00100000) == 0b00100000) {
+	if (getFlag('N')) {
+		if (getFlag('H')) {
 			s = (s - 0x06) & 0xFF;
 		}
-		if ((this->registers.getF() & 0b00010000) == 0b00010000) {
-			s -= 0x60;
+		if (getFlag('C')) {
+			s = (s - 0x60) & 0xFF;
 		}
 	} else {
-		if ((this->registers.getF() & 0b00100000) == 0b00100000 || (s & 0xF) > 9) {
+		if (getFlag('H') || (s & 0x0F) > 0x09) {
 			s += 0x06;
 		}
-		if ((this->registers.getF() & 0b00010000) == 0b00010000 || s > 0x9F) {
+		if (getFlag('C') || s > 0x9F) {
 			s += 0x60;
 		}
 	}
 
-	this->registers.setA((Byte) s); // maybe do s%255
-
 	resetFlag('H');
 
-	if (s == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-
-	if (s >= 0x100) {
+	if (s > 0xff) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
 	}
+
+	s &= 0xFF;
+
+	if (s == 0x00) {
+		setFlag('Z');
+	}
+	else {
+		resetFlag('Z');
+	}
+
+	this->registers.setA((Byte)s);
 }
 
 void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
@@ -559,15 +566,7 @@ unsigned short CPU::add16bitAdrSign(unsigned short a, Byte b) {
 }
 
 Byte CPU::adc(Byte a, Byte b) {
-	Byte c;
-
-	if ((this->registers.getF() & 0b00010000) == 0b00010000) {
-		c = 0x01;
-	} else {
-		c = 0x00;
-	}
-
-	Byte retval = a + b + c;
+	Byte retval = a + b + getFlag('C');
 
 	// Z is set if result is zero, else reset
 	if (retval == (Byte)0x00) {
@@ -627,15 +626,7 @@ Byte CPU::sub(Byte a, Byte b) {
 }
 
 Byte CPU::sbc(Byte a, Byte b) {
-	Byte c;
-
-	if ((this->registers.getF() & 0b00010000) == 0b00010000) {
-		c = 0b00000001;
-	} else {
-		c = 0x00;
-	}
-
-	Byte retval = a - b - c;
+	Byte retval = a - b - getFlag('C');
 
 	// Z is set if result is zero, else reset
 	if (retval == 0x00) {
@@ -736,7 +727,7 @@ void CPU::cp(Byte A, Byte X) {
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	if (((A ^ X ^ sub) & 0x10) != 0x00) {
+	if ((A ^ X ^ sub) & 0x10) {
 		setFlag('H');
 	} else {
 		resetFlag('H');
@@ -1770,9 +1761,9 @@ Byte CPU::srl(Byte value) {
 	return retval;
 }
 
-void CPU::bit(Byte value, int bit) {
+void CPU::bit(int bit, Byte value) {
 	// zero flag is set if bit is not set.
-	if (testBit(value, bit)) {
+	if (!testBit(value, bit)) {
 		setFlag('Z');
 	} else {
 		resetFlag('Z');
@@ -1785,13 +1776,13 @@ void CPU::bit(Byte value, int bit) {
 	setFlag('H');
 }
 
-Byte CPU::res(Byte value, int bit) {
+Byte CPU::res(int bit, Byte value) {
 	// flags are not affected.
 
 	return resetBit(value, bit);
 }
 
-Byte CPU::set(Byte value, int bit) {
+Byte CPU::set(int bit, Byte value) {
 	// flags are not affected.
 
 	return setBit(value, bit);
@@ -2187,388 +2178,388 @@ int CPU::executeExtendedOpcodes() {
 			bit(7, this->registers.getA());
 			break;
 		case 0x80: // RES 0, B		clear (reset) bit 0 of B.
-			this->registers.setB(res(this->registers.getB(), 0));
+			this->registers.setB(res(0, this->registers.getB()));
 			break;
 		case 0x81: // RES 0, C
-			this->registers.setC(res(this->registers.getC(), 0));
+			this->registers.setC(res(0, this->registers.getC()));
 			break;
 		case 0x82: // RES 0, D
-			this->registers.setD(res(this->registers.getD(), 0));
+			this->registers.setD(res(0, this->registers.getD()));
 			break;
 		case 0x83: // RES 0, E
-			this->registers.setE(res(this->registers.getE(), 0));
+			this->registers.setE(res(0, this->registers.getE()));
 			break;
 		case 0x84: // RES 0, H
-			this->registers.setH(res(this->registers.getH(), 0));
+			this->registers.setH(res(0, this->registers.getH()));
 			break;
 		case 0x85: // RES 0, L
-			this->registers.setL(res(this->registers.getL(), 0));
+			this->registers.setL(res(0, this->registers.getL()));
 			break;
 		case 0x86: // RES 0, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 0));
+			WriteByte(this->registers.getHL(), res(0, ReadByte(this->registers.getHL())));
 			break;
 		case 0x87: // RES 0, A
-			this->registers.setA(res(this->registers.getA(), 0));
+			this->registers.setA(res(0, this->registers.getA()));
 			break;
 		case 0x88: // RES 1, B
-			this->registers.setB(res(this->registers.getB(), 1));
+			this->registers.setB(res(1, this->registers.getB()));
 			break;
 		case 0x89: // RES 1, C
-			this->registers.setC(res(this->registers.getC(), 1));
+			this->registers.setC(res(1, this->registers.getC()));
 			break;
 		case 0x8A: // RES 1, D
-			this->registers.setD(res(this->registers.getD(), 1));
+			this->registers.setD(res(1, this->registers.getD()));
 			break;
 		case 0x8B: // RES 1, E
-			this->registers.setE(res(this->registers.getE(), 1));
+			this->registers.setE(res(1, this->registers.getE()));
 			break;
 		case 0x8C: // RES 1, H
-			this->registers.setH(res(this->registers.getH(), 1));
+			this->registers.setH(res(1, this->registers.getH()));
 			break;
 		case 0x8D: // RES 1, L
-			this->registers.setL(res(this->registers.getL(), 1));
+			this->registers.setL(res(1, this->registers.getL()));
 			break;
 		case 0x8E: // RES 1, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 1));
+			WriteByte(this->registers.getHL(), res(1, ReadByte(this->registers.getHL())));
 			break;
 		case 0x8F: // RES 1, A
-			this->registers.setA(res(this->registers.getA(), 1));
+			this->registers.setA(res(1, this->registers.getA()));
 			break;
 		case 0x90: // RES 2, B
-			this->registers.setB(res(this->registers.getB(), 2));
+			this->registers.setB(res(2, this->registers.getB()));
 			break;
 		case 0x91: // RES 2, C
-			this->registers.setC(res(this->registers.getC(), 2));
+			this->registers.setC(res(2, this->registers.getC()));
 			break;
 		case 0x92: // RES 2, D
-			this->registers.setD(res(this->registers.getD(), 2));
+			this->registers.setD(res(2, this->registers.getD()));
 			break;
 		case 0x93: // RES 2, E
-			this->registers.setE(res(this->registers.getE(), 2));
+			this->registers.setE(res(2, this->registers.getE()));
 			break;
 		case 0x94: // RES 2, H
-			this->registers.setH(res(this->registers.getH(), 2));
+			this->registers.setH(res(2, this->registers.getH()));
 			break;
 		case 0x95: // RES 2, L
-			this->registers.setL(res(this->registers.getL(), 2));
+			this->registers.setL(res(2, this->registers.getL()));
 			break;
 		case 0x96: // RES 2, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 2));
+			WriteByte(this->registers.getHL(), res(2, ReadByte(this->registers.getHL())));
 			break;
 		case 0x97: // RES 2, A
-			this->registers.setA(res(this->registers.getA(), 2));
+			this->registers.setA(res(2, this->registers.getA()));
 			break;
 		case 0x98: // RES 3, B
-			this->registers.setB(res(this->registers.getB(), 3));
+			this->registers.setB(res(3, this->registers.getB()));
 			break;
 		case 0x99: // RES 3, C
-			this->registers.setC(res(this->registers.getC(), 3));
+			this->registers.setC(res(3, this->registers.getC()));
 			break;
 		case 0x9A: // RES 3, D
-			this->registers.setD(res(this->registers.getD(), 3));
+			this->registers.setD(res(3, this->registers.getD()));
 			break;
 		case 0x9B: // RES 3, E
-			this->registers.setE(res(this->registers.getE(), 3));
+			this->registers.setE(res(3, this->registers.getE()));
 			break;
 		case 0x9C: // RES 3, H
-			this->registers.setH(res(this->registers.getH(), 3));
+			this->registers.setH(res(3, this->registers.getH()));
 			break;
 		case 0x9D: // RES 3, L
-			this->registers.setL(res(this->registers.getL(), 3));
+			this->registers.setL(res(3, this->registers.getL()));
 			break;
 		case 0x9E: // RES 3, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 3));
+			WriteByte(this->registers.getHL(), res(3, ReadByte(this->registers.getHL())));
 			break;
 		case 0x9F: // RES 3, A
-			this->registers.setA(res(this->registers.getA(), 3));
+			this->registers.setA(res(3, this->registers.getA()));
 			break;
 		case 0xA0: // RES 4, B
-			this->registers.setB(res(this->registers.getB(), 4));
+			this->registers.setB(res(4, this->registers.getB()));
 			break;
 		case 0xA1: // RES 4, C
-			this->registers.setC(res(this->registers.getC(), 4));
+			this->registers.setC(res(4, this->registers.getC()));
 			break;
 		case 0xA2: // RES 4, D
-			this->registers.setD(res(this->registers.getD(), 4));
+			this->registers.setD(res(4, this->registers.getD()));
 			break;
 		case 0xA3: // RES 4, E
-			this->registers.setE(res(this->registers.getE(), 4));
+			this->registers.setE(res(4, this->registers.getE()));
 			break;
 		case 0xA4: // RES 4, H
-			this->registers.setH(res(this->registers.getH(), 4));
+			this->registers.setH(res(4, this->registers.getH()));
 			break;
 		case 0xA5: // RES 4, L
-			this->registers.setL(res(this->registers.getL(), 4));
+			this->registers.setL(res(4, this->registers.getL()));
 			break;
 		case 0xA6: // RES 4, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 4));
+			WriteByte(this->registers.getHL(), res(4, ReadByte(this->registers.getHL())));
 			break;
 		case 0xA7: // RES 4, A
-			this->registers.setA(res(this->registers.getA(), 4));
+			this->registers.setA(res(4, this->registers.getA()));
 			break;
 		case 0xA8: // RES 5, B
-			this->registers.setB(res(this->registers.getB(), 5));
+			this->registers.setB(res(5, this->registers.getB()));
 			break;
 		case 0xA9: // RES 5, C
-			this->registers.setC(res(this->registers.getC(), 5));
+			this->registers.setC(res(5, this->registers.getC()));
 			break;
 		case 0xAA: // RES 5, D
-			this->registers.setD(res(this->registers.getD(), 5));
+			this->registers.setD(res(5, this->registers.getD()));
 			break;
 		case 0xAB: // RES 5, E
-			this->registers.setE(res(this->registers.getE(), 5));
+			this->registers.setE(res(5, this->registers.getE()));
 			break;
 		case 0xAC: // RES 5, H
-			this->registers.setH(res(this->registers.getH(), 5));
+			this->registers.setH(res(5, this->registers.getH()));
 			break;
 		case 0xAD: // RES 5, L
-			this->registers.setL(res(this->registers.getL(), 5));
+			this->registers.setL(res(5, this->registers.getL()));
 			break;
 		case 0xAE: // RES 5, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 5));
+			WriteByte(this->registers.getHL(), res(5, ReadByte(this->registers.getHL())));
 			break;
 		case 0xAF: // RES 5, A
-			this->registers.setA(res(this->registers.getA(), 5));
+			this->registers.setA(res(5, this->registers.getA()));
 			break;
 		case 0xB0: // RES 6, B
-			this->registers.setB(res(this->registers.getB(), 6));
+			this->registers.setB(res(6, this->registers.getB()));
 			break;
 		case 0xB1: // RES 6, C
-			this->registers.setC(res(this->registers.getC(), 6));
+			this->registers.setC(res(6, this->registers.getC()));
 			break;
 		case 0xB2: // RES 6, D
-			this->registers.setD(res(this->registers.getD(), 6));
+			this->registers.setD(res(6, this->registers.getD()));
 			break;
 		case 0xB3: // RES 6, E
-			this->registers.setE(res(this->registers.getE(), 6));
+			this->registers.setE(res(6, this->registers.getE()));
 			break;
 		case 0xB4: // RES 6, H
-			this->registers.setH(res(this->registers.getH(), 6));
+			this->registers.setH(res(6, this->registers.getH()));
 			break;
 		case 0xB5: // RES 6, L
-			this->registers.setL(res(this->registers.getL(), 6));
+			this->registers.setL(res(6, this->registers.getL()));
 			break;
 		case 0xB6: // RES 6, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 6));
+			WriteByte(this->registers.getHL(), res(6, ReadByte(this->registers.getHL())));
 			break;
 		case 0xB7: // RES 6, A
-			this->registers.setA(res(this->registers.getA(), 6));
+			this->registers.setA(res(6, this->registers.getA()));
 			break;
 		case 0xB8: // RES 7, B
-			this->registers.setB(res(this->registers.getB(), 7));
+			this->registers.setB(res(7, this->registers.getB()));
 			break;
 		case 0xB9: // RES 7, C
-			this->registers.setC(res(this->registers.getC(), 7));
+			this->registers.setC(res(7, this->registers.getC()));
 			break;
 		case 0xBA: // RES 7, D
-			this->registers.setD(res(this->registers.getD(), 7));
+			this->registers.setD(res(7, this->registers.getD()));
 			break;
 		case 0xBB: // RES 7, E
-			this->registers.setE(res(this->registers.getE(), 7));
+			this->registers.setE(res(7, this->registers.getE()));
 			break;
 		case 0xBC: // RES 7, H
-			this->registers.setH(res(this->registers.getH(), 7));
+			this->registers.setH(res(7, this->registers.getH()));
 			break;
 		case 0xBD: // RES 7, L
-			this->registers.setL(res(this->registers.getL(), 7));
+			this->registers.setL(res(7, this->registers.getL()));
 			break;
 		case 0xBE: // RES 7, (HL)
-			WriteByte(this->registers.getHL(), res(ReadByte(this->registers.getHL()), 7));
+			WriteByte(this->registers.getHL(), res(7, ReadByte(this->registers.getHL())));
 			break;
 		case 0xBF: // RES 7, A
-			this->registers.setA(res(this->registers.getA(), 7));
+			this->registers.setA(res(7, this->registers.getA()));
 			break;
 		case 0xC0: // SET 0, B
-			this->registers.setB(set(this->registers.getB(), 0));
+			this->registers.setB(set(0, this->registers.getB()));
 			break;
 		case 0xC1: // SET 0, C
-			this->registers.setC(set(this->registers.getC(), 0));
+			this->registers.setC(set(0, this->registers.getC()));
 			break;
 		case 0xC2: // SET 0, D
-			this->registers.setD(set(this->registers.getD(), 0));
+			this->registers.setD(set(0, this->registers.getD()));
 			break;
 		case 0xC3: // SET 0, E
-			this->registers.setE(set(this->registers.getE(), 0));
+			this->registers.setE(set(0, this->registers.getE()));
 			break;
 		case 0xC4: // SET 0, H
-			this->registers.setH(set(this->registers.getH(), 0));
+			this->registers.setH(set(0, this->registers.getH()));
 			break;
 		case 0xC5: // SET 0, L
-			this->registers.setL(set(this->registers.getL(), 0));
+			this->registers.setL(set(0, this->registers.getL()));
 			break;
 		case 0xC6: // SET 0, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 0));
+			WriteByte(this->registers.getHL(), set(0, ReadByte(this->registers.getHL())));
 			break;
 		case 0xC7: // SET 0, A
-			this->registers.setA(set(this->registers.getA(), 0));
+			this->registers.setA(set(0, this->registers.getA()));
 			break;
 		case 0xC8: // SET 1, B
-			this->registers.setB(set(this->registers.getB(), 1));
+			this->registers.setB(set(1, this->registers.getB()));
 			break;
 		case 0xC9: // SET 1, C
-			this->registers.setC(set(this->registers.getC(), 1));
+			this->registers.setC(set(1, this->registers.getC()));
 			break;
 		case 0xCA: // SET 1, D
-			this->registers.setD(set(this->registers.getD(), 1));
+			this->registers.setD(set(1, this->registers.getD()));
 			break;
 		case 0xCB: // SET 1, E
-			this->registers.setE(set(this->registers.getE(), 1));
+			this->registers.setE(set(1, this->registers.getE()));
 			break;
 		case 0xCC: // SET 1, H
-			this->registers.setH(set(this->registers.getH(), 1));
+			this->registers.setH(set(1, this->registers.getH()));
 			break;
 		case 0xCD: // SET 1, L
-			this->registers.setB(set(this->registers.getL(), 1));
+			this->registers.setB(set(1, this->registers.getL()));
 			break;
 		case 0xCE: // SET 1, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 1));
+			WriteByte(this->registers.getHL(), set(1, ReadByte(this->registers.getHL())));
 			break;
 		case 0xCF: // SET 1, A
-			this->registers.setA(set(this->registers.getA(), 1));
+			this->registers.setA(set(1, this->registers.getA()));
 			break;
 		case 0xD0: // SET 2, B
-			this->registers.setB(set(this->registers.getB(), 2));
+			this->registers.setB(set(2, this->registers.getB()));
 			break;
 		case 0xD1: // SET 2, C
-			this->registers.setC(set(this->registers.getC(), 2));
+			this->registers.setC(set(2, this->registers.getC()));
 			break;
 		case 0xD2: // SET 2, D
-			this->registers.setD(set(this->registers.getD(), 2));
+			this->registers.setD(set(2, this->registers.getD()));
 			break;
 		case 0xD3: // SET 2, E
-			this->registers.setE(set(this->registers.getE(), 2));
+			this->registers.setE(set(2, this->registers.getE()));
 			break;
 		case 0xD4: // SET 2, H
-			this->registers.setH(set(this->registers.getH(), 2));
+			this->registers.setH(set(2, this->registers.getH()));
 			break;
 		case 0xD5: // SET 2, L
-			this->registers.setL(set(this->registers.getL(), 2));
+			this->registers.setL(set(2, this->registers.getL()));
 			break;
 		case 0xD6: // SET 2, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 2));
+			WriteByte(this->registers.getHL(), set(2, ReadByte(this->registers.getHL())));
 			break;
 		case 0xD7: // SET 2, A
-			this->registers.setA(set(this->registers.getA(), 2));
+			this->registers.setA(set(2, this->registers.getA()));
 			break;
 		case 0xD8: // SET 3, B
-			this->registers.setB(set(this->registers.getB(), 3));
+			this->registers.setB(set(3, this->registers.getB()));
 			break;
 		case 0xD9: // SET 3, C
-			this->registers.setC(set(this->registers.getC(), 3));
+			this->registers.setC(set(3, this->registers.getC()));
 			break;
 		case 0xDA: // SET 3, D
-			this->registers.setD(set(this->registers.getD(), 3));
+			this->registers.setD(set(3, this->registers.getD()));
 			break;
 		case 0xDB: // SET 3, E
-			this->registers.setE(set(this->registers.getE(), 3));
+			this->registers.setE(set(3, this->registers.getE()));
 			break;
 		case 0xDC: // SET 3, H
-			this->registers.setH(set(this->registers.getH(), 3));
+			this->registers.setH(set(3, this->registers.getH()));
 			break;
 		case 0xDD: // SET 3, L
-			this->registers.setL(set(this->registers.getL(), 3));
+			this->registers.setL(set(3, this->registers.getL()));
 			break;
 		case 0xDE: // SET 3, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 3));
+			WriteByte(this->registers.getHL(), set(3, ReadByte(this->registers.getHL())));
 			break;
 		case 0xDF: // SET 3, A
-			this->registers.setA(set(this->registers.getA(), 3));
+			this->registers.setA(set(3, this->registers.getA()));
 			break;
 		case 0xE0: // SET 4, B
-			this->registers.setB(set(this->registers.getB(), 4));
+			this->registers.setB(set(4, this->registers.getB()));
 			break;
 		case 0xE1: // SET 4, C
-			this->registers.setC(set(this->registers.getC(), 4));
+			this->registers.setC(set(4, this->registers.getC()));
 			break;
 		case 0xE2: // SET 4, D
-			this->registers.setD(set(this->registers.getD(), 4));
+			this->registers.setD(set(4, this->registers.getD()));
 			break;
 		case 0xE3: // SET 4, E
-			this->registers.setE(set(this->registers.getE(), 4));
+			this->registers.setE(set(4, this->registers.getE()));
 			break;
 		case 0xE4: // SET 4, H
-			this->registers.setH(set(this->registers.getH(), 4));
+			this->registers.setH(set(4, this->registers.getH()));
 			break;
 		case 0xE5: // SET 4, L
-			this->registers.setL(set(this->registers.getL(), 4));
+			this->registers.setL(set(4, this->registers.getL()));
 			break;
 		case 0xE6: // SET 4, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 4));
+			WriteByte(this->registers.getHL(), set(4, ReadByte(this->registers.getHL())));
 			break;
 		case 0xE7: // SET 4, A
-			this->registers.setA(set(this->registers.getA(), 4));
+			this->registers.setA(set(4, this->registers.getA()));
 			break;
 		case 0xE8: // SET 5, B
-			this->registers.setB(set(this->registers.getB(), 5));
+			this->registers.setB(set(5, this->registers.getB()));
 			break;
 		case 0xE9: // SET 5, C
-			this->registers.setC(set(this->registers.getC(), 5));
+			this->registers.setC(set(5, this->registers.getC()));
 			break;
 		case 0xEA: // SET 5, D
-			this->registers.setD(set(this->registers.getD(), 5));
+			this->registers.setD(set(5, this->registers.getD()));
 			break;
 		case 0xEB: // SET 5, E
-			this->registers.setE(set(this->registers.getE(), 5));
+			this->registers.setE(set(5, this->registers.getE()));
 			break;
 		case 0xEC: // SET 5, H
-			this->registers.setH(set(this->registers.getH(), 5));
+			this->registers.setH(set(5, this->registers.getH()));
 			break;
 		case 0xED: // SET 5, L
-			this->registers.setL(set(this->registers.getL(), 5));
+			this->registers.setL(set(5, this->registers.getL()));
 			break;
 		case 0xEE: // SET 5, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 5));
+			WriteByte(this->registers.getHL(), set(5, ReadByte(this->registers.getHL())));
 			break;
 		case 0xEF: // SET 5, A
-			this->registers.setA(set(this->registers.getA(), 5));
+			this->registers.setA(set(5, this->registers.getA()));
 			break;
 		case 0xF0: // SET 6, B
-			this->registers.setB(set(this->registers.getB(), 6));
+			this->registers.setB(set(6, this->registers.getB()));
 			break;
 		case 0xF1: // SET 6, C
-			this->registers.setC(set(this->registers.getC(), 6));
+			this->registers.setC(set(6, this->registers.getC()));
 			break;
 		case 0xF2: // SET 6, D
-			this->registers.setD(set(this->registers.getD(), 6));
+			this->registers.setD(set(6, this->registers.getD()));
 			break;
 		case 0xF3: // SET 6, E
-			this->registers.setE(set(this->registers.getE(), 6));
+			this->registers.setE(set(6, this->registers.getE()));
 			break;
 		case 0xF4: // SET 6, H
-			this->registers.setH(set(this->registers.getH(), 6));
+			this->registers.setH(set(6, this->registers.getH()));
 			break;
 		case 0xF5: // SET 6, L
-			this->registers.setL(set(this->registers.getL(), 6));
+			this->registers.setL(set(6, this->registers.getL()));
 			break;
 		case 0xF6: // SET 6, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 6));
+			WriteByte(this->registers.getHL(), set(6, ReadByte(this->registers.getHL())));
 			break;
 		case 0xF7: // SET 6, A
-			this->registers.setA(set(this->registers.getB(), 6));
+			this->registers.setA(set(6, this->registers.getB()));
 			break;
 		case 0xF8: // SET 7, B
-			this->registers.setB(set(this->registers.getB(), 7));
+			this->registers.setB(set(7, this->registers.getB()));
 			break;
 		case 0xF9: // SET 7, C
-			this->registers.setC(set(this->registers.getC(), 7));
+			this->registers.setC(set(7, this->registers.getC()));
 			break;
 		case 0xFA: // SET 7, D
-			this->registers.setD(set(this->registers.getD(), 7));
+			this->registers.setD(set(7, this->registers.getD()));
 			break;
 		case 0xFB: // SET 7, E
-			this->registers.setE(set(this->registers.getE(), 7));
+			this->registers.setE(set(7, this->registers.getE()));
 			break;
 		case 0xFC: // SET 7, H
-			this->registers.setH(set(this->registers.getH(), 7));
+			this->registers.setH(set(7, this->registers.getH()));
 			break;
 		case 0xFD: // SET 7, L
-			this->registers.setL(set(this->registers.getL(), 7));
+			this->registers.setL(set(7, this->registers.getL()));
 			break;
 		case 0xFE: // SET 7, (HL)
-			WriteByte(this->registers.getHL(), set(ReadByte(this->registers.getHL()), 7));
+			WriteByte(this->registers.getHL(), set(7, ReadByte(this->registers.getHL())));
 			break;
 		case 0xFF: // SET 7, A
-			this->registers.setA(set(this->registers.getA(), 7));
+			this->registers.setA(set(7, this->registers.getA()));
 			break;
 	}
 

@@ -19,6 +19,8 @@ using namespace std;
 #include <string>
 //----------------------------------------------------------------------------------------------
 
+bool externVar = false;
+
 void delay(int milli_seconds) {
 	if (milli_seconds < 0) {
 		return;
@@ -291,7 +293,9 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				keyEn = true;
 			}
 
-			if (skip && (skipCounter % 32 == 0)) {
+			if (skip && (skipCounter % 32 == 0) && skipCounter > 31) {
+				cout << "reached" << endl;
+				skipCounter = 0;
 				keyEn = true;
 				skip = false;
 			}
@@ -326,7 +330,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 				}
 
-				if (keyEn || keyHardEn) {
+				if (keyEn || keyHardEn || externVar) {
 					if (printVRAMAfterInstruction) {
 						cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
 						printVRAMAfterInstruction = false;
@@ -362,7 +366,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 			} else {
 				skipCounter++;
-				cout << skip << endl;
+				//cout << skip << endl;
 			}
 			
 			PrintRegistersFile(logFile);
@@ -552,7 +556,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 5
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
