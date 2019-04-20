@@ -39,6 +39,7 @@ public:
 	void Signed8bitTo16bit();
 	void land_test_e6();
 	void sub_test();
+	void bit_test();
 
 	void tests(int);
 

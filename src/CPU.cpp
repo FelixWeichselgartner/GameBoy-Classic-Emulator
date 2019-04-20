@@ -148,12 +148,6 @@ void CPU::resetFlag(char type) {
 }
 
 Byte CPU::ReadByte(unsigned short address) const {
-	if (false && address == 0xff80 && (ram.getMemory(0xff80) != 0 ||true) && (true || this->registers.getPC() != 0x234b && this->registers.getPC() != 0x234c)) {
-		cout << "@@@@@@@@@@@@@@@@@@@@@@@@ now ############################" << endl;
-		cout << "joypad: " << toBinary(this->ram.getMemory(0xff80)) << " @ pc: " << this->registers.getPC() << endl;
-		externVar = false;
-	}
-
 	// rom memory bank.
 	if (address >= ADDR_ROM_1 && address < ADDR_VRAM_T_S) {
 		return this->rom.getMemory(address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000));

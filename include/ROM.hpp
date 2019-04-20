@@ -29,7 +29,7 @@ public:
 	ROM(class RAM*);
 	~ROM();
 
-	Byte getMemory(unsigned short) const;
+	Byte getMemory(unsigned int) const;
 
 	void load(class RAM*, bool);
 	void dltBootstrap(class RAM*);

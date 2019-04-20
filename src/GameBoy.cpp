@@ -185,6 +185,14 @@ void GameBoy::sub_test() {
 	cpu.registers.printFlags();
 }
 
+void GameBoy::bit_test() {
+	this->cpu.registers.setF(0x00);
+	cpu.registers.printFlags();
+	this->cpu.registers.setA(0x00);
+	this->cpu.bit(7, this->cpu.registers.getA());
+	cpu.registers.printFlags();
+}
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
@@ -201,6 +209,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	bool skip = false;
 	int skipCounter = 1;
 	game = ' ';
+	Byte oldRomBank = 0x01, newRomBank;
 
 	cout << "ram enable: " << boolalpha << this->cpu.ram.getRamEnable() << endl;
 
@@ -286,6 +295,15 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 			}
 
+			newRomBank = cpu.rom.getCurrentRomBank();
+
+			if (newRomBank != oldRomBank) {
+				cout << "new rb: " << HEX << (int)this->cpu.rom.getCurrentRomBank() << endl;
+				cout << "address: " << HEX16 << this->cpu.registers.getPC() << endl;
+			}
+
+			oldRomBank = newRomBank;
+
 			if (this->cpu.registers.getPC() == 0x0100 && cpu.getEnableBootstrap()) {
 				cout << "switch back rom 0x0000 - 0x0100" << endl;
 				this->cpu.rom.dltBootstrap(&cpu.ram);
@@ -300,7 +318,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				skip = false;
 			}
 
-			if (this->cpu.registers.getPC() == 0x0009 && false) {
+			if (this->cpu.registers.getPC() == 0x1bd9) {
 				keyEn = true;
 			}
 
@@ -313,6 +331,8 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			}
 			
 			if (!skip) {
+
+				
 				/*
 				if (this->cpu.registers.getPC() == 0x1b9d) {
 					keyEn = true;
@@ -331,6 +351,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				}
 
 				if (keyEn || keyHardEn || externVar) {
+
+					cout << "current rom bank: " << (int)this->cpu.rom.getCurrentRomBank() << endl;
+					cout << "0x4000: " << HEX << (int)cpu.ReadByte(0x4000) << endl;
+
 					if (printVRAMAfterInstruction) {
 						cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
 						printVRAMAfterInstruction = false;
@@ -369,7 +393,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				//cout << skip << endl;
 			}
 			
-			PrintRegistersFile(logFile);
+			//PrintRegistersFile(logFile);
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);
@@ -442,6 +466,9 @@ void GameBoy::tests(int mode) {
 		break;
 	case 13:
 		sub_test();
+		break;
+	case 14:
+		bit_test();
 		break;
 	}
 }
@@ -571,6 +598,7 @@ void GameBoy::run() {
 // MODE 11		signed 8 bit to signed 16 bit
 // MODE 12		land test - op e6
 // MODE 13		sub test
+// MODE 14		bit test
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
