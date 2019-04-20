@@ -70,7 +70,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 
 	ifstream gbfile;
 	//gbfile.open("mooneye/manual-only/sprite_priority.gb", ios::in | ios::binary | ios::ate);
-	gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
