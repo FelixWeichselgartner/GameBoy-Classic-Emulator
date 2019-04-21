@@ -191,6 +191,13 @@ void GameBoy::bit_test() {
 	this->cpu.registers.setA(0x00);
 	this->cpu.bit(7, this->cpu.registers.getA());
 	cpu.registers.printFlags();
+	cout << endl << endl;
+	this->cpu.registers.setF(0x00);
+	cpu.registers.printFlags();
+	this->cpu.registers.setA(0b10000000);
+	this->cpu.bit(7, this->cpu.registers.getA());
+	cpu.registers.printFlags();
+	cout << "test bit 7: " << boolalpha << testBit(this->cpu.registers.getA(), 7) << endl;
 }
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
@@ -297,7 +304,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 			newRomBank = cpu.rom.getCurrentRomBank();
 
-			if (newRomBank != oldRomBank) {
+			if (newRomBank != oldRomBank && false) {
 				cout << "new rb: " << HEX << (int)this->cpu.rom.getCurrentRomBank() << endl;
 				cout << "address: " << HEX16 << this->cpu.registers.getPC() << endl;
 			}
@@ -318,7 +325,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				skip = false;
 			}
 
-			if (this->cpu.registers.getPC() == 0x1bd9) {
+			if (this->cpu.registers.getPC() == 0x1a89 && false) {
 				keyEn = true;
 			}
 
@@ -352,8 +359,8 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 				if (keyEn || keyHardEn || externVar) {
 
-					cout << "current rom bank: " << (int)this->cpu.rom.getCurrentRomBank() << endl;
-					cout << "0x4000: " << HEX << (int)cpu.ReadByte(0x4000) << endl;
+					//cout << "current rom bank: " << (int)this->cpu.rom.getCurrentRomBank() << endl;
+					//cout << "0x4000: " << HEX << (int)cpu.ReadByte(0x4000) << endl;
 
 					if (printVRAMAfterInstruction) {
 						cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
@@ -393,7 +400,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				//cout << skip << endl;
 			}
 			
-			//PrintRegistersFile(logFile);
+			PrintRegistersFile(logFile);
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);

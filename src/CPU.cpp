@@ -95,34 +95,19 @@ Byte setBit(Byte value, int bit) {
 }
 
 Byte CPU::getFlag(char type) {
+	Byte tmp;
+
 	switch (type) {
-	case 'Z':
-		if ((this->registers.getF() & 0b10000000) != 0x00) {
-			return 0x01;
-		} else {
-			return 0x00;
-		}
-	case 'N': 
-		if ((this->registers.getF() & 0b01000000) != 0x00) {
-			return 0x01;
-		} else {
-			return 0x00;
-		}
-	case 'H': 
-		if ((this->registers.getF() & 0b00100000) != 0x00) {
-			return 0x01;
-		} else {
-			return 0x00;
-		}
-	case 'C': 
-		if ((this->registers.getF() & 0b00010000) != 0x00) {
-			return 0x01;
-		} else {
-			return 0x00;
-		}
-	default: 
-		cout << "[type]" << (int)type << " does not exist" << endl;
-		exit(1);
+		case 'Z': tmp = this->registers.getF() & 0b10000000; break;
+		case 'N': tmp = this->registers.getF() & 0b01000000; break;
+		case 'H': tmp = this->registers.getF() & 0b00100000; break;
+		case 'C': tmp = this->registers.getF() & 0b00010000; break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+
+	if (tmp) {
+		return 0x01;
+	} else {
 		return 0x00;
 	}
 }
@@ -182,12 +167,11 @@ Byte CPU::ReadByte(unsigned short address) const {
 	}
 }
 
-int t = 0;
-
 void CPU::WriteByte(unsigned short address, Byte value) {
 
-	if (address == 0xff9c && false)
-		cout << "@ " << HEX16 << this->registers.getPC() << endl;
+	/*
+	if (address == 0xff8c)
+		cout << "@ " << HEX16 << this->registers.getPC() << " with value: " << HEX << (int)value << endl;
 
 	if (address < 0x8000 && false) {
 		cout << "write < 0x8000 -> pc: " << HEX16 << this->registers.getPC() << "step: " << CPUstepCount << endl;
@@ -199,6 +183,7 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 			cout << "lcd stat is set @ " << HEX16 << this->registers.getPC() << "(" << CPUstepCount << ") with " << HEX << (int)value << "h" << endl;
 		}
 	}
+	*/
 	
 
 	/*
@@ -327,7 +312,7 @@ void CPU::daa() {
 			s = (s - 0x06) & 0xFF;
 		}
 		if (getFlag('C')) {
-			s = (s - 0x60) & 0xFF;
+			s = s - 0x60;
 		}
 	} else {
 		if (getFlag('H') || (s & 0x0F) > 0x09) {
@@ -342,8 +327,6 @@ void CPU::daa() {
 
 	if (s > 0xff) {
 		setFlag('C');
-	} else {
-		resetFlag('C');
 	}
 
 	s &= 0xFF;
@@ -375,7 +358,7 @@ Byte CPU::rlc(Byte a) {
 	resetFlag('H');
 
 	// C is set if bit 7 is 1, else reset
-	if (((a >> 7) & 0x01) == 0x01) {
+	if ((a >> 7) & 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -393,7 +376,7 @@ Byte CPU::rrc(Byte a) {
 	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
-	if ((a & 0x01) == 0x01) {
+	if (a & 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -405,19 +388,13 @@ Byte CPU::rrc(Byte a) {
 Byte CPU::rr(Byte a) {
 	Byte retval = (a >> 1) | (getFlag('C') << 7);
 
-	// Z is set if result is zero, else reset
-	if (retval == (Byte)0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-
-	// N, H are reset
+	// Z, N, H are reset
+	resetFlag('Z');
 	resetFlag('N');
 	resetFlag('H');
 
 	// C is set if bit 0 is 1, else reset
-	if ((a & 0x01) == 0x01) {
+	if (a & 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');
@@ -429,19 +406,13 @@ Byte CPU::rr(Byte a) {
 Byte CPU::rl(Byte a) {
 	Byte retval = (a << 1) | getFlag('C');
 
-	// Z is set if result is zero, else reset
-	if (retval == (Byte)0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-
-	// N, H are reset
+	// Z, N, H are reset
+	resetFlag('Z');
 	resetFlag('N');
 	resetFlag('H');
 
 	// C is set if bit 7 is 1, else reset
-	if (((a >> 7) & 0x01) == 0x01) {
+	if ((a >> 7) & 0x01) {
 		setFlag('C');
 	} else {
 		resetFlag('C');

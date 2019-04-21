@@ -64,7 +64,7 @@ unsigned short Registers::getAF() const {
     return this->AF;
 }
 void Registers::setAF(unsigned short value) {
-    this->AF = value;
+    this->AF = value & 0xFFF0;
 }
 
 Byte Registers::getB() const {
