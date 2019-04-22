@@ -57,7 +57,7 @@ Byte Registers::getF() const {
     return this->F;
 }
 void Registers::setF(Byte value) {
-    this->F = value;
+    this->F = value & 0xF0;
 }
 
 unsigned short Registers::getAF() const {

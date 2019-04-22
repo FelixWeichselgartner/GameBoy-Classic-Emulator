@@ -38,9 +38,7 @@ CPU::CPU() {
 	this->running = 0x01;
 	this->jump = 0x00;
 	this->InterruptMasterEnable = 0x00;
-	this->TimerCounter = 1024;
 	this->cycles = 0;
-	this->DividerRegister = 0;
 	this->gb_halt = this->gb_stop = 0x00;
 	this->enableBootstrap = false;
 	if (enableBootstrap) {
@@ -48,8 +46,13 @@ CPU::CPU() {
 	} else {
 		this->registers.setPC(0x0100);
 	}
+	timer = new Timer(this);
 
 	rom.load(&ram, enableBootstrap);
+}
+
+CPU::~CPU() {
+	delete timer;
 }
 
 void CPU::setJoypadLink(class Joypad* joypadLink) {
@@ -118,7 +121,7 @@ void CPU::setFlag(char type) {
 		case 'N': this->registers.setF(this->registers.getF() | 0b01000000); break;
 		case 'H': this->registers.setF(this->registers.getF() | 0b00100000); break;
 		case 'C': this->registers.setF(this->registers.getF() | 0b00010000); break;
-		default: cout << "[type]" << (int)type << " does not exist" << endl; break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
 	}
 }
 
@@ -128,7 +131,7 @@ void CPU::resetFlag(char type) {
 		case 'N': this->registers.setF(this->registers.getF() & 0b10111111); break;
 		case 'H': this->registers.setF(this->registers.getF() & 0b11011111); break;
 		case 'C': this->registers.setF(this->registers.getF() & 0b11101111); break;
-		default: cout << "[type]" << (int)type << " does not exist" << endl; break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
 	}
 }
 
@@ -168,6 +171,11 @@ Byte CPU::ReadByte(unsigned short address) const {
 }
 
 void CPU::WriteByte(unsigned short address, Byte value) {
+
+	/*
+	if (address == 0xffff || address == 0xff0f) {
+		cout << "@ " << HEX16 << address << ": " << toBinary(value) << endl;
+	}
 
 	/*
 	if (address == 0xff8c)
@@ -236,12 +244,12 @@ void CPU::WriteByte(unsigned short address, Byte value) {
 	} 
 	// timer handling.
 	else if (address == ADDR_TMC) {
-		Byte currentFrequency = getClockFrequency();
+		Byte currentFrequency = timer->getClockFrequency();
 		this->ram.setMemory(address, value);
-		Byte newFrequency = getClockFrequency();
+		Byte newFrequency = timer->getClockFrequency();
 
 		if (currentFrequency != newFrequency) {
-			setClockFrequency();
+			timer->setClockFrequency();
 		}
 	} 
 	// return normal memory.
@@ -909,7 +917,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x20: // JR NZ, n      relative jump by signed immediate if last result was not zero.
 			jumpRelAddress = load8bit();
 			if (!getFlag('Z')) {
-				this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
+				this->registers.setPC(add16bitAdrSign(this->registers.getPC(), jumpRelAddress));
 			}
             break;
         case 0x21: // LD HL, nn     load 16-bit immediate into HL.
@@ -1186,6 +1194,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x76: // HALT          halt processor.
 			this->gb_halt = 0x01;
+			this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x77: // LD (HL), A    copy A to address pointed by HL.
             WriteByte(this->registers.getHL(), this->registers.getA());
@@ -1529,9 +1538,9 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xDB: // XX            operation removed in this CPU. 
             break;
-        case 0xDC: // CALL C, nn    call routine at 16-bit location if last result caused no carry.
+        case 0xDC: // CALL C, nn    call routine at 16-bit location if last result caused carry.
 			jumpAddress = load16bit();
-			if (!getFlag('C')) {
+			if (getFlag('C')) {
 				call(jumpAddress);
 			}
             break;
@@ -2535,14 +2544,13 @@ int CPU::CPUstep() {
 	this->cycles = 0;
 	CPUstepCount++;
 
-	//executeInstruction(gb_halt ? 0x00 : ReadByte(this->registers.getPC()));
-	if (!gb_halt) {
-		executeInstruction(ReadByte(this->registers.getPC()));
-	}
+	executeInstruction(gb_halt ? 0x00 : ReadByte(this->registers.getPC()));
+	
 
 	// may not increase program counter after jumps.
 	if (!this->jump) {
-		this->registers.setPC(this->registers.getPC() + 1);
+		if (!gb_halt)
+			this->registers.setPC(this->registers.getPC() + 1);
 	} else {
 		this->jump = 0x00;
 	}
@@ -2595,12 +2603,6 @@ void CPU::DoInterupts() {
 	}
 }
 
-/*
-V-Blank:	0x40
-LCD:		0x48
-TIMER:		0x50
-JOYPAD:		0x60
-*/
 #define INTERUPT_VBLANK 0x40
 #define INTERUPT_LCD	0x48
 #define INTERUPT_TIMER	0x50
@@ -2621,18 +2623,21 @@ void CPU::ServiceInterupts(int interupt) {
 
 	switch (interupt) {
 		case 0:
-			//cout << "########## service interrupt vblank" << endl;
+			//cout << "service interrupt vblank" << endl;
 			this->registers.setPC(INTERUPT_VBLANK);
 			break;
 		case 1:
+			cout << "service interrupt lcd" << endl;
 			this->registers.setPC(INTERUPT_LCD);
 			break;
 		case 2:
+			cout << "service interrupt timer" << endl;
 			this->registers.setPC(INTERUPT_TIMER);
 			break;
 		case 4:
 			cout << "service interrupt joypad" << endl;
 			this->registers.setPC(INTERUPT_JOYPAD);
+			break;
 		default:
 			break;
 	}
@@ -2646,54 +2651,6 @@ void CPU::DoDMATransfer(Byte data) {
 	}
 }
 
-bool CPU::IsClockEnabled() const {
-	return testBit(ReadByte(ADDR_TMC), 2);
-}
-
-Byte CPU::getClockFrequency() const {
-	return ReadByte(ADDR_TMC) & 0b00000011;
-}
-
-void CPU::setClockFrequency() {
-	switch (getClockFrequency()) {
-		case 0: this->TimerCounter = 1024; break; // => frequency = 4096
-		case 1: this->TimerCounter = 16;   break; // => frequency = 262144
-		case 2: this->TimerCounter = 64;   break; // => frequency = 65536
-		case 3: this->TimerCounter = 256;  break; // => frequency = 16382
-	}
-}
-
-void CPU::DoDividerRegister(int cycles) {
-	this->DividerRegister += cycles;
-
-	if (this->DividerRegister >= 0xFF) {
-		this->DividerRegister = 0x00;
-		ram.setMemory(0xFF04, ram.getMemory(0xFF04) + 1);
-	}
-}
-
-/*
-00: 4096 Hz
-01: 262144 Hz
-10: 65536 Hz
-11: 16384 Hz
-*/
-
 void CPU::UpdateTimers(int cycles) {
-	DoDividerRegister(cycles);
-
-	if (IsClockEnabled()) {
-		this->TimerCounter -= cycles;
-
-		if (this->TimerCounter <= 0) {
-			setClockFrequency();
-
-			if (ReadByte(ADDR_TIMA) == 0xFF) {
-				WriteByte(ADDR_TIMA, ReadByte(ADDR_TMA));
-				RequestInterupt(2);
-			} else {
-				WriteByte(ADDR_TIMA, ReadByte(ADDR_TIMA) + 1);
-			}
-		}
-	}
+	timer->update(cycles);
 }

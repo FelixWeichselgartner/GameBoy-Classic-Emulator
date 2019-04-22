@@ -325,15 +325,15 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				skip = false;
 			}
 
-			if (this->cpu.registers.getPC() == 0x1a89 && false) {
-				keyEn = true;
-			}
-
 			if (this->cpu.registers.getPC() == 0x2349 && this->cpu.registers.getA() != 0 && false) {
 				keyEn = true;
 			}
 
 			if (counter > 0x90 && false) {
+				keyEn = true;
+			}
+
+			if (this->cpu.registers.getPC() == 0x0050) {
 				keyEn = true;
 			}
 			

@@ -7,8 +7,10 @@
 #include "RAM.hpp"
 #include "ROM.hpp"
 #include "Joypad.hpp"
+#include "Timer.hpp"
 
-typedef unsigned char Byte;
+typedef unsigned char	Byte;
+typedef unsigned short	Word;
 //----------------------------------------------------------------------------------------------
 
 bool testBit(Byte, int);
@@ -23,7 +25,7 @@ private:
 	Byte running, gb_stop, gb_halt;
 	Byte jump, InterruptMasterEnable;
 	bool enableBootstrap;
-	int cycles, TimerCounter, DividerRegister;
+	int cycles;
 
 public:
 
@@ -37,10 +39,12 @@ public:
     class RAM ram;
 	class ROM rom = ROM(&ram);
 	class Joypad* joypadLink;
+	class Timer* timer;
 
 public:
 
     CPU();
+	~CPU();
 
 	void setJoypadLink(class Joypad*);
 
@@ -152,10 +156,6 @@ public:
 	// dma transfer - dma == direct memory access
 	void DoDMATransfer(Byte);
 
-	bool IsClockEnabled() const;
-	Byte getClockFrequency() const;
-	void setClockFrequency();
-	void DoDividerRegister(int);
 	void UpdateTimers(int);
 };
 //----------------------------------------------------------------------------------------------

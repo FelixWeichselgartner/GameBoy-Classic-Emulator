@@ -69,8 +69,10 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	gbfile.open("individual/03-op sp,hl.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("individual/02-interrupts.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("rom_singles/8-instr_effect.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
@@ -127,6 +129,7 @@ void ROM::InitialiseRomBaking() {
 
 	switch (rom[0x0147]) {
 		case 0:
+			cout << "Game uses no MBC." << endl;
 			break;
 		case 1: 
 			MBC_1 = true; 
@@ -155,10 +158,6 @@ void ROM::InitialiseRomBaking() {
 
 	if (MBC_2) {
 		cout << "Game uses MBC2." << endl;
-	}
-
-	if (!MBC_1 && !MBC_2) {
-		cout << "Game uses no MBC." << endl;
 	}
 }
 
