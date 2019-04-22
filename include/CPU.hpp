@@ -22,9 +22,9 @@ class CPU {
 
 private:
 
-	Byte running, gb_stop, gb_halt;
-	Byte jump, InterruptMasterEnable;
-	bool enableBootstrap;
+	Byte running, gb_stop;
+	bool enableBootstrap, jump;
+	bool gb_halt, gb_ime;
 	int cycles;
 
 public:

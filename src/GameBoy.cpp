@@ -58,7 +58,9 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "de:" << HEX16 << this->cpu.registers.getDE() << " ";
 	file << "hl:" << HEX16 << this->cpu.registers.getHL() << " ";
 	file << "sp:" << HEX16 << this->cpu.registers.getSP() << " ";
-	file << "ly:" << HEX << (int)this->cpu.ReadByte(0xff44) << endl;
+	file << "ly:" << HEX << (int)this->cpu.ReadByte(0xff44) << " ";
+	file << "ir:" << HEX << (int)this->cpu.ReadByte(0xff0f) << " ";
+	file << "ie:" << HEX << (int)this->cpu.ReadByte(0xffff) << endl;
 }
 
 // seems to be working
@@ -173,6 +175,11 @@ void GameBoy::land_test_e6() {
 	this->cpu.registers.setF(0xc0);
 	this->cpu.registers.setA(this->cpu.land(this->cpu.registers.getA(), 0x7f));
 	cout << "0x80 & 07f = " << HEX << (int)this->cpu.registers.getA() << endl;
+	this->cpu.registers.printFlags();
+	cout << endl << endl;
+	this->cpu.registers.setA(0x00);
+	this->cpu.registers.setF(0xa0);
+	this->cpu.registers.setA(this->cpu.land(this->cpu.registers.getA(), 0x04));
 	this->cpu.registers.printFlags();
 }
 
@@ -333,7 +340,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				keyEn = true;
 			}
 
-			if (this->cpu.registers.getPC() == 0xc2c7) {
+			if (this->cpu.registers.getPC() == 0xc2c7 && false) {
 				keyEn = true;
 			}
 			
@@ -402,7 +409,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				//cout << skip << endl;
 			}
 			
-			//PrintRegistersFile(logFile);
+			PrintRegistersFile(logFile);
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);

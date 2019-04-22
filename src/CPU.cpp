@@ -36,10 +36,11 @@ unsigned long long CPUstepCount = 0;
 CPU::CPU() {
 	this->joypadLink = NULL;
 	this->running = 0x01;
-	this->jump = 0x00;
-	this->InterruptMasterEnable = 0x00;
+	this->jump = false;
+	this->gb_ime = false;
 	this->cycles = 0;
-	this->gb_halt = this->gb_stop = 0x00;
+	this->gb_halt = false;
+	this->gb_stop = 0x00;
 	this->enableBootstrap = false;
 	if (enableBootstrap) {
 		this->registers.setPC(0x0000);
@@ -148,20 +149,6 @@ Byte CPU::ReadByte(unsigned short address) const {
 	}
 	// joypad register.
 	else if (address == ADDR_IO) {
-
-		/*
-		for (int i = 0; i < 4; i++) {
-			if (!testBit(joypadLink->getJoypadState(), i)) {
-				cout << "button i: " << i << " was pressed!" << endl;
-			}
-		}
-		*/
-
-		/*
-		if (CPUstepCount > 5000000 && address == 0xff00 && this->registers.getPC() == 0x29cf) 
-			cout << "read 0xff00 @ " << this->registers.getPC() << ": " << toBinary(joypadLink->getJoypadState()) << endl;
-		*/
-
 		return joypadLink->getJoypadState();
 	} 
 	// normal memory.
@@ -171,44 +158,6 @@ Byte CPU::ReadByte(unsigned short address) const {
 }
 
 void CPU::WriteByte(unsigned short address, Byte value) {
-
-	/*
-	if (address == 0xffff || address == 0xff0f) {
-		cout << "@ " << HEX16 << address << ": " << toBinary(value) << endl;
-	}
-
-	/*
-	if (address == 0xff8c)
-		cout << "@ " << HEX16 << this->registers.getPC() << " with value: " << HEX << (int)value << endl;
-
-	if (address < 0x8000 && false) {
-		cout << "write < 0x8000 -> pc: " << HEX16 << this->registers.getPC() << "step: " << CPUstepCount << endl;
-	}
-
-	if (false) {
-		// 0xff41 lcd stat	
-		if (address == 0xff41) {
-			cout << "lcd stat is set @ " << HEX16 << this->registers.getPC() << "(" << CPUstepCount << ") with " << HEX << (int)value << "h" << endl;
-		}
-	}
-	*/
-	
-
-	/*
-	if (address == 0xfffa) {
-		cout << "0xfffa is set @ " << CPUstepCount << " with " << HEX << (int)value << "h" << endl;
-	}
-	*/
-
-	//cout << "ram bank: " << HEX << (int)this->ram.getCurrentRamBank() << endl;
-
-	// joypad
-	
-	/*
-	if (CPUstepCount > 5000000 && address == 0xff00)
-		cout << "read 0xff00 @ " << this->registers.getPC() << endl;
-	*/
-
 	// rom banking.
 	if (address < ADDR_VRAM_T_S) {
 		this->rom.HandleBanking(address, value);
@@ -866,7 +815,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(rrc(this->registers.getA()));
             break;
         case 0x10: // STOP          stop processor.
-			this->gb_halt = 0x01;
+			this->gb_halt = true;
             break;
         case 0x11: // LD DE, nn     load 16-bit immediate into DE.
 			this->registers.setDE(load16bit());
@@ -1193,7 +1142,7 @@ void CPU::executeInstruction(Byte opcode) {
             WriteByte(this->registers.getHL(), this->registers.getL());
             break;
         case 0x76: // HALT          halt processor.
-			this->gb_halt = 0x01;
+			this->gb_halt = true;
 			this->registers.setPC(this->registers.getPC() + 1);
             break;
         case 0x77: // LD (HL), A    copy A to address pointed by HL.
@@ -1418,7 +1367,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xC0: // RET NZ        return if last result was not zero.
 			if (!getFlag('Z')) {
 				this->registers.setPC(pop16bit());
-				jump = 0x01;
+				jump = true;
 			}
             break;
         case 0xC1: // POP BC        pop 16-bit value from stack into BC.
@@ -1428,12 +1377,12 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpAddress = load16bit();
 			if (!getFlag('Z')) {
 				this->registers.setPC(jumpAddress);
-				this->jump = 0x01;
+				this->jump = true;
 			}
             break;
         case 0xC3: // JP nn         absolute jump to 16-bit location.
 			this->registers.setPC(load16bit());
-			jump = 0x01;
+			jump = true;
             break;
         case 0xC4: // CALL NZ, nn   call routine at 16-bit location if last result was not zero.
 			jumpAddress = load16bit();
@@ -1453,18 +1402,18 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xC8: // RET Z         return if last result was zero.
 			if (getFlag('Z')) {
 				this->registers.setPC(pop16bit());
-				jump = 0x01;
+				jump = true;
 			}
             break;
         case 0xC9: // RET           return to calling routine.
 			this->registers.setPC(pop16bit());
-			jump = 0x01;
+			jump = true;
             break;
         case 0xCA: // JP Z, nn      absolute jump to 16-bit location if last result was zero.
 			jumpAddress = load16bit();
 			if (getFlag('Z')) {
 				this->registers.setPC(jumpAddress);
-				this->jump = 0x01;
+				this->jump = true;
 			}
             break;
         case 0xCB: // Ext ops       extended operations (two-Byte instruction code).
@@ -1488,7 +1437,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xD0: // RET NC        return if last result caused no carry.
 			if (!getFlag('C')) {
 				this->registers.setPC(pop16bit());
-				jump = 0x01;
+				jump = true;
 			}
             break;
         case 0xD1: // POP DE        pop 16-bit value from stack into DE.
@@ -1498,7 +1447,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpAddress = load16bit();
 			if (!getFlag('C')) {
 				this->registers.setPC(jumpAddress);
-				this->jump = 0x01;
+				this->jump = true;
 			}
             break;
         case 0xD3: // XX            operation removed in this CPU.
@@ -1521,19 +1470,19 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xD8: // RET C         return if last result caused carry.
 			if (getFlag('C')) {
 				this->registers.setPC(pop16bit());
-				jump = 0x01;
+				jump = true;
 			}
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
-			this->InterruptMasterEnable = 0x01;
-			this->jump = 0x01;
+			this->gb_ime = true;
+			this->jump = true;
 			this->registers.setPC(pop16bit());
             break; 
         case 0xDA: // JP C, nn      absolute jump to 16-bit location if last result caused carry.
 			jumpAddress = load16bit();
 			if (getFlag('C')) {
 				this->registers.setPC(jumpAddress);
-				this->jump = 0x01;
+				this->jump = true;
 			}
             break;
         case 0xDB: // XX            operation removed in this CPU. 
@@ -1579,7 +1528,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0xE9: // JP (HL)       jump to 16-bit value pointed by HL.
 			this->registers.setPC(this->registers.getHL());
-			this->jump = 0x01;
+			this->jump = true;
             break;
         case 0xEA: // LD (nn), A    save A at given 16-bit address.
 			WriteByte(load16bit(), this->registers.getA());
@@ -1605,7 +1554,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xF2: // XX            operation removed in this CPU.
             break;
         case 0xF3: // DI            disable interrupts
-			this->InterruptMasterEnable = 0x00;
+			this->gb_ime = false;
             break;
         case 0xF4: // XX            operation removed in this CPU.
             break;
@@ -1628,7 +1577,7 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(ReadByte(load16bit()));
             break;
         case 0xFB: // EI            enable interrupts.
-			this->InterruptMasterEnable = 0x01;
+			this->gb_ime = true;
             break;
         case 0xFC: // XX            operation removed in this CPU.
             break;
@@ -2552,7 +2501,7 @@ int CPU::CPUstep() {
 		if (!gb_halt)
 			this->registers.setPC(this->registers.getPC() + 1);
 	} else {
-		this->jump = 0x00;
+		this->jump = false;
 	}
 
 	return this->cycles;
@@ -2575,19 +2524,15 @@ void CPU::RequestInterupt(int id) {
 	req = setBit(req, id);
 	WriteByte(ADDR_INTR_REQ, req);
 
+	gb_halt = false;
+
 	return;
 }
 
 void CPU::DoInterupts() {
 	Byte req, enabled;
 
-	/*
-	if (CPUstepCount > 200000)
-		cout << "IntMEn" << boolalpha << (InterruptMasterEnable == 0x01) << endl;
-		*/
-
-	if (InterruptMasterEnable || gb_halt) {
-		gb_halt = 0x00;
+	if (gb_ime /*|| gb_halt*/) {
 		req = ReadByte(ADDR_INTR_REQ);
 		enabled = ReadByte(ADDR_INTR_EN);
 
@@ -2611,9 +2556,9 @@ void CPU::DoInterupts() {
 void CPU::ServiceInterupts(int interupt) {
 	Byte req;
 
-	InterruptMasterEnable = 0x00;
-	req = ReadByte(ADDR_INTR_REQ);
+	gb_ime = false;
 
+	req = ReadByte(ADDR_INTR_REQ);
 	req = resetBit(req, interupt);
 	WriteByte(ADDR_INTR_REQ, req);
 

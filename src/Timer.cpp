@@ -44,16 +44,11 @@ void Timer::DividerRegisterStep(int cycles) {
 	}
 }
 
-#include <iostream>
-using namespace std;
-
 void Timer::update(int cycles) {
 	DividerRegisterStep(cycles);
 
 	if (IsEnabled()) {
-		this->TimerCounter += cycles;
-
-		//cout << "TimerCounter: " << TimerCounter << endl;
+		this->TimerCounter -= cycles;
 
 		if (getTimerCounter() <= 0) {
 			setClockFrequency();
@@ -61,9 +56,7 @@ void Timer::update(int cycles) {
 			if (cpuLink->ReadByte(ADDR_TIMA) == 0xFF) {
 				cpuLink->WriteByte(ADDR_TIMA, cpuLink->ReadByte(ADDR_TMA));
 				cpuLink->RequestInterupt(2);
-				cout << "timer interrupt requested" << endl;
-			}
-			else {
+			} else {
 				cpuLink->WriteByte(ADDR_TIMA, cpuLink->ReadByte(ADDR_TIMA) + 1);
 			}
 		}
