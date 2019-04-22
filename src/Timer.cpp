@@ -53,7 +53,7 @@ void Timer::update(int cycles) {
 	if (IsEnabled()) {
 		this->TimerCounter += cycles;
 
-		cout << "TimerCounter: " << TimerCounter << endl;
+		//cout << "TimerCounter: " << TimerCounter << endl;
 
 		if (getTimerCounter() <= 0) {
 			setClockFrequency();

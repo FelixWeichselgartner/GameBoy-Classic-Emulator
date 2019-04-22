@@ -252,7 +252,7 @@ void ROM::print(class RAM* ram, unsigned short start, unsigned short end) {
 	}
 	cout << endl;
 	for (int i = start, c = 0; i < start + (end + 1 - start ) / 16; i++, c++) {
-		cout << HEX16 << start + c * 16 << ": ";
+		cout << HEX16 << setw(8) << start + c * 16 << ": ";
 		for (int k = 0; k < 16; k++) {
 			cout << HEX << (int)ram->getMemory(start + c * 16 + k) << " ";
 		}

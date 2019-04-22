@@ -333,7 +333,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				keyEn = true;
 			}
 
-			if (this->cpu.registers.getPC() == 0x0050) {
+			if (this->cpu.registers.getPC() == 0xc2c7) {
 				keyEn = true;
 			}
 			
@@ -361,6 +361,8 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 					//cout << "current rom bank: " << (int)this->cpu.rom.getCurrentRomBank() << endl;
 					//cout << "0x4000: " << HEX << (int)cpu.ReadByte(0x4000) << endl;
+
+					cpu.rom.print(&cpu.ram, 0xdff0, 0xe000);
 
 					if (printVRAMAfterInstruction) {
 						cpu.rom.print(&cpu.ram, 0x8000, 0xA000);
@@ -400,7 +402,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 				//cout << skip << endl;
 			}
 			
-			PrintRegistersFile(logFile);
+			//PrintRegistersFile(logFile);
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);

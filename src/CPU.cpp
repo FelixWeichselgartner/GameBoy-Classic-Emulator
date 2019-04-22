@@ -715,13 +715,13 @@ void CPU::cp(Byte A, Byte X) {
 }
 
 void CPU::push8bit(Byte value) {
-	WriteByte(this->registers.getSP(), value);
 	this->registers.setSP(this->registers.getSP() - 1);
+	WriteByte(this->registers.getSP(), value);
 }
 
 Byte CPU::pop8bit() {
-	this->registers.setSP(this->registers.getSP() + 1);
 	Byte retval = ReadByte(this->registers.getSP());
+	this->registers.setSP(this->registers.getSP() + 1);
 	return retval;
 }
 
