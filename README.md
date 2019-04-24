@@ -105,12 +105,14 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 * http://www.codeslinger.co.uk/pages/projects/gameboy/opcodes.html
 * https://cturt.github.io/cinoop.html
 * http://gbdev.gg8.se/wiki/articles/Main_Page
+* https://rednex.github.io/rgbds/gbz80.7.html#RRC_r8
 * http://imrannazar.com/Gameboy-Z80-Opcode-Map
 * https://rednex.github.io/rgbds/gbz80.7.html#INC_r8
 * http://www.chibiakumas.com/z80/Gameboy.php
 * http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
 * https://blog.rekawek.eu/2017/02/09/coffee-gb/
 * http://www.z80.info/z80syntx.htm#DAA
+* https://meatfighter.com/gameboy/TheNintendoGameboy.pdf
 * http://gbdev.gg8.se/files/roms/blargg-gb-tests/
 * http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-Graphics
 * https://blog.ryanlevick.com/DMG-01/public/book/introduction.html

@@ -63,14 +63,11 @@ public:
 	Byte getFlag(char);
 	void setFlag(char);
 	void resetFlag(char);
+	void setFlagState(char, bool);
 
     Byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, Byte);
 
-	// increment value.
-	Byte inc(Byte);
-	// decrement value.
-	Byte dec(Byte);
 	// adjust for register a for bcd addition.
 	void daa();
 	// load 8 bit value in register.
@@ -79,6 +76,12 @@ public:
 	unsigned short load16bit();
 	// save 16 bit value to memory.
 	void save16bitToAddress(unsigned short, unsigned short);
+
+	// shift operations special for akkumulator A.
+	Byte rlca(Byte);
+	Byte rla(Byte);
+	Byte rrca(Byte);
+	Byte rra(Byte);
 	// rotate left carry.
 	Byte rlc(Byte);
 	// rotate right carry.
@@ -87,8 +90,20 @@ public:
 	Byte rr(Byte);
 	// rotate left.
 	Byte rl(Byte);
-	// complement of Byte value.
-	Byte cpl(Byte);
+	// shift Byte left with preserving sign.
+	Byte sla(Byte);
+	// shift Byte right with preserving sign.
+	Byte sra(Byte);
+	// shift Byte right.
+	Byte srl(Byte);
+
+	// swap nybbles in Byte.
+	Byte swap(Byte);
+	
+	// increment value.
+	Byte inc(Byte);
+	// decrement value.
+	Byte dec(Byte);
 	// add two Byte values.
     Byte add(Byte, Byte, char);
 	// add two 16-bit values.
@@ -104,13 +119,17 @@ public:
 	// sub two Byte values - carry.
 	Byte sbc(Byte, Byte);
 	// logical AND on two Byte values.
+
 	Byte land(Byte, Byte); 
 	// logical XOR on two Byte values.
 	Byte lxor(Byte, Byte);
 	// logical OR on two Byte values.
 	Byte lor(Byte, Byte);
+	// complement of Byte value.
+	Byte cpl(Byte);
 	// compare two Byte values.
 	void cp(Byte, Byte);
+
 	// push Byte value on the stack.
 	void push8bit(Byte);
 	// pop Byte value from the stack.
@@ -119,6 +138,7 @@ public:
 	void push16bit(unsigned short);
 	// pop 2 Byte value from the stack.
 	unsigned short pop16bit();
+
 	// call routine.
 	void call(unsigned short);
 	// rst
@@ -127,14 +147,6 @@ public:
 	// execute instructions according to opcode.
     void executeInstruction(Byte);
 
-	// shift Byte left with preserving sign.
-	Byte sla(Byte);
-	// shift Byte right with preserving sign.
-	Byte sra(Byte);
-	// swap nybbles in Byte.
-	Byte swap(Byte);
-	// shift Byte right.
-	Byte srl(Byte);
 	// test bit of Byte.
 	void bit(int, Byte);
 	// clear (reset) bit of Byte.

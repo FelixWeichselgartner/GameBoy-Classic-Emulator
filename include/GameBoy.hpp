@@ -40,6 +40,7 @@ public:
 	void land_test_e6();
 	void sub_test();
 	void bit_test();
+	void RrRrcRlRlc_test();
 
 	void tests(int);
 

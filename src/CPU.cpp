@@ -109,11 +109,7 @@ Byte CPU::getFlag(char type) {
 		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
 	}
 
-	if (tmp) {
-		return 0x01;
-	} else {
-		return 0x00;
-	}
+	return tmp ? 0x01 : 0x00;
 }
 
 void CPU::setFlag(char type) {
@@ -133,6 +129,14 @@ void CPU::resetFlag(char type) {
 		case 'H': this->registers.setF(this->registers.getF() & 0b11011111); break;
 		case 'C': this->registers.setF(this->registers.getF() & 0b11101111); break;
 		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+}
+
+void CPU::setFlagState(char type, bool state) {
+	if (state) {
+		setFlag(type);
+	} else {
+		resetFlag(type);
 	}
 }
 
@@ -221,44 +225,12 @@ unsigned short CPU::load16bit() {
 	return retval;
 }
 
-Byte CPU::inc(Byte value) {
-	Byte retval = value + 1;
-
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-	
-	resetFlag('N');
-
-	if ((retval & 0x0F) == 0x00) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
-
-	return retval;
-}
-
-Byte CPU::dec(Byte value) {
-	Byte retval = value - 1;
-
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-	
-	setFlag('N');
-
-	if ((retval & 0x0F) == 0x0F) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
-
-	return retval;
+void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
+	Byte firstHalf, secondHalf;
+	firstHalf = HIGH_BYTE(value);
+	secondHalf = LOW_BYTE(value);
+	WriteByte(address, firstHalf);
+	WriteByte(address + 1, secondHalf);
 }
 
 void CPU::daa() {
@@ -288,113 +260,215 @@ void CPU::daa() {
 
 	s &= 0xFF;
 
-	if (s == 0x00) {
-		setFlag('Z');
-	}
-	else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !s);
 
 	this->registers.setA((Byte)s);
 }
 
-void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
-	Byte firstHalf, secondHalf;
-	firstHalf = HIGH_BYTE(value);
-	secondHalf = LOW_BYTE(value);
-	WriteByte(address, firstHalf);
-	WriteByte(address + 1, secondHalf);
-}
+////////////////////////////////////////////////////////////////
+// shift operations
 
-Byte CPU::rlc(Byte a) {
+Byte CPU::rlca(Byte a) {
 	Byte retval = (a << 1) | (a >> 7);
 
-	// Z, N, H are reset
-	resetFlag('Z');
-	resetFlag('N');
-	resetFlag('H');
+	// previous bit 7 value.
+	setFlagState('C', testBit(a, 7));
 
-	// C is set if bit 7 is 1, else reset
-	if ((a >> 7) & 0x01) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
+	// Z not affected.
+	resetFlag('Z'); // or is it?
 
-	return retval;
-}
-
-Byte CPU::rrc(Byte a) {
-	Byte retval = a >> 1;
-
-	if ((retval & 0x01) == 0x01) {
-		retval |= (1 << 7);
-		setFlag('C');
-	}
-	else {
-		resetFlag('C');
-	}
-
-	// Z, N, H are reset
-	if (retval == 0)
-		getFlag('Z');
-	else
-		resetFlag('Z');
-
+	// N, H are reset.
 	resetFlag('N');
 	resetFlag('H');
 
 	return retval;
 }
 
-Byte CPU::rr(Byte a) {
-	Byte retval = (a >> 1) | (getFlag('C') << 7);
-
-	// Z, N, H are reset
-	if (retval == 0)
-		getFlag('Z');
-	else
-		resetFlag('Z');
-
-	resetFlag('N');
-	resetFlag('H');
-
-	// C is set if bit 0 is 1, else reset
-	if (a & 0x01) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
-
-	return retval;
-}
-
-Byte CPU::rl(Byte a) {
+Byte CPU::rla(Byte a) {
 	Byte retval = (a << 1) | getFlag('C');
 
-	// Z, N, H are reset
-	resetFlag('Z');
+	// previous bit 7 value.
+	setFlagState('C', testBit(a, 7));
+
+	// Z not affected.
+	resetFlag('Z'); // or is it?
+
+	// N, H are reset.
 	resetFlag('N');
 	resetFlag('H');
-
-	// C is set if bit 7 is 1, else reset
-	if ((a >> 7) & 0x01) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
 
 	return retval;
 }
 
-Byte CPU::cpl(Byte a) {
-	// N is set
+Byte CPU::rrca(Byte a) {
+	Byte retval = (a >> 1) | (a << 7);
+
+	// previous bit 0 value.
+	setFlagState('C', testBit(a, 0));
+
+	// Z not affected.
+	resetFlag('Z'); // or is it?
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	return retval;
+}
+
+Byte CPU::rra(Byte a) {
+	Byte retval = (a >> 1) | (getFlag('C') << 7);
+
+	// previous bit 0 value.
+	setFlagState('C', testBit(a, 0));
+
+	// Z not affected.
+	resetFlag('Z'); // or is it?
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	return retval;
+}
+
+Byte CPU::rlc(Byte a) { // false
+	Byte retval = (a << 1) | (a >> 7);
+
+	// Z is set if result is zero, else reset.
+	setFlagState('Z', !retval);
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	// C is set if bit 7 is 1, else reset.
+	setFlagState('C', testBit(a, 7));
+
+	return retval;
+}
+
+Byte CPU::rl(Byte a) { // false
+	Byte retval = (a << 1) | getFlag('C');
+
+	// Z is set if result is zero, else reset.
+	setFlagState('Z', !retval);
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	// C is set if bit 7 is 1, else reset.
+	setFlagState('C', testBit(a, 7));
+
+	return retval;
+}
+
+Byte CPU::rrc(Byte a) { // false
+	Byte retval = a >> 1;
+
+	// Z is set if result is zero, else reset.
+	setFlagState('Z', !retval);
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	// C is set if bit 0 is 1, else reset.
+	setFlagState('C', testBit(a, 0));
+
+	return retval;
+}
+
+Byte CPU::rr(Byte a) { // false
+	Byte retval = (a >> 1) | (getFlag('C') << 7);
+
+	// Z is set if result is zero, else reset.
+	setFlagState('Z', !retval);
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	// C is set if bit 0 is 1, else reset.
+	setFlagState('C', testBit(a, 0));
+
+	return retval;
+}
+
+Byte CPU::sla(Byte value) {
+	Byte retval = value << 1;
+
+	// Z is set if result is zero, else reset.
+	setFlagState('Z', !retval);
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	// C is set if bit 7 is 1, else reset.
+	setFlagState('C', testBit(value, 7));
+
+	return retval;
+}
+
+Byte CPU::sra(Byte value) {
+	Byte retval = (value >> 1) | (value & 0x80);
+
+	// Z is set if result is zero, else reset.
+	setFlagState('Z', !retval);
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	// C is set if bit 0 is 1, else reset.
+	setFlagState('C', testBit(value, 0));
+
+	return retval;
+}
+
+Byte CPU::srl(Byte value) {
+	Byte retval = value >> 1;
+
+	// Z is set if result is zero, else reset.
+	setFlagState('Z', !retval);
+
+	// N, H are reset.
+	resetFlag('N');
+	resetFlag('H');
+
+	// C is set if bit 0 is 1, else reset.
+	setFlagState('C', testBit(value, 0));
+
+	return retval;
+}
+
+////////////////////////////////////////////////////////////////
+// arithmetical operations
+
+Byte CPU::inc(Byte value) {
+	Byte retval = value + 1;
+
+	setFlagState('Z', !retval);
+
+	resetFlag('N');
+
+	setFlagState('H', (retval & 0x0F) == 0x00);
+
+	return retval;
+}
+
+Byte CPU::dec(Byte value) {
+	Byte retval = value - 1;
+
+	setFlagState('Z', !retval);
+
 	setFlag('N');
 
-	// H is set
-	setFlag('H');
+	setFlagState('H', (retval & 0x0F) == 0x0F);
 
-	return ~a;
+	return retval;
 }
 
 Byte CPU::add(Byte a, Byte b, char type) {
@@ -409,28 +483,16 @@ Byte CPU::add(Byte a, Byte b, char type) {
 	}
 
 	// Z is set if result is zero, else reset
-    if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
     // N is set to zero
 	resetFlag('N');
 
     // H is set if overflow from bit 3, else reset
-    if (((a & 0xf) + (b & 0xf)) & 0x10) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
+	setFlagState('H', ((a & 0xf) + (b & 0xf)) & 0x10);
 
     // C is set if overflow from bit 7, else reset
-    if (((int) a + (int) b) > (int) 255) {
-		setFlag('C');
-    } else {
-		resetFlag('C');
-	}
+	setFlagState('C', ((int)a + (int)b) > 255);
 
 	return retval;
 }
@@ -440,24 +502,16 @@ unsigned short CPU::add16bit(unsigned short a, unsigned short b) {
 	unsigned int sum;
 
 	retval = a + b;
-	sum = (unsigned short)a + (unsigned short)b;
+	sum = (unsigned int)a + (unsigned int)b;
 
 	// N is set to zero
 	resetFlag('N');
 
 	// H is set if overflow from bit 7, else reset
-	if ((sum ^ a ^ b) & 0x1000) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
+	setFlagState('H', (sum ^ a ^ b) & 0x1000);
 
 	// C is set if overflow from bit 15, else reset
-	if (sum > (int) (65536 - 1)) { // 65536 == pow(2, 16)
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
+	setFlagState('C', sum > 65535);
 
 	return retval;
 }
@@ -470,25 +524,14 @@ unsigned short CPU::add16bitSign(unsigned short a, Byte b) {
 	resetFlag('Z');
 	resetFlag('N');
 
-	if ((a ^ n ^ retval) & 0x1000) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
+	setFlagState('H', (a ^ n ^ retval) & 0x1000);
 
 	if (n >= 0) {
-		if (a > retval) {
-			setFlag('C');
-		} else {
-			resetFlag('C');
-		}
+		setFlagState('C', a > retval);
 	} else {
-		if (a < retval) {
-			setFlag('C');
-		} else {
-			resetFlag('C');
-		}
+		setFlagState('C', a < retval);
 	}
+
 	return retval;
 }
 
@@ -500,28 +543,16 @@ Byte CPU::adc(Byte a, Byte b) {
 	Byte retval = a + b + getFlag('C');
 
 	// Z is set if result is zero, else reset
-	if (retval == (Byte)0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
 	// N is set to zero
 	resetFlag('N');
 
 	// H is set if overflow from bit 3, else reset
-	if (((a & 0xf) + (b & 0xf)) & 0x10) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
+	setFlagState('H', ((a & 0xf) + (b & 0xf)) & 0x10);
 
 	// C is set if overflow from bit 7, else reset
-	if (((int)a + (int)b) > (Byte)255) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
+	setFlagState('C', ((int)a + (int)b) > 25);
 
 	return retval;
 }
@@ -530,28 +561,16 @@ Byte CPU::sub(Byte a, Byte b) {
 	Byte retval = a - b;
 
 	// Z is set if result is zero, else reset
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
 	// N is set
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	if ((a ^ b ^ retval) & 0x10) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
+	setFlagState('H', (a ^ b ^ retval) & 0x10);
 
 	// C is set if no borrow from bit 7, else reset
-	if (b > a) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
+	setFlagState('C', b > a);
 
 	return retval;
 }
@@ -560,41 +579,38 @@ Byte CPU::sbc(Byte a, Byte b) {
 	Byte retval = a - b - getFlag('C');
 
 	// Z is set if result is zero, else reset
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
 	// N is set
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	if ((a ^ b ^ retval) & 0x10) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
+	setFlagState('H', (a ^ b ^ retval) & 0x10);
 
 	// C is set if no borrow from bit 7, else reset
-	if (b > a) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
+	setFlagState('C', b > a);
 
 	return retval;
+}
+
+////////////////////////////////////////////////////////////////
+// logical operations
+
+Byte CPU::cpl(Byte a) {
+	// N is set
+	setFlag('N');
+
+	// H is set
+	setFlag('H');
+
+	return ~a;
 }
 
 Byte CPU::land(Byte a, Byte b) {
 	Byte retval = a & b;
 
 	// Z is set if result is zero, else reset
-	if (retval == (Byte)0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
 	// N is reset
 	resetFlag('N');
@@ -612,11 +628,7 @@ Byte CPU::lxor(Byte a, Byte b) {
 	Byte retval = a ^ b;
 
 	// Z is set if result is zero, else reset
-	if (retval == (Byte)0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
 	// N, H, C are reset
 	resetFlag('N');
@@ -630,11 +642,7 @@ Byte CPU::lor(Byte a, Byte b) {
 	Byte retval = a | b;
 
 	// Z is set if result is zero, else reset
-	if (retval == (Byte)0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
 	// N, H, C is reset
 	resetFlag('N');
@@ -648,29 +656,20 @@ void CPU::cp(Byte A, Byte X) {
 	Byte sub = A - X;
 
 	// Z is set if result is zero, else reset
-	if (sub == (Byte)0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !sub);
 
 	// N is set
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	if ((A ^ X ^ sub) & 0x10) {
-		setFlag('H');
-	} else {
-		resetFlag('H');
-	}
+	setFlagState('H', (A ^ X ^ sub) & 0x10);
 
 	// C is set if no borrow from bit 7, else reset
-	if (X > A) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
+	setFlagState('C', X > A);
 }
+
+////////////////////////////////////////////////////////////////
+// stack operations
 
 void CPU::push8bit(Byte value) {
 	this->registers.setSP(this->registers.getSP() - 1);
@@ -700,6 +699,9 @@ unsigned short CPU::pop16bit() {
 	return retval;
 }
 
+////////////////////////////////////////////////////////////////
+// function calls
+
 void CPU::call(unsigned short address) {
 	push16bit(this->registers.getPC() + 1);
 	this->registers.setPC(address);
@@ -709,6 +711,8 @@ void CPU::call(unsigned short address) {
 void CPU::rst(unsigned short address) {
 	call(address);
 }
+
+////////////////////////////////////////////////////////////////
 
 Byte CyclesPerOPCode[0x100]{
 //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
@@ -796,8 +800,8 @@ void CPU::executeInstruction(Byte opcode) {
         case  0x6: // LD B, n       load 8 bit immediate into B.
 			this->registers.setB(load8bit());
             break;
-        case  0x7: // RLC A         rotate A left with carry.
-			this->registers.setA(rlc(this->registers.getA()));
+        case  0x7: // RLCA			rotate A left with carry.
+			this->registers.setA(rlca(this->registers.getA()));
             break;
         case  0x8: // LD (nn), SP   save SP to a given address.
 			save16bitToAddress(load16bit(), this->registers.getSP());
@@ -820,8 +824,8 @@ void CPU::executeInstruction(Byte opcode) {
         case  0xE: // LD C, n       load 8-bit immediate to C.
 			this->registers.setC(load8bit());
             break;
-        case  0xF: // RRC A         rotate A right with carry.
-			this->registers.setA(rrc(this->registers.getA()));
+        case  0xF: // RRCA			rotate A right with carry.
+			this->registers.setA(rrca(this->registers.getA()));
             break;
         case 0x10: // STOP          stop processor.
 			this->gb_halt = true;
@@ -844,8 +848,8 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x16: // LD D, n       load 8-bit immediate into D.
 			this->registers.setD(load8bit());
             break;
-        case 0x17: // RL A          rotate A left.
-			this->registers.setA(rl(this->registers.getA()));
+        case 0x17: // RLA	        rotate A left.
+			this->registers.setA(rla(this->registers.getA()));
             break;
         case 0x18: // JR n          relative jump by signed immediate.
 			jumpRelAddress = load8bit();
@@ -869,8 +873,8 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x1E: // LD E, n       Load 8-bit immediate into E.
 			this->registers.setE(load8bit());
             break;
-        case 0x1F: // RR A          rotate A right.
-			this->registers.setA(rr(this->registers.getA()));
+        case 0x1F: // RRA			rotate A right.
+			this->registers.setA(rra(this->registers.getA()));
             break;
         case 0x20: // JR NZ, n      relative jump by signed immediate if last result was not zero.
 			jumpRelAddress = load8bit();
@@ -1601,65 +1605,13 @@ void CPU::executeInstruction(Byte opcode) {
     }
 }
 
-Byte CPU::sla(Byte value) {
-	Byte retval = value << 1;
-
-	// Z is set if result is zero, else reset.
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-
-	// N, H are reset.
-	resetFlag('N');
-	resetFlag('H');
-
-	// C is set according to result.
-	if (testBit(value, 7)) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
-
-	return retval;
-}
-
-Byte CPU::sra(Byte value) {
-	Byte retval = (value >> 1) | (value & 0b10000000);
-
-	// Z is set if result is zero, else reset.
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-
-	// N, H are reset.
-	resetFlag('N');
-	resetFlag('H');
-
-	// C is set according to result.
-	if (testBit(value, 0)) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
-
-	return retval;
-}
-
 Byte CPU::swap(Byte value) {
 	Byte upperbyte = UPPER_HALFBYTE(value);
 	Byte lowerbyte = LOWER_HALFBYTE(value);
 	Byte retval = (lowerbyte << 4) | upperbyte;
 
 	// Z is set if result is zero, else reset.
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !retval);
 
 	// N, H, C are reset.
 	resetFlag('N');
@@ -1669,37 +1621,9 @@ Byte CPU::swap(Byte value) {
 	return retval;
 }
 
-Byte CPU::srl(Byte value) {
-	Byte retval = value >> 1;
-
-	// Z is set if result is zero, else reset.
-	if (retval == 0x00) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
-
-	// N, H are reset.
-	resetFlag('N');
-	resetFlag('H');
-
-	// C is set according to result.
-	if (value & 0x01) {
-		setFlag('C');
-	} else {
-		resetFlag('C');
-	}
-
-	return retval;
-}
-
 void CPU::bit(int bit, Byte value) {
 	// zero flag is set if bit is not set.
-	if (!testBit(value, bit)) {
-		setFlag('Z');
-	} else {
-		resetFlag('Z');
-	}
+	setFlagState('Z', !testBit(value, bit));
 
 	// N is reset.
 	resetFlag('N');
@@ -2578,12 +2502,15 @@ void CPU::ServiceInterupts(int interupt) {
 			this->registers.setPC(INTERUPT_VBLANK);
 			break;
 		case 1:
+			//cout << "service interrupt lcd" << endl;
 			this->registers.setPC(INTERUPT_LCD);
 			break;
 		case 2:
+			//cout << "service interrupt timer" << endl;
 			this->registers.setPC(INTERUPT_TIMER);
 			break;
 		case 4:
+			//cout << "service interrupt joypad" << endl;
 			this->registers.setPC(INTERUPT_JOYPAD);
 			break;
 		default:
