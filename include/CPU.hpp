@@ -63,6 +63,7 @@ public:
 	Byte getFlag(char);
 	void setFlag(char);
 	void resetFlag(char);
+	void setFlagState(char, bool);
 
     Byte ReadByte(unsigned short) const;
     void WriteByte(unsigned short, Byte);

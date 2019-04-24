@@ -207,6 +207,24 @@ void GameBoy::bit_test() {
 	cout << "test bit 7: " << boolalpha << testBit(this->cpu.registers.getA(), 7) << endl;
 }
 
+void GameBoy::RrRrcRlRlc_test() {
+	this->cpu.registers.setF(0x00);
+	cpu.registers.printFlags();
+	this->cpu.registers.setA(0x00);
+	cout << "a start: " << HEX << (int)this->cpu.registers.getA() << endl;
+	this->cpu.registers.setA(this->cpu.rr(this->cpu.registers.getA()));
+	cpu.registers.printFlags();
+	cout << "result: " << HEX << (int)this->cpu.registers.getA() << endl;
+
+	this->cpu.registers.setF(0x10);
+	cpu.registers.printFlags();
+	this->cpu.registers.setA(0x01);
+	cout << "a start: " << HEX << (int)this->cpu.registers.getA() << endl;
+	this->cpu.registers.setA(this->cpu.rr(this->cpu.registers.getA()));
+	cpu.registers.printFlags();
+	cout << "result: " << HEX << (int)this->cpu.registers.getA() << endl;
+}
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
@@ -486,6 +504,9 @@ void GameBoy::tests(int mode) {
 	case 14:
 		bit_test();
 		break;
+	case 15:
+		RrRrcRlRlc_test();
+		break;
 	}
 }
 
@@ -615,6 +636,7 @@ void GameBoy::run() {
 // MODE 12		land test - op e6
 // MODE 13		sub test
 // MODE 14		bit test
+// MODE 15		rrc, rr, rlc, rl test
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
