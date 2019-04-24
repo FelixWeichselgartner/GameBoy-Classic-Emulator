@@ -325,19 +325,24 @@ Byte CPU::rlc(Byte a) {
 }
 
 Byte CPU::rrc(Byte a) {
-	Byte retval = (a >> 1) | (a << 7);
+	Byte retval = a >> 1;
 
-	// Z, N, H are reset
-	resetFlag('Z');
-	resetFlag('N');
-	resetFlag('H');
-
-	// C is set if bit 0 is 1, else reset
-	if (a & 0x01) {
+	if ((retval & 0x01) == 0x01) {
+		retval |= (1 << 7);
 		setFlag('C');
-	} else {
+	}
+	else {
 		resetFlag('C');
 	}
+
+	// Z, N, H are reset
+	if (retval == 0)
+		getFlag('Z');
+	else
+		resetFlag('Z');
+
+	resetFlag('N');
+	resetFlag('H');
 
 	return retval;
 }
@@ -346,7 +351,11 @@ Byte CPU::rr(Byte a) {
 	Byte retval = (a >> 1) | (getFlag('C') << 7);
 
 	// Z, N, H are reset
-	resetFlag('Z');
+	if (retval == 0)
+		getFlag('Z');
+	else
+		resetFlag('Z');
+
 	resetFlag('N');
 	resetFlag('H');
 
@@ -2532,7 +2541,7 @@ void CPU::RequestInterupt(int id) {
 void CPU::DoInterupts() {
 	Byte req, enabled;
 
-	if (gb_ime /*|| gb_halt*/) {
+	if (gb_ime) {
 		req = ReadByte(ADDR_INTR_REQ);
 		enabled = ReadByte(ADDR_INTR_EN);
 
@@ -2543,9 +2552,9 @@ void CPU::DoInterupts() {
 				}
 			}
 		}
-
-		return;
 	}
+
+	return;
 }
 
 #define INTERUPT_VBLANK 0x40
@@ -2564,23 +2573,17 @@ void CPU::ServiceInterupts(int interupt) {
 
 	push16bit(this->registers.getPC());
 
-	//cout << "service interrupt" << endl;
-
 	switch (interupt) {
 		case 0:
-			//cout << "service interrupt vblank" << endl;
 			this->registers.setPC(INTERUPT_VBLANK);
 			break;
 		case 1:
-			cout << "service interrupt lcd" << endl;
 			this->registers.setPC(INTERUPT_LCD);
 			break;
 		case 2:
-			cout << "service interrupt timer" << endl;
 			this->registers.setPC(INTERUPT_TIMER);
 			break;
 		case 4:
-			cout << "service interrupt joypad" << endl;
 			this->registers.setPC(INTERUPT_JOYPAD);
 			break;
 		default:
