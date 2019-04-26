@@ -65,7 +65,8 @@ public:
 	void resetFlag(char);
 	void setFlagState(char, bool);
 
-    Byte ReadByte(unsigned short) const;
+	Byte ReadIORegisters(unsigned short);
+    Byte ReadByte(unsigned short);
     void WriteByte(unsigned short, Byte);
 
 	// adjust for register a for bcd addition.
@@ -143,6 +144,8 @@ public:
 	void call(unsigned short);
 	// rst
 	void rst(unsigned short);
+
+	void removed(Byte);
 	
 	// execute instructions according to opcode.
     void executeInstruction(Byte);

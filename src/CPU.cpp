@@ -140,7 +140,155 @@ void CPU::setFlagState(char type, bool state) {
 	}
 }
 
-Byte CPU::ReadByte(unsigned short address) const {
+Byte CPU::ReadIORegisters(unsigned short address) {
+	// waveform storage for arbitrary sound data, some lcd registers.
+	if (address >= 0xFF30 && address <= 0xFF3F || address >= 0xFF42 && address <= 0xFF4B) {
+		return this->ram.getMemory(address);
+	}
+
+	switch ((Byte)(address & 0x00FF)) {
+		// joypad register.
+		case 0x00:
+			return joypadLink->getJoypadState();
+
+		// SIO control.
+		case 0x02:
+			return this->ram.getMemory(address) | 0b01111110;
+
+		// divider register (r/w).
+		case 0x04:
+			return this->ram.getMemory(address);
+
+		// timer counter (r/w).
+		case 0x05:
+			return this->ram.getMemory(address);
+
+		// timer modulo (r/w).
+		case 0x06:
+			return this->ram.getMemory(address);
+
+		// timer control.
+		case 0x07:
+			return this->ram.getMemory(address) | 0b11111000;
+
+		// interrupt flags.
+		case 0x0F:
+			return this->ram.getMemory(address) | 0b11100000;
+
+		// sound mode 1 register, sweep register (r/w).
+		case 0x10:
+			return this->ram.getMemory(address) | 0b10000000;
+
+		// sound mode 1 register, sound length/wave pattern duty (r/w).
+		case 0x11:
+			return this->ram.getMemory(address);
+
+		// sound mode 1 register, envelope (r/w).
+		case 0x12:
+			return this->ram.getMemory(address);
+
+		// sound mode 1 register, frequency lo (w).
+		case 0x13:
+			return this->ram.getMemory(address); // maybe 0xff
+
+		// sound mode 1 register, frequency hi (r/w).
+		case 0x14:
+			return this->ram.getMemory(address) | 0b00111000;
+
+		// sound mode 2 register, sound length; wave pattern duty (r/w).
+		case 0x16:
+			return this->ram.getMemory(address);
+
+		// sound mode 2 register, envelope (r/w).
+		case 0x17:
+			return this->ram.getMemory(address);
+
+		// sound mode 2 register, frequency lo data (w).
+		case 0x18:
+			return this->ram.getMemory(address); //0xff
+
+		// sound mode 2 register, frequency hi data (r/w).
+		case 0x19:
+			return 0xBF;
+
+		// sound mode 3 register, sound on/off (r/w).
+		case 0x1A:
+			return this->ram.getMemory(address) | 0b01111111;
+
+		// sound mode 3 register, sound length (r/w).
+		case 0x1B:
+			return this->ram.getMemory(address);
+
+		// sound mode 3 register, select output.
+		case 0x1C:
+			return this->ram.getMemory(address) | 0b10011111;
+
+		// sound mode 3 register, frequency's lower data (w).
+		case 0x1D:
+			return this->ram.getMemory(address); // maybe 0xff
+
+		// sound mode 3 register, frequency's higher data (r/w).
+		case 0x1E:
+			return this->ram.getMemory(address) | 0b10111111;
+
+		// sound mode 4 register, sound length (r/w);
+		case 0x20:
+			//return this->ram.getMemory(address) | 0b11000000; this has to be changed later, when sound is implemented
+			return 0xFF;
+
+		// sound mode 4 register, envelope (r/w).
+		case 0x21:
+			return this->ram.getMemory(address);
+
+		// sound mode 4 register, polynomial counter (r/w).
+		case 0x22:
+			return this->ram.getMemory(address);
+
+		// sound mode 4 register, counter/consecutive; initial (r/w).
+		case 0x23:
+			return this->ram.getMemory(address) | 0b00111111;
+
+		// channel control / on-off / volume (r/w).
+		case 0x24:
+			return this->ram.getMemory(address);
+
+		// selection of sound ouput terminal (r/w).
+		case 0x25:
+			return this->ram.getMemory(address);
+
+		// sound on/off
+		case 0x26:
+			return this->ram.getMemory(address) | 0b01110000;
+
+		// lcd control.
+		case 0x40:
+			return this->ram.getMemory(address);
+
+		// lcd status.
+		case 0x41:
+			return this->ram.getMemory(address) | 0b10000000;
+
+		case 0x72:
+			return this->ram.getMemory(address);
+
+		case 0x73:
+			return this->ram.getMemory(address);
+
+		case 0x75:
+			return this->ram.getMemory(address) | 0x8F;
+
+		case 0x76:
+			return 0x00;
+
+		case 0x77:
+			return 0x00;
+
+		default:
+			return 0xFF;
+	}
+}
+
+Byte CPU::ReadByte(unsigned short address) {
 	// rom memory bank.
 	if (address >= ADDR_ROM_1 && address < ADDR_VRAM_T_S) {
 		return this->rom.getMemory(address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000));
@@ -151,10 +299,14 @@ Byte CPU::ReadByte(unsigned short address) const {
 			return this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
 		else return 0xFF; //not quite sure if this is correct
 	}
-	// joypad register.
-	else if (address == ADDR_IO) {
-		return joypadLink->getJoypadState();
-	} 
+	// io registers & high ram.
+	else if ((address & 0xFF00) == 0xFF00) {
+		if (address >= 0xFF80 && address <= ADDR_INTR_EN) {
+			return this->ram.getMemory(address);
+		} else {
+			return ReadIORegisters(address);
+		}
+	}
 	// normal memory.
 	else {
 		return this->ram.getMemory(address);
@@ -713,6 +865,10 @@ void CPU::rst(unsigned short address) {
 }
 
 ////////////////////////////////////////////////////////////////
+
+void CPU::removed(Byte op) {
+	cout << "operation " << HEX << (int)op << " was removed from this CPU." << endl;
+}
 
 Byte CyclesPerOPCode[0x100]{
 //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
@@ -1464,6 +1620,7 @@ void CPU::executeInstruction(Byte opcode) {
 			}
             break;
         case 0xD3: // XX            operation removed in this CPU.
+			removed(0xD3);
             break;
         case 0xD4: // CALL C, nn   call routine at 16-bit location if last result caused carry.
 			jumpAddress = load16bit();
@@ -1499,6 +1656,7 @@ void CPU::executeInstruction(Byte opcode) {
 			}
             break;
         case 0xDB: // XX            operation removed in this CPU. 
+			removed(0xDB);
             break;
         case 0xDC: // CALL C, nn    call routine at 16-bit location if last result caused carry.
 			jumpAddress = load16bit();
@@ -1507,6 +1665,7 @@ void CPU::executeInstruction(Byte opcode) {
 			}
             break;
         case 0xDD: // XX            operation removed in this CPU.
+			removed(0xDD);
             break;
         case 0xDE: // SBC A, n      subtract 8-bit immediate and carry from A. 
 			this->registers.setA(sbc(this->registers.getA(), load8bit()));
@@ -1524,8 +1683,10 @@ void CPU::executeInstruction(Byte opcode) {
 			WriteByte(ADDR_IO + this->registers.getC(), this->registers.getA());
             break;
         case 0xE3: // XX            operation removed in this CPU.
+			removed(0xE3);
             break;
         case 0xE4: // XX            operation removed in this CPU.
+			removed(0xE4);
             break;
         case 0xE5: // PUSH HL       Push 16-bit HL onto stack.
 			push16bit(this->registers.getHL());
@@ -1547,10 +1708,13 @@ void CPU::executeInstruction(Byte opcode) {
 			WriteByte(load16bit(), this->registers.getA());
             break;
         case 0xEB: // XX            operation removed in this CPU.
+			removed(0xEB);
             break;
         case 0xEC: // XX            operation removed in this CPU.
+			removed(0xEC);
             break;
         case 0xED: // XX            operation removed in this CPU.
+			removed(0xED);
             break;
         case 0xEE: // XOR n         logical XOR 8-bit immediate against A.
 			this->registers.setA(lxor(this->registers.getA(), load8bit()));
@@ -1564,12 +1728,14 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xF1: // POP AF        pop 16-bit value from stack into AF.
 			this->registers.setAF(pop16bit());
             break;
-        case 0xF2: // XX            operation removed in this CPU.
+        case 0xF2: // LD A, (C)     load A from address pointed to by (FF00h + C)
+			this->registers.setA(ReadByte(ADDR_IO + this->registers.getC()));
             break;
         case 0xF3: // DI            disable interrupts
 			this->gb_ime = false;
             break;
         case 0xF4: // XX            operation removed in this CPU.
+			removed(0xF4);
             break;
         case 0xF5: // PUSH AF       push 16-bit AF onto stack.
 			push16bit(this->registers.getAF());
@@ -1593,8 +1759,10 @@ void CPU::executeInstruction(Byte opcode) {
 			this->gb_ime = true;
             break;
         case 0xFC: // XX            operation removed in this CPU.
+			removed(0xFC);
             break;
         case 0xFD: // XX            operation removed in this CPU.
+			removed(0xFD);
             break;
         case 0xFE: // CP n          compare 8-bit immediate against A.
 			cp(this->registers.getA(), load8bit());

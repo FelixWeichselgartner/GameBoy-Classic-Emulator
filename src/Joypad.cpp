@@ -34,7 +34,7 @@ Byte Joypad::getJoypadState() const {
 	}
 
 	//cout << "retval: " << toBinary(retval) << endl;
-	return retval;
+	return retval | 0b11000000;
 }
 
 void Joypad::KeyPressed(int key) {
