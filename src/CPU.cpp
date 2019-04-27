@@ -132,6 +132,20 @@ void CPU::resetFlag(char type) {
 	}
 }
 
+void CPU::toggleFlag(char type) {
+	switch (type) {
+		case 'Z': this->registers.setF(this->registers.getF() ^ 0b10000000); break;
+		case 'N': this->registers.setF(this->registers.getF() ^ 0b01000000); break;
+		case 'H': this->registers.setF(this->registers.getF() ^ 0b00100000); break;
+		case 'C': this->registers.setF(this->registers.getF() ^ 0b00010000); break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+}
+
+void CPU::resetFlagAll() {
+	this->registers.setF(0x00);
+}
+
 void CPU::setFlagState(char type, bool state) {
 	if (state) {
 		setFlag(type);
@@ -426,10 +440,8 @@ Byte CPU::rlca(Byte a) {
 	// previous bit 7 value.
 	setFlagState('C', testBit(a, 7));
 
-	// Z not affected.
-	resetFlag('Z'); // or is it?
-
-	// N, H are reset.
+	// Z, N, H are reset.
+	resetFlag('Z');
 	resetFlag('N');
 	resetFlag('H');
 
@@ -443,7 +455,7 @@ Byte CPU::rla(Byte a) {
 	setFlagState('C', testBit(a, 7));
 
 	// Z not affected.
-	resetFlag('Z'); // or is it?
+	//resetFlag('Z'); // or is it?
 
 	// N, H are reset.
 	resetFlag('N');
@@ -458,10 +470,8 @@ Byte CPU::rrca(Byte a) {
 	// previous bit 0 value.
 	setFlagState('C', testBit(a, 0));
 
-	// Z not affected.
-	resetFlag('Z'); // or is it?
-
-	// N, H are reset.
+	// Z, N, H are reset.
+	resetFlag('Z');
 	resetFlag('N');
 	resetFlag('H');
 
@@ -474,10 +484,8 @@ Byte CPU::rra(Byte a) {
 	// previous bit 0 value.
 	setFlagState('C', testBit(a, 0));
 
-	// Z not affected.
-	resetFlag('Z'); // or is it?
-
-	// N, H are reset.
+	// Z, N, H are reset.
+	resetFlag('Z');
 	resetFlag('N');
 	resetFlag('H');
 
@@ -517,7 +525,7 @@ Byte CPU::rl(Byte a) { // false
 }
 
 Byte CPU::rrc(Byte a) { // false
-	Byte retval = a >> 1;
+	Byte retval = a >> 1 | a << 7;
 
 	// Z is set if result is zero, else reset.
 	setFlagState('Z', !retval);
@@ -1114,6 +1122,8 @@ void CPU::executeInstruction(Byte opcode) {
 			WriteByte(this->registers.getHL(), load8bit());
             break;
         case 0x37: // SCF           set carry flag.
+			resetFlag('N');
+			resetFlag('H');
 			setFlag('C');
             break;
         case 0x38: // JR C, n       relative jump by signed immediate if last result caused carry.
@@ -1142,11 +1152,9 @@ void CPU::executeInstruction(Byte opcode) {
 			this->registers.setA(load8bit());
             break;
         case 0x3F: // CCF           complement carry flag.
-			if (getFlag('C')) {
-				resetFlag('C');
-			} else {
-				setFlag('C');
-			}
+			resetFlag('N');
+			resetFlag('H');
+			toggleFlag('C');
             break;
         case 0x40: // LD B, B       copy B to B.
             this->registers.setB(this->registers.getB());

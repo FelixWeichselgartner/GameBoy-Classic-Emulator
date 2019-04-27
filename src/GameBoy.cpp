@@ -60,7 +60,8 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "sp:" << HEX16 << this->cpu.registers.getSP() << " ";
 	file << "ly:" << HEX << (int)this->cpu.ReadByte(0xff44) << " ";
 	file << "ir:" << HEX << (int)this->cpu.ReadByte(0xff0f) << " ";
-	file << "ie:" << HEX << (int)this->cpu.ReadByte(0xffff) << endl;
+	file << "ie:" << HEX << (int)this->cpu.ReadByte(0xffff) << " ";
+	file << "ff80:" << HEX << (int)this->cpu.ReadByte(0xff80) << endl;
 }
 
 // seems to be working

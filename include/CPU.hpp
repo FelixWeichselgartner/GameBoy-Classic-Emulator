@@ -64,6 +64,8 @@ public:
 	void setFlag(char);
 	void resetFlag(char);
 	void setFlagState(char, bool);
+	void toggleFlag(char);
+	void resetFlagAll();
 
 	Byte ReadIORegisters(unsigned short);
     Byte ReadByte(unsigned short);
