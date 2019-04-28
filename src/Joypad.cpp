@@ -33,7 +33,6 @@ Byte Joypad::getJoypadState() const {
 		}
 	}
 
-	//cout << "retval: " << toBinary(retval) << endl;
 	return retval | 0b11000000;
 }
 

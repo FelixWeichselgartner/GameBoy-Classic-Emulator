@@ -222,6 +222,14 @@ void GameBoy::RrRrcRlRlc_test() {
 	cout << "result: " << HEX << (int)this->cpu.registers.getA() << endl;
 }
 
+void GameBoy::add_sp_imm_test() {
+	this->cpu.registers.setAF(0x1200);
+	this->cpu.registers.setSP(0x0000);
+	cout << "af:" << HEX16 << cpu.registers.getAF() << " sp:" << cpu.registers.getSP() << endl;
+	this->cpu.registers.setSP(this->cpu.add16bitSign(this->cpu.registers.getSP(), 0xFF));
+	cout << "af:" << HEX16 << cpu.registers.getAF() << " sp:" << cpu.registers.getSP() << endl;
+}
+
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	int c, cyclesInstruction;
 	int delaytime = 1000 / 60;
@@ -504,6 +512,9 @@ void GameBoy::tests(int mode) {
 	case 15:
 		RrRrcRlRlc_test();
 		break;
+	case 16:
+		add_sp_imm_test();
+		break;
 	}
 }
 
@@ -634,6 +645,7 @@ void GameBoy::run() {
 // MODE 13		sub test
 // MODE 14		bit test
 // MODE 15		rrc, rr, rlc, rl test
+// MDOE 16		add sp, imm
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;

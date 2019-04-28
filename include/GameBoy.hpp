@@ -43,6 +43,7 @@ public:
 	void sub_test();
 	void bit_test();
 	void RrRrcRlRlc_test();
+	void add_sp_imm_test();
 
 	void tests(int);
 

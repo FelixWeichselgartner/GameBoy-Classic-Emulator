@@ -664,25 +664,19 @@ Word CPU::add16bit(Word a, Word b) {
 }
 
 Word CPU::add16bitSign(Word a, Byte b) {
-	signed char n = (signed char)b;
-	Word retval = a + n;
+	sByte n = (sByte)b;
+	int retval = a + n;
 
 	resetFlag('Z');
 	resetFlag('N');
+	setFlagState('H', (a ^ n ^ (retval & 0xFFFF)) & 0x10);
+	setFlagState('C', (a ^ n ^ (retval & 0xFFFF)) & 0x0100);
 
-	setFlagState('H', (a ^ n ^ retval) & 0x1000);
-
-	if (n >= 0) {
-		setFlagState('C', a > retval);
-	} else {
-		setFlagState('C', a < retval);
-	}
-
-	return retval;
+	return (Word)retval;
 }
 
 Word CPU::add16bitAdrSign(Word a, Byte b) {
-	return (Word)(a + (short)((signed char)b));
+	return (Word)(a + (short)((sByte)b));
 }
 
 Byte CPU::adc(Byte a, Byte b) {
@@ -1003,7 +997,7 @@ void CPU::executeInstruction(Byte opcode) {
             break;
         case 0x18: // JR n          relative jump by signed immediate.
 			jumpRelAddress = load8bit();
-			this->registers.setPC(this->registers.getPC() + (signed char) jumpRelAddress);
+			this->registers.setPC(this->registers.getPC() + (sByte) jumpRelAddress);
             break;
         case 0x19: // ADD HL, DE    add 16-bit DE to HL.
 			this->registers.setHL(add16bit(this->registers.getHL(), this->registers.getDE()));
