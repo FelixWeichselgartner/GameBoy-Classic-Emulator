@@ -2,7 +2,7 @@
 #define RAM_HPP_
 
 //----------------------------------------------------------------------------------------------
-typedef unsigned char Byte;
+#include "datatypes.h"
 //----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
@@ -43,8 +43,8 @@ public:
 
     RAM();
 
-	Byte getMemory(unsigned short) const;
-    void setMemory(unsigned short, Byte);
+	Byte getMemory(Word) const;
+    void setMemory(Word, Byte);
 
 	Byte getCurrentRamBank() const;
 	void setCurrentRamBank(Byte);
@@ -52,8 +52,8 @@ public:
 	bool getRamEnable() const;
 	void setRamEnable(bool);
 
-	Byte getRamBankMemory(unsigned short) const;
-	void setRamBankMemory(unsigned short, Byte);
+	Byte getRamBankMemory(Word) const;
+	void setRamBankMemory(Word, Byte);
 
 	void ChangeRamBank(Byte);
 	

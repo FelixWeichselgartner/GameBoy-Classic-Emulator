@@ -70,7 +70,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	streampos size;
 
 	ifstream gbfile;
-	//gbfile.open("individual/09-op r,r.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("individual/03-op sp,hl.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("individual/11-op a,(hl).gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("individual/02-interrupts.gb", ios::in | ios::binary | ios::ate);
@@ -79,7 +79,7 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("rom_singles/8-instr_effect.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);
-	gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("unused_hwio-C.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {

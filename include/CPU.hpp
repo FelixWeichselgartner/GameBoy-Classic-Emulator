@@ -2,15 +2,12 @@
 #define CPU_HPP_
 
 //----------------------------------------------------------------------------------------------
-#include <math.h>
+#include "datatypes.h"
 #include "Registers.hpp"
 #include "RAM.hpp"
 #include "ROM.hpp"
 #include "Joypad.hpp"
 #include "Timer.hpp"
-
-typedef unsigned char	Byte;
-typedef unsigned short	Word;
 //----------------------------------------------------------------------------------------------
 
 bool testBit(Byte, int);
@@ -67,18 +64,18 @@ public:
 	void toggleFlag(char);
 	void resetFlagAll();
 
-	Byte ReadIORegisters(unsigned short);
-    Byte ReadByte(unsigned short);
-    void WriteByte(unsigned short, Byte);
+	Byte ReadIORegisters(Word);
+    Byte ReadByte(Word);
+    void WriteByte(Word, Byte);
 
 	// adjust for register a for bcd addition.
 	void daa();
 	// load 8 bit value in register.
 	Byte load8bit();
 	// load 16 bit value in register.
-	unsigned short load16bit();
+	Word load16bit();
 	// save 16 bit value to memory.
-	void save16bitToAddress(unsigned short, unsigned short);
+	void save16bitToAddress(Word, Word);
 
 	// shift operations special for akkumulator A.
 	Byte rlca(Byte);
@@ -108,13 +105,13 @@ public:
 	// decrement value.
 	Byte dec(Byte);
 	// add two Byte values.
-    Byte add(Byte, Byte, char);
+    Byte add(Byte, Byte);
 	// add two 16-bit values.
-	unsigned short add16bit(unsigned short, unsigned short);
-	// add signed byte to unsigned short.
-	unsigned short add16bitSign(unsigned short, Byte);
+	Word add16bit(Word, Word);
+	// add signed byte to Word.
+	Word add16bitSign(Word, Byte);
 	// add two 16-bit values for addresses (that means without flags).
-	unsigned short add16bitAdrSign(unsigned short, Byte);
+	Word add16bitAdrSign(Word, Byte);
 	// add two Byte values + carry.
 	Byte adc(Byte, Byte);
 	// sub two Byte values.
@@ -138,14 +135,14 @@ public:
 	// pop Byte value from the stack.
 	Byte pop8bit();
 	// push 2 Byte value on the stack.
-	void push16bit(unsigned short);
+	void push16bit(Word);
 	// pop 2 Byte value from the stack.
-	unsigned short pop16bit();
+	Word pop16bit();
 
 	// call routine.
-	void call(unsigned short);
+	void call(Word);
 	// rst
-	void rst(unsigned short);
+	void rst(Word);
 
 	void removed(Byte);
 	

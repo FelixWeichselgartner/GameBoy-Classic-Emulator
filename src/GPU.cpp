@@ -152,7 +152,7 @@ void GPU::TestTiles() {
 	return;
 }
 
-Byte GPU::getColor(Byte colorNum, unsigned short address) {
+Byte GPU::getColor(Byte colorNum, Word address) {
 	Byte palette = this->cpuLink->ReadByte(address);
 	int high = 0, low = 0, color;
 
@@ -167,8 +167,8 @@ Byte GPU::getColor(Byte colorNum, unsigned short address) {
 }
 
 void GPU::RenderNintendoLogo() {
-	unsigned short address = 0x0104;
-	unsigned short end = 0x0133;
+	Word address = 0x0104;
+	Word end = 0x0133;
 	int x1, y1, x2, y2, c1, c2;
 	Byte data1, data2;
 
@@ -195,8 +195,8 @@ void GPU::RenderTiles(Byte lcdControl) {
 	Byte windowY, windowX, scrollY, scrollX, yPos, xPos, color;
 	Byte line, data1, data2;
 	signed short tileNum;
-	unsigned short tileData = 0, backgroundMemory = 0;
-	unsigned short tileAddress, tileLocation, tileRow;
+	Word tileData = 0, backgroundMemory = 0;
+	Word tileAddress, tileLocation, tileRow;
 	bool noSign = true, usingWindow;
 	int colorBit, colorNum, y;
 
@@ -260,7 +260,7 @@ void GPU::RenderSprites(Byte lcdControl) {
 	Byte data1, data2, color;
 	bool flipXaxis, flipYaxis;
 	int scanline, ysize, line, colorBit, pixel, colorNum;
-	unsigned short address, colorAddress;
+	Word address, colorAddress;
 	const int maxSprites = 40, bytesPerSprite = 4;
 
 	ysize = testBit(lcdControl, 2) ? 16 : 8;

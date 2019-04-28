@@ -1,12 +1,7 @@
 //----------------------------------------------------------------------------------------------
 #include "../include/GameBoy.hpp"
-#include "../include/RAM.hpp"
-#include "../include/ROM.hpp"
-#include "../include/GPU.hpp"
-#include "../include/Registers.hpp"
-#include "../include/format.hpp"
-#include "../include/Joypad.hpp"
 
+#include "../include/format.hpp"
 #include <iostream>
 using namespace std;
 #include <iomanip>
@@ -61,7 +56,8 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "ly:" << HEX << (int)this->cpu.ReadByte(0xff44) << " ";
 	file << "ir:" << HEX << (int)this->cpu.ReadByte(0xff0f) << " ";
 	file << "ie:" << HEX << (int)this->cpu.ReadByte(0xffff) << " ";
-	file << "ff80:" << HEX << (int)this->cpu.ReadByte(0xff80) << endl;
+	file << "ff80:" << HEX << (int)this->cpu.ReadByte(0xff80) << " ";
+	file << "dd02:" << HEX << (int)this->cpu.ReadByte(0xdd02) << endl;
 }
 
 // seems to be working
@@ -106,7 +102,7 @@ void GameBoy::RomTest() {
 
 void GameBoy::PushPopTest() {
 	Byte n1 = 0x12, n2 = 0x34, m1, m2;
-	unsigned short s1 = 0x5678, s2;
+	Word s1 = 0x5678, s2;
 
 	cout << "SP: " << HEX << cpu.registers.getSP() << endl;
 	cpu.push8bit(n1);
@@ -163,7 +159,7 @@ void GameBoy::OP_DA_Test() {
 }
 
 void GameBoy::Signed8bitTo16bit() {
-	unsigned short z1 = 0x02f0;
+	Word z1 = 0x02f0;
 	Byte  z2 = 0xfb;
 	cout << "z1 = " << z1 << " z2 = (u)" << (int)z2 << " (s) " << (int)((signed char)z2) << endl;
 	cout << "conversion: " << HEX16 << (short)((signed char)z2) << endl;
@@ -621,7 +617,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug

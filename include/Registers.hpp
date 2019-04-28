@@ -2,7 +2,7 @@
 #define REGISTERS_HPP_
 
 //----------------------------------------------------------------------------------------------
-typedef unsigned char Byte;
+#include "datatypes.h"
 //----------------------------------------------------------------------------------------------
 
 #include <string>
@@ -17,7 +17,7 @@ private:
             Byte F;
 			Byte A;
         };
-        unsigned short AF;
+        Word AF;
     };
 
     union {
@@ -25,7 +25,7 @@ private:
 			Byte C;
             Byte B;
         };
-        unsigned short BC;
+        Word BC;
     };
 
     union {
@@ -33,7 +33,7 @@ private:
             Byte E;
 			Byte D;
         };
-        unsigned short DE;
+        Word DE;
     };
 
     union {
@@ -41,13 +41,13 @@ private:
 			Byte L;
             Byte H;
         };
-        unsigned short HL;
+        Word HL;
     };
 
     // program counter - the memory address of the next instruction to be fetched.
-    unsigned short PC;
+    Word PC;
     // stack pointer - the memory address of the top of the stack.
-    unsigned short SP;
+    Word SP;
 
   public:
 
@@ -64,8 +64,8 @@ private:
     void setF(Byte);
 
     // AF Register
-    unsigned short getAF() const;
-    void setAF(unsigned short);
+    Word getAF() const;
+    void setAF(Word);
 
 
     // B Register
@@ -77,8 +77,8 @@ private:
     void setC(Byte);
 
     // BC Register
-    unsigned short getBC() const;
-    void setBC(unsigned short);
+    Word getBC() const;
+    void setBC(Word);
 
 
     // D Register
@@ -90,8 +90,8 @@ private:
     void setE(Byte);
 
     // DE Register
-    unsigned short getDE() const;
-    void setDE(unsigned short);
+    Word getDE() const;
+    void setDE(Word);
 
 
     // H Register
@@ -103,17 +103,17 @@ private:
     void setL(Byte);
 
     // HL Register
-    unsigned short getHL() const;
-    void setHL(unsigned short);
+    Word getHL() const;
+    void setHL(Word);
 
 
     // PC Register
-    unsigned short getPC() const;
-    void setPC(unsigned short);
+    Word getPC() const;
+    void setPC(Word);
 
     // SP Register
-    unsigned short getSP() const;
-    void setSP(unsigned short);
+    Word getSP() const;
+    void setSP(Word);
 };
 //----------------------------------------------------------------------------------------------
 

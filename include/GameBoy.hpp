@@ -7,6 +7,8 @@
 #include "ROM.hpp"
 #include "GPU.hpp"
 #include "Registers.hpp"
+#include "Joypad.hpp"
+#include "datatypes.h"
 
 #include <fstream>
 //----------------------------------------------------------------------------------------------

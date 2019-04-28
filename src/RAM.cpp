@@ -5,7 +5,7 @@
 
 RAM::RAM() {
 	this->RamBanks = NULL;
-	this->RamBanks = new unsigned char[0x8000];
+	this->RamBanks = new Byte[0x8000];
 	for (int i = 0; i < 0x8000; i++) {
 		RamBanks[i] = 0;
 	}
@@ -44,11 +44,11 @@ RAM::RAM() {
 	memory[0xFFFF] = 0x00;
 }
 
-Byte RAM::getMemory(unsigned short address) const {
+Byte RAM::getMemory(Word address) const {
 	return this->memory[address];
 }
 
-void RAM::setMemory(unsigned short address, Byte value) {
+void RAM::setMemory(Word address, Byte value) {
     this->memory[address] = value;
 }
 
@@ -68,11 +68,11 @@ void RAM::setRamEnable(bool en) {
 	this->EnableRamBanking = en;
 }
 
-Byte RAM::getRamBankMemory(unsigned short address) const {
+Byte RAM::getRamBankMemory(Word address) const {
 	return this->RamBanks[address];
 }
 
-void RAM::setRamBankMemory(unsigned short address, Byte value) {
+void RAM::setRamBankMemory(Word address, Byte value) {
 	this->RamBanks[address] = value;
 }
 

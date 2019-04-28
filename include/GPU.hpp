@@ -93,7 +93,7 @@ public:
 	void TestGraphics();
 	void TestTiles();
 
-	Byte getColor(Byte, unsigned short);
+	Byte getColor(Byte, Word);
 
 	void RenderNintendoLogo();
 	void RenderTiles(Byte);

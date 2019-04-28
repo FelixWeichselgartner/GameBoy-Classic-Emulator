@@ -29,8 +29,8 @@ unsigned long long CPUstepCount = 0;
 
 //----------------------------------------------------------------------------------------------
 // split an 8-bit number in 2 x 4 bit
-#define LOWER_HALFBYTE(x)       (x & 0x00001111)
-#define UPPER_HALFBYTE(x)		((x >> 4) & 0x00001111)
+#define LOWER_HALFBYTE(x)       (x & 0b00001111)
+#define UPPER_HALFBYTE(x)		((x >> 4) & 0b00001111)
 //----------------------------------------------------------------------------------------------
 
 CPU::CPU() {
@@ -154,7 +154,7 @@ void CPU::setFlagState(char type, bool state) {
 	}
 }
 
-Byte CPU::ReadIORegisters(unsigned short address) {
+Byte CPU::ReadIORegisters(Word address) {
 	// waveform storage for arbitrary sound data, some lcd registers.
 	if (address >= 0xFF30 && address <= 0xFF3F || address >= 0xFF42 && address <= 0xFF4B) {
 		return this->ram.getMemory(address);
@@ -302,7 +302,7 @@ Byte CPU::ReadIORegisters(unsigned short address) {
 	}
 }
 
-Byte CPU::ReadByte(unsigned short address) {
+Byte CPU::ReadByte(Word address) {
 	// rom memory bank.
 	if (address >= ADDR_ROM_1 && address < ADDR_VRAM_T_S) {
 		return this->rom.getMemory(address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000));
@@ -327,7 +327,7 @@ Byte CPU::ReadByte(unsigned short address) {
 	}
 }
 
-void CPU::WriteByte(unsigned short address, Byte value) {
+void CPU::WriteByte(Word address, Byte value) {
 	// rom banking.
 	if (address < ADDR_VRAM_T_S) {
 		this->rom.HandleBanking(address, value);
@@ -384,14 +384,14 @@ Byte CPU::load8bit() {
 	return ReadByte(this->registers.getPC());
 }
 
-unsigned short CPU::load16bit() {
-	unsigned short retval = 0x0000;
+Word CPU::load16bit() {
+	Word retval = 0x0000;
 	retval = load8bit();
 	retval |= (load8bit() << 8);
 	return retval;
 }
 
-void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
+void CPU::save16bitToAddress(Word address, Word value) {
 	Byte firstHalf, secondHalf;
 	firstHalf = HIGH_BYTE(value);
 	secondHalf = LOW_BYTE(value);
@@ -400,7 +400,7 @@ void CPU::save16bitToAddress(unsigned short address, unsigned short value) {
 }
 
 void CPU::daa() {
-	unsigned short s = this->registers.getA();
+	Word s = this->registers.getA();
 
 	if (getFlag('N')) {
 		if (getFlag('H')) {
@@ -454,10 +454,8 @@ Byte CPU::rla(Byte a) {
 	// previous bit 7 value.
 	setFlagState('C', testBit(a, 7));
 
-	// Z not affected.
-	//resetFlag('Z'); // or is it?
-
-	// N, H are reset.
+	// Z, N, H are reset.
+	resetFlag('Z');
 	resetFlag('N');
 	resetFlag('H');
 
@@ -614,7 +612,7 @@ Byte CPU::inc(Byte value) {
 
 	resetFlag('N');
 
-	setFlagState('H', (retval & 0x0F) == 0x00);
+	setFlagState('H', !(retval & 0x0F));
 
 	return retval;
 }
@@ -631,55 +629,43 @@ Byte CPU::dec(Byte value) {
 	return retval;
 }
 
-Byte CPU::add(Byte a, Byte b, char type) {
-	Byte retval;
-
-	if (type == 'u') { //unsigned
-		retval = a + b;
-	} else if (type == 's') { //signed
-		retval = a + (signed char)b;
-	} else {
-		exit(1);
-	}
+Byte CPU::add(Byte a, Byte b) {
+	Word sum = (Word)a + b;
 
 	// Z is set if result is zero, else reset
-	setFlagState('Z', !retval);
+	setFlagState('Z', !(sum & 0xFF));
 
     // N is set to zero
 	resetFlag('N');
 
     // H is set if overflow from bit 3, else reset
-	setFlagState('H', ((a & 0xf) + (b & 0xf)) & 0x10);
+	setFlagState('H', (a ^ b ^ sum) & 0x10);
 
     // C is set if overflow from bit 7, else reset
-	setFlagState('C', ((int)a + (int)b) > 255);
+	setFlagState('C', sum & 0xFF00);
 
-	return retval;
+	return (Byte)(sum & 0xFF);
 }
 
-unsigned short CPU::add16bit(unsigned short a, unsigned short b) {
-	unsigned short retval;
-	unsigned int sum;
-
-	retval = a + b;
-	sum = (unsigned int)a + (unsigned int)b;
+Word CPU::add16bit(Word a, Word b) {
+	Word retval = a + b;
+	unsigned int sum = (unsigned int)a + (unsigned int)b;
 
 	// N is set to zero
 	resetFlag('N');
 
-	// H is set if overflow from bit 7, else reset
-	setFlagState('H', (sum ^ a ^ b) & 0x1000);
+	// H is set if overflow from bit 11, else reset
+	setFlagState('H', (((Word)sum & 0xFFFF) ^ a ^ b) & 0x1000);
 
 	// C is set if overflow from bit 15, else reset
-	setFlagState('C', sum > 65535);
+	setFlagState('C', sum & 0x00010000);
 
 	return retval;
 }
 
-unsigned short CPU::add16bitSign(unsigned short a, Byte b) {
+Word CPU::add16bitSign(Word a, Byte b) {
 	signed char n = (signed char)b;
-	unsigned short retval;
-	retval = a + n;
+	Word retval = a + n;
 
 	resetFlag('Z');
 	resetFlag('N');
@@ -695,62 +681,62 @@ unsigned short CPU::add16bitSign(unsigned short a, Byte b) {
 	return retval;
 }
 
-unsigned short CPU::add16bitAdrSign(unsigned short a, Byte b) {
-	return (unsigned short)(a + (short)((signed char)b));
+Word CPU::add16bitAdrSign(Word a, Byte b) {
+	return (Word)(a + (short)((signed char)b));
 }
 
 Byte CPU::adc(Byte a, Byte b) {
-	Byte retval = a + b + getFlag('C');
+	Word sum = (Word)a + b + getFlag('C');
 
 	// Z is set if result is zero, else reset
-	setFlagState('Z', !retval);
+	setFlagState('Z', !(sum & 0xFF));
 
 	// N is set to zero
 	resetFlag('N');
 
 	// H is set if overflow from bit 3, else reset
-	setFlagState('H', ((a & 0xf) + (b & 0xf)) & 0x10);
+	setFlagState('H', (a ^ b ^ sum) & 0x10);
 
 	// C is set if overflow from bit 7, else reset
-	setFlagState('C', ((int)a + (int)b) > 25);
+	setFlagState('C', sum & 0xFF00);
 
-	return retval;
+	return (Byte)(sum & 0xFF);
 }
 
 Byte CPU::sub(Byte a, Byte b) {
-	Byte retval = a - b;
+	Word diff = (Word)a - b;
 
 	// Z is set if result is zero, else reset
-	setFlagState('Z', !retval);
+	setFlagState('Z', !(diff & 0xFF));
 
 	// N is set
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	setFlagState('H', (a ^ b ^ retval) & 0x10);
+	setFlagState('H', (a ^ b ^ diff) & 0x10);
 
 	// C is set if no borrow from bit 7, else reset
-	setFlagState('C', b > a);
+	setFlagState('C', diff & 0xFF00);
 
-	return retval;
+	return (Byte)(diff & 0xFF);
 }
 
 Byte CPU::sbc(Byte a, Byte b) {
-	Byte retval = a - b - getFlag('C');
+	Word diff = a - b - getFlag('C');
 
 	// Z is set if result is zero, else reset
-	setFlagState('Z', !retval);
+	setFlagState('Z', !(diff & 0xFF));
 
 	// N is set
 	setFlag('N');
 
 	// H is set if no borrow from bit 4, else reset
-	setFlagState('H', (a ^ b ^ retval) & 0x10);
+	setFlagState('H', (a ^ b ^ diff) & 0x10);
 
 	// C is set if no borrow from bit 7, else reset
-	setFlagState('C', b > a);
+	setFlagState('C', diff & 0xFF00);
 
-	return retval;
+	return (Byte)(diff & 0xFF);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -842,7 +828,7 @@ Byte CPU::pop8bit() {
 	return retval;
 }
 
-void CPU::push16bit(unsigned short value) {
+void CPU::push16bit(Word value) {
 	Byte firstHalf, secondHalf;
 	firstHalf = HIGH_BYTE(value);
 	secondHalf = LOW_BYTE(value);
@@ -850,8 +836,8 @@ void CPU::push16bit(unsigned short value) {
 	push8bit(secondHalf);
 }
 
-unsigned short CPU::pop16bit() {
-	unsigned short retval;
+Word CPU::pop16bit() {
+	Word retval;
 	Byte HighHalf, LowHalf;
 	LowHalf = pop8bit();
 	HighHalf = pop8bit();
@@ -862,13 +848,13 @@ unsigned short CPU::pop16bit() {
 ////////////////////////////////////////////////////////////////
 // function calls
 
-void CPU::call(unsigned short address) {
+void CPU::call(Word address) {
 	push16bit(this->registers.getPC() + 1);
 	this->registers.setPC(address);
 	this->jump = true;
 }
 
-void CPU::rst(unsigned short address) {
+void CPU::rst(Word address) {
 	call(address);
 }
 
@@ -940,7 +926,7 @@ Byte CyclesPerCBOPCode[0x100] = {
 
 void CPU::executeInstruction(Byte opcode) {
 	this->cycles += CyclesPerOPCode[opcode] * 4;
-	unsigned short	jumpAddress;
+	Word	jumpAddress;
 	Byte			jumpRelAddress;
 
     switch((int)opcode) {
@@ -1350,28 +1336,28 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(this->registers.getA());
             break;
         case 0x80: // ADD A, B      add B to A.
-            this->registers.setA(add(this->registers.getA(), this->registers.getB(), 'u'));
+            this->registers.setA(add(this->registers.getA(), this->registers.getB()));
             break;
         case 0x81: // ADD A, C      add C to A.
-            this->registers.setA(add(this->registers.getA(), this->registers.getC(), 'u'));
+            this->registers.setA(add(this->registers.getA(), this->registers.getC()));
             break;
         case 0x82: // ADD A, D      add D to A.
-            this->registers.setA(add(this->registers.getA(), this->registers.getD(), 'u'));
+            this->registers.setA(add(this->registers.getA(), this->registers.getD()));
             break;
         case 0x83: // ADD A, E      add E to A.
-            this->registers.setA(add(this->registers.getA(), this->registers.getE(), 'u'));
+            this->registers.setA(add(this->registers.getA(), this->registers.getE()));
             break;
         case 0x84: // ADD A, H      add H to A.
-            this->registers.setA(add(this->registers.getA(), this->registers.getH(), 'u'));
+            this->registers.setA(add(this->registers.getA(), this->registers.getH()));
             break;
         case 0x85: // ADD A, L      add L to A.
-            this->registers.setA(add(this->registers.getA(), this->registers.getL(), 'u'));
+            this->registers.setA(add(this->registers.getA(), this->registers.getL()));
             break;
         case 0x86: // ADD A, (HL)   add value pointed by HL to A.
-            this->registers.setA(add(this->registers.getA(), ReadByte(this->registers.getHL()), 'u'));
+            this->registers.setA(add(this->registers.getA(), ReadByte(this->registers.getHL())));
             break;
         case 0x87: // ADD A, A      add A to A.
-            this->registers.setA(add(this->registers.getA(), this->registers.getA(), 'u'));
+            this->registers.setA(add(this->registers.getA(), this->registers.getA()));
             break;
         case 0x88: // ADC A, B      add B and carry flag to A.
 			this->registers.setA(adc(this->registers.getA(), this->registers.getB()));
@@ -1571,7 +1557,7 @@ void CPU::executeInstruction(Byte opcode) {
 			push16bit(this->registers.getBC());
             break;
         case 0xC6: // ADD A, n      add 8-bit immediate to A. 
-			this->registers.setA(add(this->registers.getA(), load8bit(), 'u'));
+			this->registers.setA(add(this->registers.getA(), load8bit()));
             break;
         case 0xC7: // RST 0         call routine at address 0000h
 			rst(0x0000);
@@ -2695,7 +2681,7 @@ void CPU::ServiceInterupts(int interupt) {
 }
 
 void CPU::DoDMATransfer(Byte data) {
-	unsigned short address = data << 8;
+	Word address = data << 8;
 	
 	for (int i = 0; i < 0xA0; i++) {
 		WriteByte(0xFE00 + i, ReadByte(address + i));

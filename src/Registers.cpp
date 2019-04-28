@@ -60,10 +60,10 @@ void Registers::setF(Byte value) {
     this->F = value & 0xF0;
 }
 
-unsigned short Registers::getAF() const {
+Word Registers::getAF() const {
     return this->AF;
 }
-void Registers::setAF(unsigned short value) {
+void Registers::setAF(Word value) {
     this->AF = value & 0xFFF0;
 }
 
@@ -81,10 +81,10 @@ void Registers::setC(Byte value) {
     this->C = value;
 }
 
-unsigned short Registers::getBC() const {
+Word Registers::getBC() const {
     return this->BC;
 }
-void Registers::setBC(unsigned short value) {
+void Registers::setBC(Word value) {
     this->BC = value;
 }
 
@@ -102,10 +102,10 @@ void Registers::setE(Byte value) {
     this->E = value;
 }
 
-unsigned short Registers::getDE() const {
+Word Registers::getDE() const {
     return this->DE;
 }
-void Registers::setDE(unsigned short value) {
+void Registers::setDE(Word value) {
     this->DE = value;
 }
 
@@ -123,23 +123,23 @@ void Registers::setL(Byte value) {
     this->L = value;
 }
 
-unsigned short Registers::getHL() const {
+Word Registers::getHL() const {
     return this->HL;
 }
-void Registers::setHL(unsigned short value) {
+void Registers::setHL(Word value) {
     this->HL = value;
 }
 
-unsigned short Registers::getPC() const {
+Word Registers::getPC() const {
     return this->PC;
 }
-void Registers::setPC(unsigned short value) {
+void Registers::setPC(Word value) {
     this->PC = value;
 }
 
-unsigned short Registers::getSP() const {
+Word Registers::getSP() const {
     return this->SP;
 }
-void Registers::setSP(unsigned short value) {
+void Registers::setSP(Word value) {
     this->SP = value;
 }
