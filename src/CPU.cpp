@@ -1610,9 +1610,9 @@ void CPU::executeInstruction(Byte opcode) {
         case 0xD3: // XX            operation removed in this CPU.
 			removed(0xD3);
             break;
-        case 0xD4: // CALL C, nn   call routine at 16-bit location if last result caused carry.
+        case 0xD4: // CALL NC, nn	call routine at 16-bit location if last result caused no carry.
 			jumpAddress = load16bit();
-			if (getFlag('C')) {
+			if (!getFlag('C')) {
 				call(jumpAddress);
 			}
             break;
@@ -2004,7 +2004,7 @@ int CPU::executeExtendedOpcodes() {
 			bit(0, this->registers.getC());
 			break;
 		case 0x42: // BIT 0, D
-			bit(0, this->registers.getC());
+			bit(0, this->registers.getD());
 			break;
 		case 0x43: // BIT 0, E
 			bit(0, this->registers.getE());
@@ -2421,7 +2421,7 @@ int CPU::executeExtendedOpcodes() {
 			this->registers.setH(set(1, this->registers.getH()));
 			break;
 		case 0xCD: // SET 1, L
-			this->registers.setB(set(1, this->registers.getL()));
+			this->registers.setL(set(1, this->registers.getL()));
 			break;
 		case 0xCE: // SET 1, (HL)
 			WriteByte(this->registers.getHL(), set(1, ReadByte(this->registers.getHL())));
@@ -2547,7 +2547,7 @@ int CPU::executeExtendedOpcodes() {
 			WriteByte(this->registers.getHL(), set(6, ReadByte(this->registers.getHL())));
 			break;
 		case 0xF7: // SET 6, A
-			this->registers.setA(set(6, this->registers.getB()));
+			this->registers.setA(set(6, this->registers.getA()));
 			break;
 		case 0xF8: // SET 7, B
 			this->registers.setB(set(7, this->registers.getB()));
