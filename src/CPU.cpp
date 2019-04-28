@@ -395,8 +395,8 @@ void CPU::save16bitToAddress(Word address, Word value) {
 	Byte firstHalf, secondHalf;
 	firstHalf = HIGH_BYTE(value);
 	secondHalf = LOW_BYTE(value);
-	WriteByte(address, firstHalf);
-	WriteByte(address + 1, secondHalf);
+	WriteByte(address, secondHalf);
+	WriteByte(address + 1, firstHalf);
 }
 
 void CPU::daa() {
