@@ -90,9 +90,6 @@ public:
 	bool IsLCDEnabled() const;
 	void SetLCDStatus();
 
-	void TestGraphics();
-	void TestTiles();
-
 	Byte getColor(Byte, Word);
 
 	void RenderNintendoLogo();

@@ -116,42 +116,6 @@ void GPU::SetLCDStatus() {
 	return;
 }
 
-void GPU::TestGraphics() {
-	SDL_RenderSetScale(renderer, (float) scaleWidth, (float) scaleHeight);
-	SDL_SetRenderDrawColor(renderer, dark_grey);
-	for (int y = 0; y < Y_RES; y++) {
-		for (int x = 0; x < X_RES; x++) {
-			SDL_RenderDrawPoint(renderer, x, y);
-		}
-
-		if (y == Y_RES / 4) {
-			SDL_SetRenderDrawColor(renderer, light_grey);
-		} else if (y == Y_RES / 2) {
-			SDL_SetRenderDrawColor(renderer, white);
-		} else if (y == Y_RES * 3 / 4) {
-			SDL_SetRenderDrawColor(renderer, black);
-		}
-	}
-	SDL_RenderPresent(renderer);
-
-	return;
-}
-
-void GPU::TestTiles() {
-	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
-	SDL_SetRenderDrawColor(renderer, dark_grey);
-
-	for (int y = 0; y < Y_RES; y++) {
-		for (int x = 0; x < X_RES; x++) {
-			SDL_RenderDrawPoint(renderer, x, y);
-		}
-	}
-
-	SDL_RenderPresent(renderer);
-
-	return;
-}
-
 Byte GPU::getColor(Byte colorNum, Word address) {
 	Byte palette = this->cpuLink->ReadByte(address);
 	int high = 0, low = 0, color;

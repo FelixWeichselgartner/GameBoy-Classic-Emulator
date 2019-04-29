@@ -10,6 +10,7 @@
 #include "Joypad.hpp"
 #include "datatypes.h"
 
+#include <SDL2/SDL.h>
 #include <fstream>
 //----------------------------------------------------------------------------------------------
 
@@ -31,23 +32,13 @@ public:
 	void PrintRegisters();
 	void PrintRegistersFile(std::ofstream &);
 
-	void AdditionTest();
 	void RomTest();
-	void PushPopTest();
 	void Debug_InputAndLog(SDL_Event &);
-	void decFlagTest();
-	void add2x16bithl();
-	void OP_DA_Test();
-	void Signed8bitTo16bit();
-	void land_test_e6();
-	void sub_test();
-	void bit_test();
-	void RrRrcRlRlc_test();
-	void add_sp_imm_test();
-	void res_test();
+	
 
 	void tests(int);
 
+	bool winEvent(SDL_Event&, bool &);
     void run();
 
 };

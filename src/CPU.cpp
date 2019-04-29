@@ -2597,7 +2597,7 @@ int CPU::CPUstep() {
 }
 
 /*
-interupts
+interrupts
 
 #define ADDR_INTR_REQ		0xFF0F		// Interupt Request Register
 #define ADDR_INTR_EN		0xFFFF		// Interupt Enable Register
