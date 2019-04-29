@@ -44,6 +44,7 @@ public:
 	void bit_test();
 	void RrRrcRlRlc_test();
 	void add_sp_imm_test();
+	void res_test();
 
 	void tests(int);
 

@@ -56,8 +56,7 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "ly:" << HEX << (int)this->cpu.ReadByte(0xff44) << " ";
 	file << "ir:" << HEX << (int)this->cpu.ReadByte(0xff0f) << " ";
 	file << "ie:" << HEX << (int)this->cpu.ReadByte(0xffff) << " ";
-	file << "ff80:" << HEX << (int)this->cpu.ReadByte(0xff80) << " ";
-	file << "dd02:" << HEX << (int)this->cpu.ReadByte(0xdd02) << endl;
+	file << "ff80:" << HEX << (int)this->cpu.ReadByte(0xff80) << endl;
 }
 
 // seems to be working
@@ -228,6 +227,17 @@ void GameBoy::add_sp_imm_test() {
 	cout << "af:" << HEX16 << cpu.registers.getAF() << " sp:" << cpu.registers.getSP() << endl;
 	this->cpu.registers.setSP(this->cpu.add16bitSign(this->cpu.registers.getSP(), 0xFF));
 	cout << "af:" << HEX16 << cpu.registers.getAF() << " sp:" << cpu.registers.getSP() << endl;
+}
+
+void GameBoy::res_test() {
+	//check: WriteByte(this->registers.getHL(), res(2, ReadByte(this->registers.getHL())));
+	this->cpu.registers.setPC(0xc000);
+	this->cpu.WriteByte(0xc001, 0x96);
+	this->cpu.registers.setHL(0xff80);
+	this->cpu.WriteByte(this->cpu.registers.getHL(), 0b00000100);
+	cout << "b: " << HEX << (int)cpu.ReadByte(this->cpu.registers.getHL()) << endl;
+	this->cpu.executeInstruction(0xcb);
+	cout << "a: " << HEX << (int)cpu.ReadByte(this->cpu.registers.getHL()) << endl;
 }
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
@@ -515,6 +525,9 @@ void GameBoy::tests(int mode) {
 	case 16:
 		add_sp_imm_test();
 		break;
+	case 17:
+		res_test();
+		break;
 	}
 }
 
@@ -628,7 +641,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 5
 // MODE 0		normal mode
 // MODE 1		addition test
 // MODE 2		gpu debug
@@ -646,6 +659,7 @@ void GameBoy::run() {
 // MODE 14		bit test
 // MODE 15		rrc, rr, rlc, rl test
 // MDOE 16		add sp, imm
+// MODE 17		res test
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;

@@ -10,7 +10,7 @@ Joypad::Joypad(class CPU* cpuLink) {
 }
 
 Byte Joypad::getJoypadState() const {
-	Byte retval = this->cpuLink->ram.getMemory(ADDR_IO);
+	Byte retval = this->cpuLink->ram.getMemory(ADDR_IO) ^ 0xFF;
 
 	// gameboy: for direction:
 	// 3 = down, 2 = up, 1 = left, 0 = down.
@@ -44,21 +44,8 @@ void Joypad::KeyPressed(int key) {
 	bool button = key > 3;
 	bool requestInterupt = (button && testBit(keyReq, BUTTON)) || (!button && testBit(keyReq, DIRECTION));
 
-	// debug
-	/*
-	cout << "previouslySet: " << boolalpha << previouslySet << endl;
-	cout << "key req" << toBinary(this->cpuLink->ram.getMemory(0xff00)) << endl;
-	cout << "button boolean: " << boolalpha << button << endl;
-	cout << "button req: " << boolalpha << testBit(keyReq, BUTTON) << " dir req: " << boolalpha << testBit(keyReq, DIRECTION) << endl;
-	cout << "requestInterupt: " << boolalpha << requestInterupt << endl;
-	*/
-
 	if (requestInterupt && !previouslySet) {
-		cout << "request joypad interupt" << endl;
 		this->cpuLink->RequestInterupt(4);
-	}
-	else {
-		//cout << "not request interupt 4" << endl;
 	}
 
 	return;

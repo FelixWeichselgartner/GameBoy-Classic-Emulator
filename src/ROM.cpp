@@ -71,16 +71,16 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 
 	ifstream gbfile;
 	//gbfile.open("individual/07-jr,jp,call,ret,rst.gb", ios::in | ios::binary | ios::ate);
-	gbfile.open("individual/11-op a,(hl).gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("individual/11-op a,(hl).gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("individual/02-interrupts.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("09-op r,r.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("rom_singles/8-instr_effect.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("rom_singles/1-lcd_sync.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("unused_hwio-C.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("mem_timing.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Game Boy Controller Kensa Cartridge.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);

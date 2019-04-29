@@ -490,7 +490,7 @@ Byte CPU::rra(Byte a) {
 	return retval;
 }
 
-Byte CPU::rlc(Byte a) { // false
+Byte CPU::rlc(Byte a) {
 	Byte retval = (a << 1) | (a >> 7);
 
 	// Z is set if result is zero, else reset.
@@ -506,7 +506,7 @@ Byte CPU::rlc(Byte a) { // false
 	return retval;
 }
 
-Byte CPU::rl(Byte a) { // false
+Byte CPU::rl(Byte a) {
 	Byte retval = (a << 1) | getFlag('C');
 
 	// Z is set if result is zero, else reset.
@@ -522,7 +522,7 @@ Byte CPU::rl(Byte a) { // false
 	return retval;
 }
 
-Byte CPU::rrc(Byte a) { // false
+Byte CPU::rrc(Byte a) {
 	Byte retval = a >> 1 | a << 7;
 
 	// Z is set if result is zero, else reset.
@@ -538,7 +538,7 @@ Byte CPU::rrc(Byte a) { // false
 	return retval;
 }
 
-Byte CPU::rr(Byte a) { // false
+Byte CPU::rr(Byte a) {
 	Byte retval = (a >> 1) | (getFlag('C') << 7);
 
 	// Z is set if result is zero, else reset.
@@ -1396,7 +1396,7 @@ void CPU::executeInstruction(Byte opcode) {
             this->registers.setA(sub(this->registers.getA(), this->registers.getL()));
             break;
         case 0x96: // SUB A, (HL)   subtract value pointed by HL from A.
-            this->registers.setA(sub(this->registers.getA(), ReadByte(this->registers.getB())));
+            this->registers.setA(sub(this->registers.getA(), ReadByte(this->registers.getHL())));
             break; 
         case 0x97: // SUB A, A      subtract A from A.
             this->registers.setA(sub(this->registers.getA(), this->registers.getA()));

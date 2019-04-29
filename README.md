@@ -8,6 +8,8 @@ You may not sell this code.
 
 Do not claim this as your own work.
 
+Do not use this software for illegal purposes.
+
 If you have improvements on the code pls contact me.
 
 contact information:
@@ -95,7 +97,7 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 * on Ubuntu screen is flickering in the upper line (however not on windows).
 * joypad input not working.
 * MBC1 is not working. Games that use rom banking don't load.
-* blarggs test roms: failing in every one I tried so far.
+* blarggs test roms: failing in every one I tried so far (nearly working cpu_instrs).
 * cmake and mingw32 compiling on windows does not bring a sdl2 window at execution.
 * emulator is running in slower speed -> at least in the bootstrap sequence.
 
