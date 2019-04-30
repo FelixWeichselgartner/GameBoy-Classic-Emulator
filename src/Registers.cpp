@@ -1,8 +1,4 @@
 //----------------------------------------------------------------------------------------------
-#include <iostream>
-#include <iomanip>
-using namespace std;
-
 #include "../include/format.hpp"
 #include "../include/Registers.hpp"
 #include "../include/RAM.hpp"
@@ -16,35 +12,6 @@ Registers::Registers() {
 	this->PC = 0x0100; // PC initialised in CPU().
 	this->SP = 0xFFFE;
 }
-
-std::string toBinary(int n) {
-	std::string r;
-
-	while (n != 0) { 
-		r = (n % 2 == 0 ? "0" : "1") + r; 
-		n /= 2; 
-	}
-
-	while (r.length() < 8) {
-		r = "0" + r;
-	}
-
-	return r;
-}
-
-
-void Registers::printFlags() {
-    cout << "the flags (0x" << HEX << (int)this->F << "): " << endl;
-
-    for (int i = 7; i >= 0; i--) {
-        std::cout << i;
-    }
-
-    cout << endl;
-    cout << "ZNHC0000" << endl;
-    cout << toBinary((int) this->F) << endl;
-}
-
     
 Byte Registers::getA() const {
     return this->A;

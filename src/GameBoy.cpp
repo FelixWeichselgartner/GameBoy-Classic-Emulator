@@ -14,8 +14,6 @@ using namespace std;
 #include <string>
 //----------------------------------------------------------------------------------------------
 
-bool externVar = false;
-
 void delay(int milli_seconds) {
 	if (milli_seconds < 0) {
 		return;
@@ -226,7 +224,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					keyEn = true;
 				}
 
-				if (keyEn || keyHardEn || externVar) {
+				if (keyEn || keyHardEn) {
 
 					//cout << "current rom bank: " << (int)this->cpu.rom.getCurrentRomBank() << endl;
 					//cout << "0x4000: " << HEX << (int)cpu.ReadByte(0x4000) << endl;

@@ -105,7 +105,6 @@ public:
 	void setScanline(Byte);
 
 	void UpdateGraphics(int);
-	void UpdateGraphics2(int);
 
 	void render();
 

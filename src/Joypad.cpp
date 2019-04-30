@@ -1,16 +1,12 @@
 #include "../include/Joypad.hpp"
 
-#include <iostream>
-#include <iomanip>
-using namespace std;
-
 Joypad::Joypad(class CPU* cpuLink) {
 	this->cpuLink = cpuLink;
 	this->JoypadState = 0xFF;
 }
 
 Byte Joypad::getJoypadState() const {
-	Byte retval = this->cpuLink->ram.getMemory(ADDR_IO) ^ 0xFF;
+	Byte retval = ~this->cpuLink->ram.getMemory(ADDR_IO);
 
 	// gameboy: for direction:
 	// 3 = down, 2 = up, 1 = left, 0 = down.

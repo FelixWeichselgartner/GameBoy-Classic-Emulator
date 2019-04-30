@@ -10,8 +10,6 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
-unsigned long long CPUstepCount = 0;
-
 //----------------------------------------------------------------------------------------------
 // Flags - F register is the flag register
 // Z = this->registers.F (Byte 7)
@@ -895,7 +893,7 @@ Byte CyclesPerCBOPCode[0x100] = {
 };
 
 void CPU::executeInstruction(Byte opcode) {
-	this->cycles += CyclesPerOPCode[opcode] * 8;
+	this->cycles += CyclesPerOPCode[opcode] * CYCLEFACTOR;
 	Word jumpAddress;
 	Byte jumpRelAddress;
 
@@ -2551,12 +2549,11 @@ int CPU::executeExtendedOpcodes() {
 			break;
 	}
 
-	return CyclesPerCBOPCode[exOpcode] * 8;
+	return CyclesPerCBOPCode[exOpcode] * CYCLEFACTOR;
 }
 
 int CPU::CPUstep() {
 	this->cycles = 0;
-	CPUstepCount++;
 
 	executeInstruction(gb_halt ? 0x00 : ReadByte(this->registers.getPC()));
 	

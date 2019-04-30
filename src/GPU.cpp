@@ -316,7 +316,7 @@ void GPU::UpdateGraphics(int cycles) {
 		ScanLineCounter += cycles;
 
 		if (ScanLineCounter >= 456) {
-			this->cpuLink->ram.setMemory(0xFF44, this->cpuLink->ReadByte(0xFF44) + 1);
+			IncScanline();
 			currentline = this->cpuLink->ReadByte(0xFF44);
 
 			ScanLineCounter -= 456;
@@ -345,69 +345,6 @@ Byte GPU::getScanline() {
 
 void GPU::setScanline(Byte s) {
 	this->cpuLink->WriteByte(0xff44, s);
-}
-
-void GPU::UpdateGraphics2(int cycles) {
-	/*
-	SetLCDStatus();
-
-	if (!IsLCDEnabled()) {
-		return;
-	}
-	*/
-
-	ScanLineCounter += cycles;
-
-	//cout << "scanline counter: " << dec << ScanLineCounter << " gpu mode: " << GpuMode << endl;
-
-	switch (GpuMode) {
-	case GPU_MODE_HBLANK:
-		if (ScanLineCounter >= 204) {
-			IncScanline();
-
-			if (getScanline() == Y_RES - 1) {
-				//cout << "~~~~~~~~~~~~ request interrupt" << endl;
-				this->cpuLink->RequestInterupt(0);
-
-				GpuMode = GPU_MODE_VBLANK;
-			}
-			else {
-				GpuMode = GPU_MODE_OAM;
-			}
-
-			ScanLineCounter -= 204;
-		}
-		break;
-	case GPU_MODE_VBLANK:
-		if (ScanLineCounter >= 456) {
-			IncScanline();
-
-			if (getScanline() > 153) {
-				setScanline(0x00);
-				GpuMode = GPU_MODE_OAM;
-			}
-
-			ScanLineCounter -= 456;
-		}
-		break;
-	case GPU_MODE_OAM:
-		if (ScanLineCounter >= 80) {
-			GpuMode = GPU_MODE_VRAM;
-
-			ScanLineCounter -= 80;
-		}
-		break;
-	case GPU_MODE_VRAM:
-		if (ScanLineCounter >= 172) {
-			GpuMode = GPU_MODE_HBLANK;
-
-			//cout << "draw scanline" << endl;
-			DrawScanLine();
-
-			ScanLineCounter -= 172;
-		}
-		break;
-	}
 }
 
 void GPU::render() {
