@@ -23,8 +23,8 @@ unsigned long long CPUstepCount = 0;
 
 //----------------------------------------------------------------------------------------------
 // split a 16-bit number in 2 x 8-bit numbers to save to memory
-#define LOW_BYTE(x)				(x & 0xff)
-#define HIGH_BYTE(x)			((x >> 8) & 0xff)
+#define LOW_BYTE(x)				(x & 0xFF)
+#define HIGH_BYTE(x)			((x >> 8) & 0xFF)
 //----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ void CPU::resetFlag(char type) {
 	}
 }
 
-void CPU::toggleFlag(char type) {
+void CPU::flipFlag(char type) {
 	switch (type) {
 		case 'Z': this->registers.setF(this->registers.getF() ^ 0b10000000); break;
 		case 'N': this->registers.setF(this->registers.getF() ^ 0b01000000); break;
@@ -147,11 +147,7 @@ void CPU::resetFlagAll() {
 }
 
 void CPU::setFlagState(char type, bool state) {
-	if (state) {
-		setFlag(type);
-	} else {
-		resetFlag(type);
-	}
+	state ? setFlag(type) : resetFlag(type);
 }
 
 Byte CPU::ReadIORegisters(Word address) {
@@ -858,7 +854,7 @@ void CPU::removed(Byte op) {
 	cout << "operation " << HEX << (int)op << " was removed from this CPU." << endl;
 }
 
-Byte CyclesPerOPCode[0x100]{
+Byte CyclesPerOPCode[0x100] {
 //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
 	 1,  3,  2,  2,  1,  1,  2,  1,  5,  2,  2,  2,  1,  1,  2,  1, 	// 0x00
 	 0,  3,  2,  2,  1,  1,  2,  1,  3,  2,  2,  2,  1,  1,  2,  1, 	// 0x10
@@ -878,50 +874,30 @@ Byte CyclesPerOPCode[0x100]{
 	 3,  3,  2,  1,  0,  4,  2,  4,  3,  2,  4,  1,  0,  0,  2,  4  	// 0xF0
 };
 
-Byte CyclesPerOPCodeOld[0x100] = {
-//   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
-	 4, 12,  8,  8,  4,  4,  8,  4, 20,  8,  8,  8,  4,  4,  8,  4,		// 0x00
-	 4, 12,  8,  8,  4,  4,  8,  4,  8,  8,  8,  8,  4,  4,  8,  4,		// 0x10
-	 8, 12,  8,  8,  4,  4,  8,  4,  8,  8,  8,  8,  4,  4,  8,  4,		// 0x20
-	 8, 12,  8,  8, 12, 12, 12,  4,  8,  8,  8,  8,  4,  4,  8,  4,		// 0x30
-	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,		// 0x40
-	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,		// 0x50
-	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,		// 0x60
-	 8,  8,  8,  8,  8,  8,  4,  8,  4,  4,  4,  4,  4,  4,  8,  4,		// 0x70
-	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,		// 0x80
-	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,		// 0x90
-	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,		// 0xA0
-	 4,  4,  4,  4,  4,  4,  8,  4,  4,  4,  4,  4,  4,  4,  8,  4,		// 0xB0
-	 8, 12, 12, 12, 12, 16,  8, 32,  8,  8, 12,  0, 12, 12,  8, 32,		// 0xC0
-	 8, 12, 12,  0, 12, 16,  8, 32,  8,  8, 12,  0, 12,  0,  8, 32,		// 0xD0
-	12, 12,  8,  0,  0, 16,  8, 32, 16,  4, 16,  0,  0,  0,  8, 32,		// 0xE0
-	12, 12,  8,  4,  0, 16,  8, 32, 12,  8, 16,  4,  0,  0,  8, 32 		// 0xF0
-};
-
 Byte CyclesPerCBOPCode[0x100] = {
 //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0x00
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0x10
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0x20
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0x30
-	 8,  8,  8,  8,  8,  8, 12,  8,  8,  8,  8,  8,  8,  8, 12,  8, 	// 0x40
-	 8,  8,  8,  8,  8,  8, 12,  8,  8,  8,  8,  8,  8,  8, 12,  8, 	// 0x50
-	 8,  8,  8,  8,  8,  8, 12,  8,  8,  8,  8,  8,  8,  8, 12,  8, 	// 0x60
-	 8,  8,  8,  8,  8,  8, 12,  8,  8,  8,  8,  8,  8,  8, 12,  8, 	// 0x70
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0x80
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0x90
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0xA0
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0xB0
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0xC0
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0xD0
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8, 	// 0xE0
-	 8,  8,  8,  8,  8,  8, 16,  8,  8,  8,  8,  8,  8,  8, 16,  8  	// 0xF0
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0x00
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0x10
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0x20
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0x30
+	 2,	 2,  2,  2,  2,  2,  3,  2,  2,  2,  2,  2,  2,  2,  3,  2, 	// 0x40
+	 2,	 2,  2,  2,  2,  2,  3,  2,  2,  2,  2,  2,  2,  2,  3,  2, 	// 0x50
+	 2,	 2,  2,  2,  2,  2,  3,  2,  2,  2,  2,  2,  2,  2,  3,  2, 	// 0x60
+	 2,	 2,  2,  2,  2,  2,  3,  2,  2,  2,  2,  2,  2,  2,  3,  2, 	// 0x70
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0x80
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0x90
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0xA0
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0xB0
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0xC0
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0xD0
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2, 	// 0xE0
+	 2,	 2,  2,  2,  2,  2,  4,  2,  2,  2,  2,  2,  2,  2,  4,  2 		// 0xF0
 };
 
 void CPU::executeInstruction(Byte opcode) {
-	this->cycles += CyclesPerOPCode[opcode] * 4;
-	Word	jumpAddress;
-	Byte			jumpRelAddress;
+	this->cycles += CyclesPerOPCode[opcode] * 8;
+	Word jumpAddress;
+	Byte jumpRelAddress;
 
     switch((int)opcode) {
         case  0x0: // NOP           no operation.
@@ -1134,7 +1110,7 @@ void CPU::executeInstruction(Byte opcode) {
         case 0x3F: // CCF           complement carry flag.
 			resetFlag('N');
 			resetFlag('H');
-			toggleFlag('C');
+			flipFlag('C');
             break;
         case 0x40: // LD B, B       copy B to B.
             this->registers.setB(this->registers.getB());
@@ -2575,7 +2551,7 @@ int CPU::executeExtendedOpcodes() {
 			break;
 	}
 
-	return CyclesPerCBOPCode[exOpcode];
+	return CyclesPerCBOPCode[exOpcode] * 8;
 }
 
 int CPU::CPUstep() {
@@ -2658,15 +2634,12 @@ void CPU::ServiceInterupts(int interupt) {
 			this->registers.setPC(INTERUPT_VBLANK);
 			break;
 		case 1:
-			//cout << "service interrupt lcd" << endl;
 			this->registers.setPC(INTERUPT_LCD);
 			break;
 		case 2:
-			//cout << "service interrupt timer" << endl;
 			this->registers.setPC(INTERUPT_TIMER);
 			break;
 		case 4:
-			//cout << "service interrupt joypad" << endl;
 			this->registers.setPC(INTERUPT_JOYPAD);
 			break;
 		default:

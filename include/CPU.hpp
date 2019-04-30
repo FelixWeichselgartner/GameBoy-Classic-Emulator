@@ -56,14 +56,15 @@ public:
 	bool getEnableBootstrap() const;
 	void setEnableBootstrap(bool);
 
-
+	// Flag handling.
 	Byte getFlag(char);
 	void setFlag(char);
 	void resetFlag(char);
 	void setFlagState(char, bool);
-	void toggleFlag(char);
+	void flipFlag(char);
 	void resetFlagAll();
 
+	// CPU's memory access.
 	Byte ReadIORegisters(Word);
     Byte ReadByte(Word);
     void WriteByte(Word, Byte);

@@ -322,7 +322,6 @@ void GPU::UpdateGraphics(int cycles) {
 			ScanLineCounter -= 456;
 
 			if (currentline == Y_RES) {
-				//cout << "~~~~~~~~~~~~ request interrupt" << endl;
 				cpuLink->RequestInterupt(0);
 			} else if (currentline > 0x99) {
 				this->cpuLink->ram.setMemory(0xFF44, 0);
