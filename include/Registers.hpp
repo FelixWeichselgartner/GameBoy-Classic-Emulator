@@ -9,6 +9,15 @@
 std::string toBinary(int);
 
 //----------------------------------------------------------------------------------------------
+// Flags - F register is the flag register
+// Z = this->registers.F (Byte 7)
+// N = this->registers.F (Byte 6)
+// H = this->registers.F (Byte 5)
+// C = this->registers.F (Byte 4)
+// Byte 3 = Byte 2 = Byte 1 = Byte 0 = not used
+//----------------------------------------------------------------------------------------------
+
+//----------------------------------------------------------------------------------------------
 class Registers {
 
 private:
@@ -52,8 +61,6 @@ private:
   public:
 
     Registers();
-
-    void printFlags();
 
     // A Register
     Byte getA() const;
@@ -114,6 +121,14 @@ private:
     // SP Register
     Word getSP() const;
     void setSP(Word);
+
+    // Flag handling.
+	Byte getFlag(char);
+	void setFlag(char);
+	void resetFlag(char);
+	void setFlagState(char, bool);
+	void flipFlag(char);
+	void resetFlagAll();
 };
 //----------------------------------------------------------------------------------------------
 

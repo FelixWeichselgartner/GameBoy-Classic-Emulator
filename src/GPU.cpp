@@ -12,10 +12,10 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
-GPU::GPU(class CPU* cpuLink) {
-	this->cpuLink = cpuLink;
-	this->ramLink = &cpuLink->ram;
-	windowName = this->cpuLink->rom.getGameName(this->ramLink);
+GPU::GPU(class CPU* cpu) {
+	if ((this->cpu = cpu) == NULL) exit(2);
+	if ((this->memory = &this->cpu->memory) == NULL) exit(2);
+	windowName = this->memory->rom.getGameName(&this->memory->ram);
 	ScanLineCounter = 0;
 	this->GpuMode = GPU_MODE_HBLANK;
 
@@ -37,6 +37,26 @@ GPU::GPU(class CPU* cpuLink) {
 	return;
 }
 
+Byte GPU::getScanline() {
+	return this->memory->ReadByte(0xFF44);
+}
+
+void GPU::setScanline(Byte s) {
+	this->memory->ram.setMemory(0xFF44, s);
+}
+
+void GPU::IncScanline() {
+	this->memory->ram.setMemory(0xFF44, getScanline() + 1);
+}
+
+void GPU::resetScanline() {
+	this->memory->ram.setMemory(0xFF44, 0);
+}
+
+bool GPU::IsLCDEnabled() const {
+	return testBit(this->memory->ReadByte(0xFF40), 7);
+}
+
 void GPU::clearScreen() {
 	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
 
@@ -53,22 +73,18 @@ void GPU::clearScreen() {
 	return;
 }
 
-bool GPU::IsLCDEnabled() const {
-	return testBit(this->cpuLink->ReadByte(0xFF40), 7);
-}
-
 void GPU::SetLCDStatus() {
-	Byte status = this->cpuLink->ReadByte(0xFF41);
-	Byte currentline = this->cpuLink->ReadByte(0xFF44);
+	Byte status = this->memory->ReadByte(0xFF41);
+	Byte currentline = getScanline();
 	Byte currentmode = status & 0x03, mode = 0x00;
 	bool reqInt = false;
 	int mode2bounds, mode3bounds;
 
 	if (!IsLCDEnabled()) {
 		ScanLineCounter = 456;
-		this->cpuLink->ram.setMemory(0xFF44, 0x00);
+		resetScanline();
 		status = setBit(status & 0b11111100, 0);
-		this->cpuLink->WriteByte(0xFF41, status);
+		this->memory->ram.setMemory(0xFF41, status);
 		return;
 	} 
 	
@@ -99,25 +115,25 @@ void GPU::SetLCDStatus() {
 	}
 
 	if (reqInt && (mode != currentmode)) {
-		cpuLink->RequestInterupt(1);
+		this->cpu->RequestInterupt(1);
 	}
 
-	if (currentline == this->cpuLink->ReadByte(0xFF45)) { // conincidence flag
+	if (currentline == this->memory->ReadByte(0xFF45)) { // conincidence flag
 		status = setBit(status, 2);
 		if (testBit(status, 6)) {
-			this->cpuLink->RequestInterupt(1);
+			this->cpu->RequestInterupt(1);
 		}
 	} else {
 		status = resetBit(status, 2);
 	}
 
-	this->cpuLink->WriteByte(0xFF41, status);
+	this->memory->ram.setMemory(0xFF41, status);
 
 	return;
 }
 
 Byte GPU::getColor(Byte colorNum, Word address) {
-	Byte palette = this->cpuLink->ReadByte(address);
+	Byte palette = this->memory->ReadByte(address);
 	int high = 0, low = 0, color;
 
 	if (colorNum >= 0 && colorNum <= 3) {
@@ -137,8 +153,8 @@ void GPU::RenderNintendoLogo() {
 	Byte data1, data2;
 
 	for (int i = address, c = 0; i < end; i += 2, c++) {
-		data1 = this->cpuLink->ReadByte(i);
-		data2 = this->cpuLink->ReadByte(i + 1);
+		data1 = this->memory->ReadByte(i);
+		data2 = this->memory->ReadByte(i + 1);
 
 		for (int k = 7, t = 0; k >= 0; k--, t++) {
 			x1 = (c % 12) * 4 + t % 4;
@@ -164,14 +180,14 @@ void GPU::RenderTiles(Byte lcdControl) {
 	bool noSign = true, usingWindow;
 	int colorBit, colorNum, y;
 
-	scrollY = this->cpuLink->ReadByte(0xFF42);
-	scrollX = this->cpuLink->ReadByte(0xFF43);
-	windowY = this->cpuLink->ReadByte(0xFF4A);
-	windowX = this->cpuLink->ReadByte(0xFF4B) - 7;
+	scrollY = this->memory->ReadByte(0xFF42);
+	scrollX = this->memory->ReadByte(0xFF43);
+	windowY = this->memory->ReadByte(0xFF4A);
+	windowX = this->memory->ReadByte(0xFF4B) - 7;
 	yPos = 0;
 
 	// checks if the window is enabled.
-	usingWindow = (testBit(lcdControl, 5) && (windowY <= this->cpuLink->ReadByte(0xFF44)));
+	usingWindow = (testBit(lcdControl, 5) && (windowY <= getScanline()));
 
 	if (testBit(lcdControl, 4)) {
 		tileData = ADDR_VRAM_T_S;
@@ -182,10 +198,10 @@ void GPU::RenderTiles(Byte lcdControl) {
 
 	if (usingWindow) {
 		backgroundMemory = testBit(lcdControl, 6) ? ADDR_VRAM_T_M_2 : ADDR_VRAM_T_M_1;
-		yPos = this->cpuLink->ReadByte(0xFF44) - windowY;
+		yPos = getScanline() - windowY;
 	} else {
 		backgroundMemory = testBit(lcdControl, 3) ? ADDR_VRAM_T_M_2 : ADDR_VRAM_T_M_1;
-		yPos = scrollY + this->cpuLink->ReadByte(0xFF44);
+		yPos = scrollY + getScanline();
 	}
 
 	tileRow = (yPos / 8) * 32;
@@ -196,20 +212,20 @@ void GPU::RenderTiles(Byte lcdControl) {
 		tileAddress = backgroundMemory + tileRow + xPos / 8;
 
 		if (noSign) {
-			tileNum = (Byte)this->cpuLink->ReadByte(tileAddress);
+			tileNum = (Byte)this->memory->ReadByte(tileAddress);
 			tileLocation = tileData + tileNum * 16;
 		} else {
-			tileNum = (signed char)this->cpuLink->ReadByte(tileAddress);
+			tileNum = (signed char)this->memory->ReadByte(tileAddress);
 			tileLocation = tileData + (tileNum + 128) * 16;
 		}
 
 		line = (yPos % 8) * 2;
-		data1 = this->cpuLink->ReadByte(tileLocation + line);
-		data2 = this->cpuLink->ReadByte(tileLocation + line + 1);
+		data1 = this->memory->ReadByte(tileLocation + line);
+		data2 = this->memory->ReadByte(tileLocation + line + 1);
 		colorBit = 7 - (xPos % 8);
 		colorNum = ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 		color = getColor(colorNum, 0xFF47);
-		y = this->cpuLink->ReadByte(0xFF44);
+		y = getScanline();
 
 		if (!((y < 0) || (y > Y_RES - 1) || (i < 0) || (i > X_RES - 1))) {
 			display[y][i] = color;
@@ -231,19 +247,19 @@ void GPU::RenderSprites(Byte lcdControl) {
 
 	for (int sprite = 0; sprite < maxSprites; sprite++) {
 		index					= sprite * bytesPerSprite;
-		yPos					= this->cpuLink->ReadByte(ADDR_OAM + index + 0) - 16;
-		xPos					= this->cpuLink->ReadByte(ADDR_OAM + index + 1) - 8;
-		tileLocation			= this->cpuLink->ReadByte(ADDR_OAM + index + 2);
-		attributes				= this->cpuLink->ReadByte(ADDR_OAM + index + 3);
+		yPos					= this->memory->ReadByte(ADDR_OAM + index + 0) - 16;
+		xPos					= this->memory->ReadByte(ADDR_OAM + index + 1) - 8;
+		tileLocation			= this->memory->ReadByte(ADDR_OAM + index + 2);
+		attributes				= this->memory->ReadByte(ADDR_OAM + index + 3);
 		flipXaxis				= testBit(attributes, 5);
 		flipYaxis				= testBit(attributes, 6);
-		scanline				= this->cpuLink->ReadByte(0xFF44);
+		scanline				= getScanline();
 
 		if ((scanline >= yPos) && (scanline < (yPos + ysize))) {
 			line				= flipYaxis ? (ysize - (scanline - yPos)) * 2 : (scanline - yPos) * 2;
 			address				= (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
-			data1				= this->cpuLink->ReadByte(address);
-			data2				= this->cpuLink->ReadByte(address + 1);
+			data1				= this->memory->ReadByte(address);
+			data2				= this->memory->ReadByte(address + 1);
 
 			for (int tilePixel = 7; tilePixel >= 0; tilePixel--) {
 				colorBit		= flipXaxis ? 7 - tilePixel : tilePixel;
@@ -268,7 +284,7 @@ void GPU::RenderSprites(Byte lcdControl) {
 }
 
 void GPU::DrawScanLine() {
-	Byte control = this->cpuLink->ReadByte(0xFF40);
+	Byte control = this->memory->ReadByte(0xFF40);
 
 	if (testBit(control, 0)) {
 		RenderTiles(control);
@@ -317,14 +333,14 @@ void GPU::UpdateGraphics(int cycles) {
 
 		if (ScanLineCounter >= 456) {
 			IncScanline();
-			currentline = this->cpuLink->ReadByte(0xFF44);
+			currentline = getScanline();
 
 			ScanLineCounter -= 456;
 
 			if (currentline == Y_RES) {
-				cpuLink->RequestInterupt(0);
+				cpu->RequestInterupt(0);
 			} else if (currentline > 0x99) {
-				this->cpuLink->ram.setMemory(0xFF44, 0);
+				resetScanline();
 			} else if (currentline < Y_RES) {
 				DrawScanLine();
 				renderDisplay(currentline);
@@ -333,18 +349,6 @@ void GPU::UpdateGraphics(int cycles) {
 	}
 
 	return;
-}
-
-void GPU::IncScanline() {
-	this->cpuLink->ram.setMemory(0xff44, this->cpuLink->ReadByte(0xff44) + 1);
-}
-
-Byte GPU::getScanline() {
-	return this->cpuLink->ReadByte(0xff44);
-}
-
-void GPU::setScanline(Byte s) {
-	this->cpuLink->WriteByte(0xff44, s);
 }
 
 void GPU::render() {

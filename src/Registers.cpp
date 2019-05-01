@@ -1,7 +1,9 @@
 //----------------------------------------------------------------------------------------------
-#include "../include/format.hpp"
 #include "../include/Registers.hpp"
-#include "../include/RAM.hpp"
+
+#include <iostream>
+#include <iomanip>
+using namespace std;
 //----------------------------------------------------------------------------------------------
 
 Registers::Registers() {
@@ -109,4 +111,77 @@ Word Registers::getSP() const {
 }
 void Registers::setSP(Word value) {
     this->SP = value;
+}
+
+Byte Registers::getFlag(char type) {
+	Byte tmp = this->F;
+
+	switch (type) {
+		case 'Z': tmp &= 0b10000000; break;
+		case 'N': tmp &= 0b01000000; break;
+		case 'H': tmp &= 0b00100000; break;
+		case 'C': tmp &= 0b00010000; break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+
+	return tmp ? 0x01 : 0x00;
+}
+
+void Registers::setFlag(char type) {
+	switch (type) {
+	case 'Z': this->setF(this->getF() | 0b10000000); break;
+	case 'N': this->setF(this->getF() | 0b01000000); break;
+	case 'H': this->setF(this->getF() | 0b00100000); break;
+	case 'C': this->setF(this->getF() | 0b00010000); break;
+	default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+}
+/*
+void Registers::setFlag(char type) {
+	switch (type) {
+		case 'Z': this->F |= 0b10000000; break;
+		case 'N': this->F |= 0b01000000; break;
+		case 'H': this->F |= 0b00100000; break;
+		case 'C': this->F |= 0b00010000; break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+}
+/*
+void Registers::resetFlag(char type) {
+	switch (type) {
+		case 'Z': this->F &= 0b01111111; break;
+		case 'N': this->F &= 0b10111111; break;
+		case 'H': this->F &= 0b11011111; break;
+		case 'C': this->F &= 0b11101111; break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+}
+*/
+
+void Registers::resetFlag(char type) {
+	switch (type) {
+		case 'Z': this->setF(this->getF() & 0b01111111); break;
+		case 'N': this->setF(this->getF() & 0b10111111); break;
+		case 'H': this->setF(this->getF() & 0b11011111); break;
+		case 'C': this->setF(this->getF() & 0b11101111); break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+}
+
+void Registers::flipFlag(char type) {
+	switch (type) {
+		case 'Z': this->F ^= 0b10000000; break;
+		case 'N': this->F ^= 0b01000000; break;
+		case 'H': this->F ^= 0b00100000; break;
+		case 'C': this->F ^= 0b00010000; break;
+		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
+	}
+}
+
+void Registers::setFlagState(char type, bool state) {
+	state ? setFlag(type) : resetFlag(type);
+}
+
+void Registers::resetFlagAll() {
+	this->F = 0x00;
 }

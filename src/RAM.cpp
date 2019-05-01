@@ -4,11 +4,12 @@
 //----------------------------------------------------------------------------------------------
 
 RAM::RAM() {
-	this->RamBanks = NULL;
-	this->RamBanks = new Byte[0x8000];
+	if ((this->RamBanks = new Byte[0x8000]) == NULL) exit(2);
+	
 	for (int i = 0; i < 0x8000; i++) {
 		RamBanks[i] = 0;
 	}
+
 	this->CurrentRamBank = 0;
 
 	memory[0xFF05] = 0x00;

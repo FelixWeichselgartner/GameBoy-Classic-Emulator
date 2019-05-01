@@ -1,6 +1,7 @@
 #ifndef DATATYPES_H_
 #define DATATYPES_H_
 
+// using those, because microcontrollers might not have char, short etc..
 #include <stdint.h>
 
 typedef uint8_t     Byte;

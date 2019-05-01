@@ -2,7 +2,8 @@
 #define JOYPAD_HPP_
 
 //----------------------------------------------------------------------------------------------
-#include "../include/CPU.hpp"
+
+class CPU;
 
 enum {
 	JOY_RIGHT,
@@ -27,7 +28,7 @@ private:
 
 	Byte JoypadState;
 
-	class CPU* cpuLink;
+	class CPU* cpu;
 
 public:
 

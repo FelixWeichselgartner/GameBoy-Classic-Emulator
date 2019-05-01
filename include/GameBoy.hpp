@@ -9,6 +9,7 @@
 #include "Registers.hpp"
 #include "Joypad.hpp"
 #include "datatypes.h"
+#include "format.hpp"
 
 #include <SDL2/SDL.h>
 #include <fstream>
@@ -27,15 +28,13 @@ public:
 
     GameBoy();
 
+	// debug functions.
 	void PrintRegisters();
 	void PrintRegistersFile(std::ofstream &);
-
-	void RomTest();
 	void Debug_InputAndLog(SDL_Event &);
-	
-
 	void tests(int);
 
+	// loop functions.
 	bool winEvent(SDL_Event&, bool &);
     void run();
 

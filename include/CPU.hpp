@@ -2,17 +2,13 @@
 #define CPU_HPP_
 
 //----------------------------------------------------------------------------------------------
-#include "datatypes.h"
 #include "Registers.hpp"
-#include "RAM.hpp"
-#include "ROM.hpp"
-#include "Joypad.hpp"
 #include "Timer.hpp"
+#include "Memory.hpp"
+#include "Joypad.hpp"
+#include "datatypes.h"
+#include "bit.hpp"
 //----------------------------------------------------------------------------------------------
-
-bool testBit(Byte, int);
-Byte resetBit(Byte, int);
-Byte setBit(Byte, int);
 
 //----------------------------------------------------------------------------------------------
 class CPU {
@@ -34,10 +30,9 @@ public:
 
     // general purpose registers + stack pointer & program counter.
     class Registers registers;
-    class RAM ram;
-	class ROM rom = ROM(&ram);
-	class Joypad* joypadLink;
-	class Timer* timer;
+	class Timer timer = Timer(this);
+	class Joypad* joypad;
+	class Memory memory = Memory(&registers, &timer);
 
 public:
 
@@ -57,27 +52,8 @@ public:
 	bool getEnableBootstrap() const;
 	void setEnableBootstrap(bool);
 
-	// Flag handling.
-	Byte getFlag(char);
-	void setFlag(char);
-	void resetFlag(char);
-	void setFlagState(char, bool);
-	void flipFlag(char);
-	void resetFlagAll();
-
-	// CPU's memory access.
-	Byte ReadIORegisters(Word);
-    Byte ReadByte(Word);
-    void WriteByte(Word, Byte);
-
 	// adjust for register a for bcd addition.
 	void daa();
-	// load 8 bit value in register.
-	Byte load8bit();
-	// load 16 bit value in register.
-	Word load16bit();
-	// save 16 bit value to memory.
-	void save16bitToAddress(Word, Word);
 
 	// shift operations special for akkumulator A.
 	Byte rlca(Byte);
@@ -109,11 +85,11 @@ public:
 	// add two Byte values.
     Byte add(Byte, Byte);
 	// add two 16-bit values.
-	Word add16bit(Word, Word);
+	Word addWord(Word, Word);
 	// add signed byte to Word.
-	Word add16bitSign(Word, Byte);
+	Word addSignedWord(Word, Byte);
 	// add two 16-bit values for addresses (that means without flags).
-	Word add16bitAdrSign(Word, Byte);
+	Word addSignedWordAddress(Word, Byte);
 	// add two Byte values + carry.
 	Byte adc(Byte, Byte);
 	// sub two Byte values.
@@ -132,20 +108,12 @@ public:
 	// compare two Byte values.
 	void cp(Byte, Byte);
 
-	// push Byte value on the stack.
-	void push8bit(Byte);
-	// pop Byte value from the stack.
-	Byte pop8bit();
-	// push 2 Byte value on the stack.
-	void push16bit(Word);
-	// pop 2 Byte value from the stack.
-	Word pop16bit();
-
 	// call routine.
 	void call(Word);
-	// rst
+	// rst routine.
 	void rst(Word);
 
+	// removed/illegal instructions.
 	void removed(Byte);
 	
 	// execute instructions according to opcode.
@@ -161,18 +129,16 @@ public:
 	// execute extended opcodes.
 	int executeExtendedOpcodes();
 
-	// one cpu step.
-	int CPUstep();
-
 	// interupts
 	void RequestInterupt(int);
 	void DoInterupts();
 	void ServiceInterupts(int);
 
-	// dma transfer - dma == direct memory access
-	void DoDMATransfer(Byte);
-
+	// update the timers.
 	void UpdateTimers(int);
+
+	// one cpu step.
+	int CPUstep();
 };
 //----------------------------------------------------------------------------------------------
 

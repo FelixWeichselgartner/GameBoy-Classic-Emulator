@@ -1,7 +1,9 @@
 #ifndef TIMER_HPP_
 #define TIMER_HPP_
 
-#include "CPU.hpp"
+#include "datatypes.h"
+
+class CPU;
 
 class Timer {
 
@@ -10,7 +12,7 @@ private:
 	int TimerCounter;
 	int DividerRegister;
 
-	class CPU* cpuLink;
+	class CPU* cpu;
 
 public:
 

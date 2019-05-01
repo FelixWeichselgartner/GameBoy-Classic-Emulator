@@ -19,10 +19,12 @@
 //----------------------------------------------------------------------------------------------
 // GPU MODES:
 
-#define GPU_MODE_HBLANK 0
-#define GPU_MODE_VBLANK 1
-#define GPU_MODE_OAM	2
-#define GPU_MODE_VRAM	3
+enum {
+	GPU_MODE_HBLANK,
+	GPU_MODE_VBLANK,
+	GPU_MODE_OAM,
+	GPU_MODE_VRAM
+};
 //----------------------------------------------------------------------------------------------
 
 
@@ -66,8 +68,8 @@ class GPU {
 
 private:
 
-	class CPU* cpuLink;
-	class RAM* ramLink;
+	class CPU* cpu;
+	class Memory* memory;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	std::string windowName;
@@ -85,6 +87,11 @@ public:
 	SDL_Window* getWindow() const { return window; }
 	SDL_Renderer* getRenderer() const { return renderer; }
 
+	Byte getScanline();
+	void setScanline(Byte);
+	void IncScanline();
+	void resetScanline();
+
 	void clearScreen();
 
 	bool IsLCDEnabled() const;
@@ -99,10 +106,6 @@ public:
 	void DrawScanLine();
 
 	void renderDisplay(Byte);
-
-	void IncScanline();
-	Byte getScanline();
-	void setScanline(Byte);
 
 	void UpdateGraphics(int);
 
