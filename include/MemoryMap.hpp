@@ -9,7 +9,7 @@
 #define ADDR_VRAM_T_A		0x9000		// VRAM: Tiles Alt
 #define ADDR_VRAM_T_M_1		0x9800		// VRAM: Tilemap 1
 #define ADDR_VRAM_T_M_2		0x9C00		// VRAM: Tilemap 2
-#define ADDR_EXT_RAM		0xA000		// 8KB External RAM (in cartridge, witchable bank, if any)
+#define ADDR_EXT_RAM		0xA000		// 8KB External RAM (in cartridge, switchable bank, if any)
 #define ADDR_INT_RAM_1		0xC000		// 4KB Work RAM Bank 0 (WRAM)
 #define ADDR_INT_RAM_2		0xD000		// 4KB Work RAM Bank 1 (WRAM) (switchable bank 1-7 in CGB Mode)
 #define ADDR_ECHO			0xE000		// Same as C000-DDFF (ECHO) (typically not used)

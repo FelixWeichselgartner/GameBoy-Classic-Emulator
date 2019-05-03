@@ -47,7 +47,6 @@ void ROM::dltBootstrap(class RAM* ram) {
 
 ROM::ROM() {
 	this->rom = NULL;
-	this->rom = NULL;
 	this->RomSize = 0;
 	this->MBC_1 = this->MBC_2 = false;
 	this->CurrentRomBank = 1;
@@ -102,9 +101,6 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 		this->rom = new char[RomSize];
 		if (this->rom != NULL) {
 			gbfile.read(rom, size);
-			for (unsigned short i = enableBootstrap ? 0x0100 : 0x0000; i < ADDR_VRAM_T_S; i++) {
-				ram->setMemory(i, rom[i]);
-			}
 		} else {
 			cout << "unable to reserve heap memory" << endl;
 		}
@@ -252,27 +248,10 @@ void ROM::HandleBanking(unsigned short address, Byte value) {
 	}
 }
 
-string ROM::getGameName(class RAM* ram) {
+string ROM::getGameName() {
 	string name = "";
 	for (int n = 0x134; n < 0x0142; n++) {
-		name += (char) ram->getMemory(n);
+		name += (char)rom[n];
 	}
 	return name;
-}
-
-void ROM::print(class RAM* ram, unsigned short start, unsigned short end) {
-	cout << "Name: " << getGameName(ram) << endl;
-	cout << "File Hexdump: " << endl << endl;
-	cout << "          ";
-	for (int i = 0; i < 16; i++) {
-		cout << HEX << i << " ";
-	}
-	cout << endl;
-	for (int i = start, c = 0; i < start + (end + 1 - start ) / 16; i++, c++) {
-		cout << HEX16 << setw(8) << start + c * 16 << ": ";
-		for (int k = 0; k < 16; k++) {
-			cout << HEX << (int)ram->getMemory(start + c * 16 + k) << " ";
-		}
-		cout << endl;
-	}
 }

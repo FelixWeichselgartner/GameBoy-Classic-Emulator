@@ -41,7 +41,7 @@ void Timer::DividerRegisterStep(int cycles) {
 
 	if (this->DividerRegister >= 0xFF) {
 		this->DividerRegister = 0x00;
-		this->cpu->memory.ram.setMemory(0xFF04, this->cpu->memory.ram.getMemory(0xFF04) + 1);
+		this->cpu->memory.setDividerRegister(this->cpu->memory.ReadByte(0xFF04) + 1);
 	}
 }
 

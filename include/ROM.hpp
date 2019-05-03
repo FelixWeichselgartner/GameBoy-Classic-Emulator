@@ -43,9 +43,7 @@ public:
 	void EnableRamBank(unsigned short, Byte);
 	void HandleBanking(unsigned short, Byte);
 
-	std::string getGameName(class RAM* ram);
-    
-	void print(class RAM*, unsigned short, unsigned short);
+	std::string getGameName();
 
 };
 //----------------------------------------------------------------------------------------------

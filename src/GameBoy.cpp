@@ -123,14 +123,6 @@ void GameBoy::run() {
 				}
 			}
 
-			/*
-			if (this->cpu.registers.getPC() == 0x0100 && cpu.getEnableBootstrap()) {
-				cout << "switch back rom 0x0000 - 0x0100" << endl;
-				this->cpu.memory.rom.dltBootstrap(&cpu.memory.ram);
-				cpu.setEnableBootstrap(false);
-			}
-			*/
-
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);
@@ -157,11 +149,7 @@ void GameBoy::run() {
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
     class GameBoy gameboy;
-	if (MODE) {
-		gameboy.tests(MODE);
-	} else {
-		gameboy.run();
-	}
+	(MODE) ? gameboy.tests(MODE) : gameboy.run();
 	cout << "Gameboy-Classic-Emulator closed." << endl;
     return 0;
 }

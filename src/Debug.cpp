@@ -51,8 +51,8 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 	bool printVRAMAfterInstruction = false, keyEn = false, keyHardEn = false;
 	char key;
-	char game = cpu.memory.rom.getGameName(&cpu.memory.ram).at(0);
-	cout << "GAME: " << cpu.memory.rom.getGameName(&cpu.memory.ram) << " == " << game << endl;
+	char game = cpu.memory.rom.getGameName().at(0);
+	cout << "GAME: " << cpu.memory.rom.getGameName() << " == " << game << endl;
 	bool skip = false;
 	int skipCounter = 1;
 	game = ' ';
@@ -202,10 +202,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					//cout << "current rom bank: " << (int)this->cpu.memory.rom.getCurrentRomBank() << endl;
 					//cout << "0x4000: " << HEX << (int)cpu.memory.ReadByte(0x4000) << endl;
 
-					cpu.memory.rom.print(&cpu.memory.ram, 0xdff0, 0xe000);
+					cpu.memory.print(0xdff0, 0xe000);
 
 					if (printVRAMAfterInstruction) {
-						cpu.memory.rom.print(&cpu.memory.ram, 0x8000, 0xA000);
+						cpu.memory.print(0x8000, 0xA000);
 						printVRAMAfterInstruction = false;
 					}
 
@@ -218,10 +218,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 						printVRAMAfterInstruction = true;
 					}
 					else if (key == 's') {
-						cpu.memory.rom.print(&cpu.memory.ram, 0x8800, 0x8850);
+						cpu.memory.print(0x8800, 0x8850);
 					}
 					else if (key == 'f') {
-						cpu.memory.rom.print(&cpu.memory.ram, 0xff00, 0xffff);
+						cpu.memory.print(0xff00, 0xffff);
 					}
 					else if (key == 'k') {
 						// skip 32 instructions

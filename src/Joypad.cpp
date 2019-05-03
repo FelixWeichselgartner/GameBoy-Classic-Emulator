@@ -7,7 +7,7 @@ Joypad::Joypad(class CPU* cpu) {
 }
 
 Byte Joypad::getJoypadState() const {
-	Byte retval = ~(cpu->memory.ram.getMemory(ADDR_IO));
+	Byte retval = ~(cpu->memory.getJoypadRequest());
 
 	// gameboy: for direction:
 	// 3 = down, 2 = up, 1 = left, 0 = down.
@@ -37,7 +37,7 @@ void Joypad::KeyPressed(int key) {
 	// 0 (set) -> true, 1 (unset) -> false.
 	bool previouslySet = !testBit(JoypadState, key);
 	JoypadState = resetBit(JoypadState, key);
-	Byte keyReq = this->cpu->memory.ram.getMemory(ADDR_IO);
+	Byte keyReq = this->cpu->memory.getJoypadRequest();
 	bool button = key > 3;
 	bool requestInterupt = (button && testBit(keyReq, BUTTON)) || (!button && testBit(keyReq, DIRECTION));
 

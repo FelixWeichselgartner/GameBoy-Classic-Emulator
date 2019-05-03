@@ -15,7 +15,7 @@ using namespace std;
 GPU::GPU(class CPU* cpu) {
 	if ((this->cpu = cpu) == NULL) exit(2);
 	if ((this->memory = &this->cpu->memory) == NULL) exit(2);
-	windowName = this->memory->rom.getGameName(&this->memory->ram);
+	windowName = this->memory->rom.getGameName();
 	ScanLineCounter = 0;
 	this->GpuMode = GPU_MODE_HBLANK;
 
@@ -42,15 +42,16 @@ Byte GPU::getScanline() {
 }
 
 void GPU::setScanline(Byte s) {
-	this->memory->ram.setMemory(0xFF44, s);
+	this->memory->setScanline(s);
 }
 
 void GPU::IncScanline() {
-	this->memory->ram.setMemory(0xFF44, getScanline() + 1);
+	this->memory->setScanline(getScanline() + 1);
+	//cout << "wrote: " << (int)(getScanline() + 1) << endl;
 }
 
 void GPU::resetScanline() {
-	this->memory->ram.setMemory(0xFF44, 0);
+	this->memory->setScanline(0);
 }
 
 bool GPU::IsLCDEnabled() const {
@@ -84,7 +85,7 @@ void GPU::SetLCDStatus() {
 		ScanLineCounter = 456;
 		resetScanline();
 		status = setBit(status & 0b11111100, 0);
-		this->memory->ram.setMemory(0xFF41, status);
+		this->memory->WriteByte(0xFF41, status);
 		return;
 	} 
 	
@@ -127,7 +128,7 @@ void GPU::SetLCDStatus() {
 		status = resetBit(status, 2);
 	}
 
-	this->memory->ram.setMemory(0xFF41, status);
+	this->memory->WriteByte(0xFF41, status);
 
 	return;
 }
@@ -246,20 +247,20 @@ void GPU::RenderSprites(Byte lcdControl) {
 	ysize = testBit(lcdControl, 2) ? 16 : 8;
 
 	for (int sprite = 0; sprite < maxSprites; sprite++) {
-		index					= sprite * bytesPerSprite;
-		yPos					= this->memory->ReadByte(ADDR_OAM + index + 0) - 16;
-		xPos					= this->memory->ReadByte(ADDR_OAM + index + 1) - 8;
-		tileLocation			= this->memory->ReadByte(ADDR_OAM + index + 2);
-		attributes				= this->memory->ReadByte(ADDR_OAM + index + 3);
-		flipXaxis				= testBit(attributes, 5);
-		flipYaxis				= testBit(attributes, 6);
-		scanline				= getScanline();
+		index			= sprite * bytesPerSprite;
+		yPos			= this->memory->ReadByte(ADDR_OAM + index + 0) - 16;
+		xPos			= this->memory->ReadByte(ADDR_OAM + index + 1) - 8;
+		tileLocation	= this->memory->ReadByte(ADDR_OAM + index + 2);
+		attributes		= this->memory->ReadByte(ADDR_OAM + index + 3);
+		flipXaxis		= testBit(attributes, 5);
+		flipYaxis		= testBit(attributes, 6);
+		scanline		= getScanline();
 
 		if ((scanline >= yPos) && (scanline < (yPos + ysize))) {
-			line				= flipYaxis ? (ysize - (scanline - yPos)) * 2 : (scanline - yPos) * 2;
-			address				= (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
-			data1				= this->memory->ReadByte(address);
-			data2				= this->memory->ReadByte(address + 1);
+			line	= flipYaxis ? (ysize - (scanline - yPos)) * 2 : (scanline - yPos) * 2;
+			address	= (ADDR_VRAM_T_S + (tileLocation * 16)) + line;
+			data1	= this->memory->ReadByte(address);
+			data2	= this->memory->ReadByte(address + 1);
 
 			for (int tilePixel = 7; tilePixel >= 0; tilePixel--) {
 				colorBit		= flipXaxis ? 7 - tilePixel : tilePixel;
@@ -326,6 +327,8 @@ void GPU::renderDisplay(Byte currentline) {
 void GPU::UpdateGraphics(int cycles) {
 	Byte currentline;
 
+	//cout << "scanline: " << (int)getScanline() << endl;
+
 	SetLCDStatus();
 
 	if (IsLCDEnabled()) {
@@ -346,6 +349,10 @@ void GPU::UpdateGraphics(int cycles) {
 				renderDisplay(currentline);
 			}
 		}
+	}
+
+	else {
+		//cout << "disabled" << endl;
 	}
 
 	return;
