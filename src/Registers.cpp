@@ -100,6 +100,7 @@ void Registers::setHL(Word value) {
 }
 
 Word Registers::getPC() const {
+	//cout << this << endl;
     return this->PC;
 }
 void Registers::setPC(Word value) {
@@ -136,27 +137,6 @@ void Registers::setFlag(char type) {
 	default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
 	}
 }
-/*
-void Registers::setFlag(char type) {
-	switch (type) {
-		case 'Z': this->F |= 0b10000000; break;
-		case 'N': this->F |= 0b01000000; break;
-		case 'H': this->F |= 0b00100000; break;
-		case 'C': this->F |= 0b00010000; break;
-		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
-	}
-}
-/*
-void Registers::resetFlag(char type) {
-	switch (type) {
-		case 'Z': this->F &= 0b01111111; break;
-		case 'N': this->F &= 0b10111111; break;
-		case 'H': this->F &= 0b11011111; break;
-		case 'C': this->F &= 0b11101111; break;
-		default: cout << "[type]" << (int)type << " does not exist" << endl; exit(1);
-	}
-}
-*/
 
 void Registers::resetFlag(char type) {
 	switch (type) {

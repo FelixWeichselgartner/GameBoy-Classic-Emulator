@@ -279,9 +279,17 @@ Memory::Memory() {
 	InitMemory();
 }
 
+// this->registers gets changed somehow
+static Registers* reg;
+int i = 0;
+
 Memory::Memory(class Registers* registers, class Timer *timer) {
 	if ((this->registers = registers) == NULL) exit(2);
 	if ((this->timer = timer) == NULL) exit(2);
+	if (i == 0) {
+		reg = this->registers;
+		i++;
+	}
 }
 
 Memory::~Memory() {
@@ -351,6 +359,9 @@ void Memory::setDividerRegister(Byte reg) {
 // load Byte/Word from Rom.
 
 Byte Memory::LoadByte() {
+	if (reg != this->registers) {
+		cout << "it happened" << endl;
+	}
 	this->registers->setPC(this->registers->getPC() + 1);
 	return ReadByte(this->registers->getPC());
 }

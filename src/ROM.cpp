@@ -84,11 +84,11 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	//gbfile.open("09-op r,r.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);
-	gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Game Boy Controller Kensa Cartridge.gb", ios::in | ios::binary | ios::ate);
 
 	if (gbfile.is_open()) {
@@ -120,7 +120,9 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 
 void ROM::InitialiseRomBaking() {
 	/*
-	memory bank controller modes (http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header):
+	memory bank controller modes:
+	(http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header)
+	(http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers)
 
 	00h  ROM ONLY                 19h  MBC5
 	01h  MBC1                     1Ah  MBC5+RAM
