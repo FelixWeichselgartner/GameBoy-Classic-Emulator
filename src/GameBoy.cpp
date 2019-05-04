@@ -103,6 +103,8 @@ bool GameBoy::winEvent(SDL_Event &windowEvent, bool &screen) {
 	return false;
 }
 
+unsigned long long counter = 0;
+
 void GameBoy::run() {
 	SDL_Event windowEvent;
 

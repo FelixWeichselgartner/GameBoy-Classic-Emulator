@@ -5,9 +5,6 @@
 #include "datatypes.h"
 //----------------------------------------------------------------------------------------------
 
-#include <string>
-std::string toBinary(int);
-
 //----------------------------------------------------------------------------------------------
 // Flags - F register is the flag register
 // Z = this->registers.F (Byte 7)

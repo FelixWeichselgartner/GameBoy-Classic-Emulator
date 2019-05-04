@@ -23,7 +23,10 @@ private:
 	Byte hram[ADDR_INTR_EN - ADDR_HRAM] 	= { 0 };
 	Byte interrupt_enable_register 			= 0;
 
+public:
+	class Registers* reg;
 	class Registers* registers;
+private:
 	class Joypad* joypad;
 	class Timer* timer;
 

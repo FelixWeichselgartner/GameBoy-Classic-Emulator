@@ -225,7 +225,7 @@ void Memory::WriteECHO(Word address, Byte value) {
 }
 
 void Memory::WriteOAM(Word address, Byte value) {
-	oam[address - ADDR_OAM] = value;
+	oam[address] = value;
 	
 }
 
@@ -280,14 +280,13 @@ Memory::Memory() {
 }
 
 // this->registers gets changed somehow
-static Registers* reg;
 int i = 0;
 
 Memory::Memory(class Registers* registers, class Timer *timer) {
 	if ((this->registers = registers) == NULL) exit(2);
 	if ((this->timer = timer) == NULL) exit(2);
 	if (i == 0) {
-		reg = this->registers;
+		this->reg = this->registers;
 		i++;
 	}
 }
@@ -488,7 +487,7 @@ void Memory::WriteByte(Word address, Byte value) {
 	}
 	// oam.
 	else if (address >= ADDR_OAM && address < ADDR_UNUSABLE) {
-		WriteOAM(address - ADDR_UNUSABLE, value);
+		WriteOAM(address - ADDR_OAM, value);
 	}
 	// unused area.
 	else if (address >= ADDR_UNUSABLE && address < ADDR_IO) {

@@ -100,7 +100,6 @@ void Registers::setHL(Word value) {
 }
 
 Word Registers::getPC() const {
-	//cout << this << endl;
     return this->PC;
 }
 void Registers::setPC(Word value) {
