@@ -16,6 +16,8 @@ class Memory {
 
 private:
 
+	bool EnableBootstrap = true;
+
 	Byte vram[ADDR_EXT_RAM - ADDR_VRAM_T_S] = { 0 };
 	Byte echo[ADDR_OAM - ADDR_ECHO] 		= { 0 };
 	Byte oam[ADDR_UNUSABLE - ADDR_OAM] 		= { 0 };
@@ -23,17 +25,14 @@ private:
 	Byte hram[ADDR_INTR_EN - ADDR_HRAM] 	= { 0 };
 	Byte interrupt_enable_register 			= 0;
 
-public:
-	class Registers* reg;
 	class Registers* registers;
-private:
 	class Joypad* joypad;
 	class Timer* timer;
 
 public:
 
 	class RAM ram;
-	class ROM rom = ROM(&ram);
+	class ROM rom = ROM(&ram, &EnableBootstrap);
 
 private:
 
@@ -68,6 +67,10 @@ public:
 
 	void setScanline(Byte);
 	void setDividerRegister(Byte);
+
+	// setter and getter for enableBootstrap.
+	bool getEnableBootstrap() const;
+	void setEnableBootstrap(bool);
 
 	// load 8 bit value in register.
 	Byte LoadByte();

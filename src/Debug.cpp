@@ -151,13 +151,6 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 			oldRomBank = newRomBank;
 
-			if (this->cpu.registers.getPC() == 0x0100 && cpu.getEnableBootstrap()) {
-				cout << "switch back rom 0x0000 - 0x0100" << endl;
-				this->cpu.memory.rom.dltBootstrap(&cpu.memory.ram);
-				cpu.setEnableBootstrap(false);
-				keyEn = true;
-			}
-
 			if (skip && (skipCounter % 32 == 0) && skipCounter > 31) {
 				cout << "reached" << endl;
 				skipCounter = 0;

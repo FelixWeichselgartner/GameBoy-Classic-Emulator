@@ -125,6 +125,10 @@ void GameBoy::run() {
 				}
 			}
 
+			if (this->cpu.registers.getPC() == 0x0100) {
+				this->cpu.memory.setEnableBootstrap(false);
+			}
+
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);

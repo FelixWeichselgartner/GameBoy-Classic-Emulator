@@ -16,7 +16,7 @@ class CPU {
 private:
 
 	Byte running, gb_stop;
-	bool enableBootstrap, jump;
+	bool EnableBootstrap = true, jump;
 	bool gb_halt, gb_ime;
 	int cycles;
 
@@ -47,10 +47,6 @@ public:
 
 	// getter for clock speed.
 	int getClockSpeed() const;
-
-	// setter and getter for enableBootstrap.
-	bool getEnableBootstrap() const;
-	void setEnableBootstrap(bool);
 
 	// adjust for register a for bcd addition.
 	void daa();

@@ -14,6 +14,7 @@ private:
 
 	char* rom;
 	int RomSize;
+	bool* EnableBootstrap;
 
 	// rom banking.
 	bool MBC_1, MBC_2;
@@ -26,13 +27,12 @@ private:
 public:
 
     ROM();
-	ROM(class RAM*);
+	ROM(class RAM*, bool*);
 	~ROM();
 
 	Byte getMemory(unsigned int) const;
 
-	void load(class RAM*, bool);
-	void dltBootstrap(class RAM*);
+	void load();
 
 	void InitialiseRomBaking();
 	Byte getCurrentRomBank() const;

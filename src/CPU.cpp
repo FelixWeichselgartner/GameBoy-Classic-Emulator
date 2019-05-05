@@ -18,9 +18,8 @@ CPU::CPU() {
 	this->cycles = 0;
 	this->gb_halt = false;
 	this->gb_stop = 0x00;
-	this->enableBootstrap = false;
-	enableBootstrap ? this->registers.setPC(0x0000) : this->registers.setPC(0x0100);
-	this->memory.rom.load(&this->memory.ram, enableBootstrap);
+	EnableBootstrap ? this->registers.setPC(0x0000) : this->registers.setPC(0x0100);
+	this->memory.rom.load();
 }
 
 CPU::~CPU() {
@@ -42,14 +41,6 @@ void CPU::setRunning(Byte running) {
 
 int CPU::getClockSpeed() const {
 	return this->clockSpeed;
-}
-
-bool CPU::getEnableBootstrap() const {
-	return this->enableBootstrap;
-}
-
-void CPU::setEnableBootstrap(bool enableBootstrap) {
-	this->enableBootstrap = enableBootstrap;
 }
 
 void CPU::daa() {

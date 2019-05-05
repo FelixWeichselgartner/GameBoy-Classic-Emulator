@@ -279,16 +279,11 @@ Memory::Memory() {
 	InitMemory();
 }
 
-// this->registers gets changed somehow
-int i = 0;
-
 Memory::Memory(class Registers* registers, class Timer *timer) {
 	if ((this->registers = registers) == NULL) exit(2);
 	if ((this->timer = timer) == NULL) exit(2);
-	if (i == 0) {
-		this->reg = this->registers;
-		i++;
-	}
+	this->joypad = NULL;
+	InitMemory();
 }
 
 Memory::~Memory() {
@@ -355,12 +350,20 @@ void Memory::setDividerRegister(Byte reg) {
 }
 
 ////////////////////////////////////////////////////////////////
+// enable bootstrap getter & setter.
+
+bool Memory::getEnableBootstrap() const {
+	return this->EnableBootstrap;
+}
+
+void Memory::setEnableBootstrap(bool EnableBootstrap) {
+	this->EnableBootstrap = EnableBootstrap;
+}
+
+////////////////////////////////////////////////////////////////
 // load Byte/Word from Rom.
 
 Byte Memory::LoadByte() {
-	if (reg != this->registers) {
-		cout << "it happened" << endl;
-	}
 	this->registers->setPC(this->registers->getPC() + 1);
 	return ReadByte(this->registers->getPC());
 }
@@ -462,8 +465,10 @@ Byte Memory::ReadByte(Word address) {
 	else if (address == ADDR_INTR_EN) {
 		return interrupt_enable_register;
 	}
+	// this should never occour.
 	else {
 		cout << "address: " << (int)address << endl;
+		return 0xFF;
 	}
 }
 

@@ -33,21 +33,10 @@ Byte bootstrap[] = {
 	0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50, // 0xF0
 };
 
-void cpBootstrap(class RAM *ram) {
-	for (int i = 0; i < 0x0100; i++) {
-		ram->setMemory(i, bootstrap[i]);
-	}
-}
-
-void ROM::dltBootstrap(class RAM* ram) {
-	for (int i = 0; i < 0x0100; i++) {
-		ram->setMemory(i, rom[i]);
-	}
-}
-
 ROM::ROM() {
 	this->rom = NULL;
 	this->RomSize = 0;
+	this->EnableBootstrap = NULL;
 	this->MBC_1 = this->MBC_2 = false;
 	this->CurrentRomBank = 1;
 	this->ram = NULL;
@@ -55,9 +44,10 @@ ROM::ROM() {
 	this->RomBankingMode = 0x00;
 }
 
-ROM::ROM(class RAM* ram) {
+ROM::ROM(class RAM* ram, bool *EnableBootstrap) {
 	this->rom = NULL;
 	this->RomSize = 0;
+	if ((this->EnableBootstrap = EnableBootstrap) == NULL) exit(2);
 	this->MBC_1 = this->MBC_2 = false;
 	this->CurrentRomBank = 1;
 	if ((this->ram = ram) == NULL) exit(2);
@@ -70,32 +60,34 @@ ROM::~ROM() {
 }
 
 Byte ROM::getMemory(unsigned int address) const {
-	return this->rom[address];
+	if (!(*EnableBootstrap) || address > 0x00FF) return this->rom[address];
+	else return bootstrap[address];
 }
 
-void ROM::load(class RAM* ram, bool enableBootstrap) {
+void ROM::load() {
 	streampos size;
 
 	ifstream gbfile;
-	//gbfile.open("cpu_instrs/01-special.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("individual/11-op a,(hl).gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("individual/02-interrupts.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("09-op r,r.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
+
+	// working:
 	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Game Boy Controller Kensa Cartridge.gb", ios::in | ios::binary | ios::ate);
+
+	// not working:
+	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
+
+	// unknown:
+	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);	
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);
 		size = gbfile.tellg();
 		cout << "file length: " << HEX16 << size << endl;
-
 		gbfile.seekg(0, ios::beg);
 		RomSize = (int)size;
 		this->rom = new char[RomSize];
@@ -110,10 +102,6 @@ void ROM::load(class RAM* ram, bool enableBootstrap) {
 	}
 
 	InitialiseRomBaking();
-
-	if (enableBootstrap) {
-		cpBootstrap(ram);
-	}
 
 	return;
 }
