@@ -17,7 +17,7 @@ private:
 	bool* EnableBootstrap;
 
 	// rom banking.
-	bool MBC_1, MBC_2;
+	bool MBC_1, MBC_2, MBC_3, MBC_5;
 	bool RomBanking;
 	Byte CurrentRomBank, RomBankingMode;
 
@@ -34,6 +34,7 @@ public:
 
 	void load();
 
+	int getRomSize() const { return this->RomSize; }
 	void InitialiseRomBaking();
 	Byte getCurrentRomBank() const;
 	Byte getRomBankingMode() const;

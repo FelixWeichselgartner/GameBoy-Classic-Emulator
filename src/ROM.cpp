@@ -37,7 +37,7 @@ ROM::ROM() {
 	this->rom = NULL;
 	this->RomSize = 0;
 	this->EnableBootstrap = NULL;
-	this->MBC_1 = this->MBC_2 = false;
+	this->MBC_1 = this->MBC_2 = this->MBC_3 = this->MBC_5 = false;
 	this->CurrentRomBank = 1;
 	this->ram = NULL;
 	this->RomBanking = true;
@@ -48,7 +48,7 @@ ROM::ROM(class RAM* ram, bool *EnableBootstrap) {
 	this->rom = NULL;
 	this->RomSize = 0;
 	if ((this->EnableBootstrap = EnableBootstrap) == NULL) exit(2);
-	this->MBC_1 = this->MBC_2 = false;
+	this->MBC_1 = this->MBC_2 = this->MBC_3 = this->MBC_5 = false;
 	this->CurrentRomBank = 1;
 	if ((this->ram = ram) == NULL) exit(2);
 	this->RomBanking = true;
@@ -60,8 +60,16 @@ ROM::~ROM() {
 }
 
 Byte ROM::getMemory(unsigned int address) const {
-	if (!(*EnableBootstrap) || address > 0x00FF) return this->rom[address];
-	else return bootstrap[address];
+	if (!(*EnableBootstrap) || address > 0x00FF) {
+		if (!(address >= RomSize)) {
+			return this->rom[address];
+		} else {
+			cout << "out of range: " << HEX16 << address << endl;
+			return 0x00;
+		}
+	} else {
+		return bootstrap[address];
+	}
 }
 
 void ROM::load() {
@@ -70,15 +78,17 @@ void ROM::load() {
 	ifstream gbfile;
 
 	// working:
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Game Boy Controller Kensa Cartridge.gb", ios::in | ios::binary | ios::ate);
 
 	// not working:
+	//gbfile.open("instr_timing.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("mbc1/rom_512Kb.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
 
 	// unknown:
 	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);
@@ -107,61 +117,102 @@ void ROM::load() {
 }
 
 void ROM::InitialiseRomBaking() {
-	/*
-	memory bank controller modes:
-	(http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header)
-	(http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers)
-
-	00h  ROM ONLY                 19h  MBC5
-	01h  MBC1                     1Ah  MBC5+RAM
-	02h  MBC1+RAM                 1Bh  MBC5+RAM+BATTERY
-	03h  MBC1+RAM+BATTERY         1Ch  MBC5+RUMBLE
-	05h  MBC2                     1Dh  MBC5+RUMBLE+RAM
-	06h  MBC2+BATTERY             1Eh  MBC5+RUMBLE+RAM+BATTERY
-	08h  ROM+RAM                  20h  MBC6
-	09h  ROM+RAM+BATTERY          22h  MBC7+SENSOR+RUMBLE+RAM+BATTERY
-	0Bh  MMM01
-	0Ch  MMM01+RAM
-	0Dh  MMM01+RAM+BATTERY
-	0Fh  MBC3+TIMER+BATTERY
-	10h  MBC3+TIMER+RAM+BATTERY   FCh  POCKET CAMERA
-	11h  MBC3                     FDh  BANDAI TAMA5
-	12h  MBC3+RAM                 FEh  HuC3
-	13h  MBC3+RAM+BATTERY         FFh  HuC1+RAM+BATTERY
-	*/
+	// memory bank controller modes:
+	// http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header
+	// http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers
 
 	switch (rom[0x0147]) {
-		case 0:
+		// 00h  ROM ONLY
+		case 0x00:
 			cout << "Game uses no MBC." << endl;
 			break;
-		case 1: 
+		// 01h  MBC1
+		case 0x01: 
 			MBC_1 = true; 
 			break;
+		// 02h  MBC1+RAM
 		case 2: 
 			MBC_1 = true; 
 			break;
+		// 03h  MBC1+RAM+BATTERY
 		case 3: 
 			MBC_1 = true; 
 			break;
-		case 4: 
-			MBC_2 = true; 
-			break;
+		// 05h  MBC2
 		case 5: 
 			MBC_2 = true; 
 			break;
+		// 06h  MBC2+BATTERY
+		case 0x06:
+			MBC_2 = true;
+			break;
+		// 08h  ROM+RAM
+		// 09h  ROM+RAM+BATTERY
+		// 0Bh  MMM01
+		// 0Ch  MMM01+RAM
+		// 0Dh  MMM01+RAM+BATTERY
+		// 0Fh  MBC3+TIMER+BATTERY
+		case 0x0F:
+			MBC_3 = true;
+			break;
+		// 10h  MBC3+TIMER+RAM+BATTERY
+		case 0x10:
+			MBC_3 = true;
+			break;
+		// 11h  MBC3
+		case 0x11:
+			MBC_3 = true;
+			break;
+		// 12h  MBC3+RAM
+		case 0x12:
+			MBC_3 = true;
+			break;
+		// 13h  MBC3+RAM+BATTERY
+		case 0x13:
+			MBC_3 = true;
+			break;
+		// 19h  MBC5
+		case 0x19:
+			MBC_5 = true;
+			break;
+		// 1Ah  MBC5+RAM
+		case 0x1A:
+			MBC_5 = true;
+			break;
+	    // 1Bh  MBC5+RAM+BATTERY
+		case 0x1B:
+			MBC_5 = true;
+			break;
+	    // 1Ch  MBC5+RUMBLE
+		case 0x1C:
+			MBC_5 = true;
+			break;
+	    // 1Dh  MBC5+RUMBLE+RAM
+		case 0x1D:
+			MBC_5 = true;
+			break;
+	    // 1Eh  MBC5+RUMBLE+RAM+BATTERY
+		case 0x1E:
+			MBC_5 = true;
+			break;
+	    // 20h  MBC6
+	    // 22h  MBC7+SENSOR+RUMBLE+RAM+BATTERY
+	   	// FCh  POCKET CAMERA
+	    // FDh  BANDAI TAMA5
+	    // FEh  HuC3
+	    // FFh  HuC1+RAM+BATTERY
 		default: 
 			cout << "The Mode " << HEX << (int)rom[0x0147] << "h is currently not supported" << endl;
 			exit(1);
 			break;
 	}
 
-	if (MBC_1) {
-		cout << "Game uses MBC1." << endl;
-	}
+	if (MBC_1) cout << "Game uses MBC1." << endl;
+	if (MBC_2) cout << "Game uses MBC2." << endl;
+	if (MBC_3) cout << "Game uses MBC3." << endl;
+	if (MBC_5) cout << "Game uses MBC5." << endl;
 
-	if (MBC_2) {
-		cout << "Game uses MBC2." << endl;
-	}
+	ram->reserveRamBankMemory(rom[0x0148]);
 }
 
 Byte ROM::getCurrentRomBank() const {
@@ -179,15 +230,17 @@ void ROM::ChangeLowRomBank(Byte value) {
 		CurrentRomBank = (CurrentRomBank & 224) | (value & 31);
 	}
 
-	if (CurrentRomBank == 0x00) {
-		CurrentRomBank++;
-	}
+	//if (CurrentRomBank == 0x04) 
+	//	cout << "four" << endl;
+
+	if (CurrentRomBank == 0x00) CurrentRomBank++;
 
 	return;
 }
 
 void ROM::ChangeHighRomBank(Byte value) {
-	CurrentRomBank = (CurrentRomBank & 0x1F) | (value & 0xE0);
+	CurrentRomBank &= 0x1F;
+	CurrentRomBank |= (value & 0xE0);
 	if (CurrentRomBank == 0x00) {
 		CurrentRomBank++;
 	}
@@ -197,7 +250,7 @@ void ROM::ChangeHighRomBank(Byte value) {
 
 void ROM::ChangeRomRamMode(Byte value) {
 	this->RomBanking = value & 0x01;
-	if (this->RomBanking) {
+	if (!this->RomBanking) {
 		this->ram->setCurrentRamBank(0x00);
 	}
 	
@@ -217,24 +270,32 @@ void ROM::EnableRamBank(unsigned short address, Byte value) {
 
 void ROM::HandleBanking(unsigned short address, Byte value) {
 	// ram enable.
-	if (address < 0x2000 && (MBC_1 || MBC_2)) {
-		EnableRamBank(address, value);
+	if (address < 0x2000) {
+		if (MBC_1 || MBC_2) {
+			EnableRamBank(address, value);
+		}
 	}
 	// change rom bank.
-	else if (address >= 0x2000 && address < 0x4000 && (MBC_1 || MBC_2)) {
-		ChangeLowRomBank(value);
+	else if (address >= 0x2000 && address < 0x4000) {
+		if (MBC_1 || MBC_2) {
+			ChangeLowRomBank(value);
+		}
 	}
 	// rom or ram bank change.
-	else if (address >= 0x4000 && address < 0x6000 && MBC_1) {
-		if (RomBanking) { //RomBanking
-			ChangeHighRomBank(value);
-		} else {
-			this->ram->ChangeRamBank(value);
+	else if (address >= 0x4000 && address < 0x6000) {
+		if (MBC_1) {
+			if (RomBanking) { //RomBanking
+				ChangeHighRomBank(value);
+			} else {
+				this->ram->ChangeRamBank(value);
+			}
 		}
 	}
 	// rom and ram banking.
-	else if (address >= 0x6000 && address < 0x8000 || MBC_1) {
-		ChangeRomRamMode(value);
+	else if (address >= 0x6000 && address < 0x8000) {
+		if (MBC_1) {
+			ChangeRomRamMode(value);
+		}
 	}
 }
 

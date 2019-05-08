@@ -10,7 +10,6 @@ using namespace std;
 #include <SDL2/SDL.h>
 
 #include <fstream>
-#include <string>
 //----------------------------------------------------------------------------------------------
 
 void delay(int milli_seconds) {

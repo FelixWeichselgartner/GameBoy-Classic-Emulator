@@ -20,6 +20,8 @@ private:
 
 public:
 
+	void reserveRamBankMemory(Byte);
+
     RAM();
 
 	Byte getMemory(Word) const;

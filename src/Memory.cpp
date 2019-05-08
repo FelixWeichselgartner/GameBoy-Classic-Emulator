@@ -12,7 +12,9 @@ Byte Memory::ReadROM(Word address) {
 	if (address < ADDR_ROM_1) {
 		return this->rom.getMemory(address);
 	} else {
-		return this->rom.getMemory(address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000));
+		//if (address > 0x8000) 
+		//	cout << HEX16 << address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000) << endl;
+		return this->rom.getMemory(address + ((this->rom.getCurrentRomBank() % (this->rom.getRomSize() / 0x4000) - 1) * 0x4000));
 	}
 }
 
@@ -173,7 +175,6 @@ Byte Memory::ReadIO(Word WordAddress) {
 
 		// scanline.
 		case 0x44:
-			cout << (int)io[address] << endl;
 			return io[address];
 
 		case 0x72:
@@ -509,6 +510,10 @@ void Memory::WriteByte(Word address, Byte value) {
 	// interrupt enable register.
 	else if (address == ADDR_INTR_EN) {
 		interrupt_enable_register = value;
+	}
+	// this should never occour.
+	else {
+		cout << "address: " << (int)address << endl;
 	}
 
 	return;

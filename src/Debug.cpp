@@ -37,7 +37,8 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "sp:" << HEX16 << this->cpu.registers.getSP() << " ";
 	file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44) << " ";
 	file << "ir:" << HEX << (int)this->cpu.memory.ReadByte(0xff0f) << " ";
-	file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff) << endl;
+	file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff);
+	file << "rbn:" << HEX << (int)this->cpu.memory.rom.getCurrentRomBank() << endl;
 }
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {

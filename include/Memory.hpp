@@ -16,7 +16,7 @@ class Memory {
 
 private:
 
-	bool EnableBootstrap = true;
+	bool EnableBootstrap = false;
 
 	Byte vram[ADDR_EXT_RAM - ADDR_VRAM_T_S] = { 0 };
 	Byte echo[ADDR_OAM - ADDR_ECHO] 		= { 0 };

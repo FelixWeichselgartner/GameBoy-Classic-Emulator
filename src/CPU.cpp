@@ -18,7 +18,7 @@ CPU::CPU() {
 	this->cycles = 0;
 	this->gb_halt = false;
 	this->gb_stop = 0x00;
-	EnableBootstrap ? this->registers.setPC(0x0000) : this->registers.setPC(0x0100);
+	this->memory.getEnableBootstrap() ? this->registers.setPC(0x0000) : this->registers.setPC(0x0100);
 	this->memory.rom.load();
 }
 

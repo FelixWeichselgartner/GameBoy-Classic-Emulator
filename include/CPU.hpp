@@ -16,7 +16,7 @@ class CPU {
 private:
 
 	Byte running, gb_stop;
-	bool EnableBootstrap = true, jump;
+	bool jump;
 	bool gb_halt, gb_ime;
 	int cycles;
 
