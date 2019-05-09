@@ -85,10 +85,10 @@ void ROM::load() {
 
 	// not working:
 	//gbfile.open("instr_timing.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("mbc1/rom_512Kb.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("mbc1/rom_512Kb.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
-	gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
 
 	// unknown:
 	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);
@@ -239,9 +239,10 @@ void ROM::ChangeLowRomBank(Byte value) {
 }
 
 void ROM::ChangeHighRomBank(Byte value) {
-	CurrentRomBank &= 0x1F;
-	CurrentRomBank |= (value & 0xE0);
-	if (CurrentRomBank == 0x00) {
+	CurrentRomBank = (CurrentRomBank & 0x1F) | ((value & 0x03) << 5);
+
+	if (CurrentRomBank == 0x00 || CurrentRomBank == 0x20 
+		|| CurrentRomBank == 0x40 || CurrentRomBank == 0x60) {
 		CurrentRomBank++;
 	}
 
