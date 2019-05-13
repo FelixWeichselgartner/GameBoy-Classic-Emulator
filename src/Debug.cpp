@@ -37,8 +37,12 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "sp:" << HEX16 << this->cpu.registers.getSP() << " ";
 	file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44) << " ";
 	file << "ir:" << HEX << (int)this->cpu.memory.ReadByte(0xff0f) << " ";
-	file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff);
-	file << "rbn:" << HEX << (int)this->cpu.memory.rom.getCurrentRomBank() << endl;
+	file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff) << " ";
+	file << "cp:" << HEX << (int)this->cpu.memory.ReadByte(0xa000) << " ";
+	file << "rbn:" << HEX << (int)this->cpu.memory.mbc->getCurrentRomBank() << " ";
+	file << "ran:" << HEX << (int)this->cpu.memory.ram.getCurrentRamBank() << endl;
+	//file << "mben:" << boolalpha << this->cpu.memory.rom.RomBanking << " ";
+	//file << "rben:" << boolalpha << this->cpu.memory.ram.EnableRamBanking << endl;
 }
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
@@ -57,7 +61,6 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 	bool skip = false;
 	int skipCounter = 1;
 	game = ' ';
-	Byte oldRomBank = 0x01, newRomBank;
 
 	cout << "ram enable: " << boolalpha << this->cpu.memory.ram.getRamEnable() << endl;
 
@@ -142,15 +145,6 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 					break;
 				}
 			}
-
-			newRomBank = cpu.memory.rom.getCurrentRomBank();
-
-			if (newRomBank != oldRomBank && false) {
-				cout << "new rb: " << HEX << (int)this->cpu.memory.rom.getCurrentRomBank() << endl;
-				cout << "address: " << HEX16 << this->cpu.registers.getPC() << endl;
-			}
-
-			oldRomBank = newRomBank;
 
 			if (skip && (skipCounter % 32 == 0) && skipCounter > 31) {
 				cout << "reached" << endl;

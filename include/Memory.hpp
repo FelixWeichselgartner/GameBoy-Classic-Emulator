@@ -4,6 +4,8 @@
 #include "Registers.hpp"
 #include "RAM.hpp"
 #include "ROM.hpp"
+#include "MBC.hpp"
+#include "MBC_1.hpp"
 #include "Timer.hpp"
 
 #include "bit.hpp"
@@ -17,6 +19,7 @@ class Memory {
 private:
 
 	bool EnableBootstrap = false;
+	Byte MemoryBankingMode;
 
 	Byte vram[ADDR_EXT_RAM - ADDR_VRAM_T_S] = { 0 };
 	Byte echo[ADDR_OAM - ADDR_ECHO] 		= { 0 };
@@ -33,21 +36,18 @@ public:
 
 	class RAM ram;
 	class ROM rom = ROM(&ram, &EnableBootstrap);
+	class MBC* mbc;
 
 private:
 
-	Byte ReadROM(Word);
 	Byte ReadVRAM(Word);
-	Byte ReadRAM(Word);
 	Byte ReadECHO(Word);
 	Byte ReadOAM(Word);
 	Byte ReadUNUSABLE(Word);
 	Byte ReadIO(Word);
 	Byte ReadHRAM(Word);
 
-	void WriteROM(Word, Byte);
 	void WriteVRAM(Word, Byte);
-	void WriteRAM(Word, Byte);
 	void WriteECHO(Word, Byte);
 	void WriteOAM(Word, Byte);
 	void WriteUNUSABLE(Word, Byte);
@@ -96,6 +96,9 @@ public:
 
 	// print memory.
 	void print(Word, Word);
+
+	// initialise mbc
+	void InitialiseMemoryBanking();
 
 };
 //----------------------------------------------------------------------------------------------

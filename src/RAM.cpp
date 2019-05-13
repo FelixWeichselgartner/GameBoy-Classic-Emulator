@@ -1,20 +1,30 @@
 //----------------------------------------------------------------------------------------------
 #include "../include/RAM.hpp"
 #include <cstdlib>
+
+#include "../include/format.hpp"
+#include <iostream>
+#include <iomanip>
+using namespace std;
 //----------------------------------------------------------------------------------------------
 
 void RAM::reserveRamBankMemory(Byte AmountBanks) {
+	
+	/*cout << "reserved: " << HEX16 << 0x2000 * AmountBanks << " of RamBankMemory" << endl;
 	if ((this->RamBanks = new Byte[0x2000 * AmountBanks]) == NULL) exit(2);
 
 	for (int i = 0; i < 0x2000 * AmountBanks; i++) {
 		RamBanks[i] = 0;
-	}
+	}*/
+
+	if ((this->RamBanks = new Byte[0x2000 * 4]) == NULL) exit(2);
 
 	this->CurrentRamBank = 0;
 }
 
 RAM::RAM() {
 	this->RamBanks = NULL;
+	this->EnableRamBanking = false; // not sure if right
 }
 
 Byte RAM::getMemory(Word address) const {

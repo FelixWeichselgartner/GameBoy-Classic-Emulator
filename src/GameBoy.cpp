@@ -5,22 +5,10 @@
 #include <iomanip>
 using namespace std;
 
-#include <time.h>
-
 #include <SDL2/SDL.h>
 
 #include <fstream>
 //----------------------------------------------------------------------------------------------
-
-void delay(int milli_seconds) {
-	if (milli_seconds < 0) {
-		return;
-	} else {
-		clock_t start_time = clock();
-		while (clock() < start_time + milli_seconds)
-			;
-	}
-}
 
 GameBoy::GameBoy() {
 	if (&joypad != NULL)
@@ -102,8 +90,6 @@ bool GameBoy::winEvent(SDL_Event &windowEvent, bool &screen) {
 	return false;
 }
 
-unsigned long long counter = 0;
-
 void GameBoy::run() {
 	SDL_Event windowEvent;
 
@@ -136,9 +122,6 @@ void GameBoy::run() {
 		}
 
 		gpu.render();
-
-		//delay(delaytime - (int)difftime(clock(), starttime));
-		//cout << "timediff: " << difftime(clock(), starttime);
 	}
 
 	SDL_DestroyRenderer(gpu.getRenderer());

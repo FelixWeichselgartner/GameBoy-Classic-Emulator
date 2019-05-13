@@ -8,28 +8,8 @@ using namespace std;
 ////////////////////////////////////////////////////////////////
 // private read/write utility functions.
 
-Byte Memory::ReadROM(Word address) {
-	if (address < ADDR_ROM_1) {
-		return this->rom.getMemory(address);
-	} else {
-		//if (address > 0x8000) 
-		//	cout << HEX16 << address - ADDR_ROM_1 + (this->rom.getCurrentRomBank() * 0x4000) << endl;
-		return this->rom.getMemory(address + ((this->rom.getCurrentRomBank() % (this->rom.getRomSize() / 0x4000) - 1) * 0x4000));
-	}
-}
-
 Byte Memory::ReadVRAM(Word address) {
 	return vram[address];
-}
-
-Byte Memory::ReadRAM(Word address) {
-	if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
-		if (this->ram.getRamEnable())
-			return this->ram.getRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000));
-		else return 0xFF; //not quite sure if this is correct
-	} else {
-		return this->ram.getMemory(address - ADDR_INT_RAM_1);
-	}
 }
 
 Byte Memory::ReadECHO(Word address) {
@@ -202,27 +182,12 @@ Byte Memory::ReadHRAM(Word address) {
 	return hram[address];
 }
 
-void Memory::WriteROM(Word address, Byte value) {
-	this->rom.HandleBanking(address, value);
-}
-
 void Memory::WriteVRAM(Word address, Byte value) {
 	vram[address] = value;
 }
 
-void Memory::WriteRAM(Word address, Byte value) {
-	if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
-		if (this->ram.getRamEnable())
-			this->ram.setRamBankMemory(address - ADDR_EXT_RAM + (this->ram.getCurrentRamBank() * 0x2000), value);
-		else
-			cout << "didnt write @ address: " << HEX16 << address << " value: " << HEX << (int)value << endl;
-	} else {
-		ram.setMemory(address - ADDR_INT_RAM_1, value);
-	}
-}
-
 void Memory::WriteECHO(Word address, Byte value) {
-	echo[address - 0x2000 - ADDR_OAM] = value;	
+	echo[address] = value;	
 }
 
 void Memory::WriteOAM(Word address, Byte value) {
@@ -285,10 +250,12 @@ Memory::Memory(class Registers* registers, class Timer *timer) {
 	if ((this->timer = timer) == NULL) exit(2);
 	this->joypad = NULL;
 	InitMemory();
+	this->rom.load();
+	InitialiseMemoryBanking();
 }
 
 Memory::~Memory() {
-
+	delete mbc;
 }
 
 ////////////////////////////////////////////////////////////////
@@ -432,7 +399,7 @@ void Memory::WriteWord(Word address, Word value) {
 Byte Memory::ReadByte(Word address) {
 	// rom memory bank.
 	if (address < ADDR_VRAM_T_S) {
-		return ReadROM(address);
+		return mbc->ReadROM(address);
 	}
 	// vram.
 	else if (address >= ADDR_VRAM_T_S && address < ADDR_EXT_RAM) {
@@ -440,7 +407,7 @@ Byte Memory::ReadByte(Word address) {
 	}
 	// ram memory bank.
 	else if (address >= ADDR_EXT_RAM && address < ADDR_ECHO) {
-		return ReadRAM(address);
+		return mbc->ReadRAM(address);
 	}
 	// echo memory.
 	else if (address >= ADDR_ECHO && address < ADDR_OAM) {
@@ -476,7 +443,7 @@ Byte Memory::ReadByte(Word address) {
 void Memory::WriteByte(Word address, Byte value) {
 	// rom banking.
 	if (address < ADDR_VRAM_T_S) {
-		WriteROM(address, value);
+		mbc->WriteROM(address, value);
 	}
 	// vram.
 	else if (address >= ADDR_VRAM_T_S && address < ADDR_EXT_RAM) {
@@ -484,12 +451,12 @@ void Memory::WriteByte(Word address, Byte value) {
 	}
 	// ram banking.
 	else if (address >= ADDR_EXT_RAM && address < ADDR_ECHO) {
-		WriteRAM(address, value);
+		mbc->WriteRAM(address, value);
 	}
 	// echo is copy of oam.
 	else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
 		WriteECHO(address - ADDR_ECHO, value);
-		WriteOAM(address - ADDR_OAM, value);
+		WriteOAM(address - ADDR_ECHO, value);
 	}
 	// oam.
 	else if (address >= ADDR_OAM && address < ADDR_UNUSABLE) {
@@ -533,4 +500,148 @@ void Memory::print(Word start, Word end) {
 		}
 		cout << endl;
 	}
+}
+
+////////////////////////////////////////////////////////////////
+// initialise mbc
+
+void Memory::InitialiseMemoryBanking() {
+	// memory bank controller modes:
+	// http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header
+	// http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers
+
+	switch (this->rom.getMemory(0x0147)) {
+		// 00h  ROM ONLY
+		case 0x00:
+			this->MemoryBankingMode = 0;
+			break;
+		// 01h  MBC1
+		case 0x01: 
+			this->MemoryBankingMode = 1;
+			break;
+		// 02h  MBC1+RAM
+		case 2: 
+			this->MemoryBankingMode = 1;
+			break;
+		// 03h  MBC1+RAM+BATTERY
+		case 3: 
+			this->MemoryBankingMode = 1;
+			break;
+		// 05h  MBC2
+		case 5: 
+			this->MemoryBankingMode = 2;
+			break;
+		// 06h  MBC2+BATTERY
+		case 0x06:
+			this->MemoryBankingMode = 2;
+			break;
+		// 08h  ROM+RAM
+		// 09h  ROM+RAM+BATTERY
+		// 0Bh  MMM01
+		// 0Ch  MMM01+RAM
+		// 0Dh  MMM01+RAM+BATTERY
+		// 0Fh  MBC3+TIMER+BATTERY
+		case 0x0F:
+			this->MemoryBankingMode = 3;
+			break;
+		// 10h  MBC3+TIMER+RAM+BATTERY
+		case 0x10:
+			this->MemoryBankingMode = 3;
+			break;
+		// 11h  MBC3
+		case 0x11:
+			this->MemoryBankingMode = 3;
+			break;
+		// 12h  MBC3+RAM
+		case 0x12:
+			this->MemoryBankingMode = 3;
+			break;
+		// 13h  MBC3+RAM+BATTERY
+		case 0x13:
+			this->MemoryBankingMode = 3;
+			break;
+		// 19h  MBC5
+		case 0x19:
+			this->MemoryBankingMode = 5;
+			break;
+		// 1Ah  MBC5+RAM
+		case 0x1A:
+			this->MemoryBankingMode = 5;
+			break;
+	    // 1Bh  MBC5+RAM+BATTERY
+		case 0x1B:
+			this->MemoryBankingMode = 5;
+			break;
+	    // 1Ch  MBC5+RUMBLE
+		case 0x1C:
+			this->MemoryBankingMode = 5;
+			break;
+	    // 1Dh  MBC5+RUMBLE+RAM
+		case 0x1D:
+			this->MemoryBankingMode = 5;
+			break;
+	    // 1Eh  MBC5+RUMBLE+RAM+BATTERY
+		case 0x1E:
+			this->MemoryBankingMode = 5;
+			break;
+	    // 20h  MBC6
+	    // 22h  MBC7+SENSOR+RUMBLE+RAM+BATTERY
+	   	// FCh  POCKET CAMERA
+	    // FDh  BANDAI TAMA5
+	    // FEh  HuC3
+	    // FFh  HuC1+RAM+BATTERY
+		default: 
+			cout << "The Mode " << HEX << (int)rom.getMemory(0x0147) << "h is currently not supported" << endl;
+			exit(1);
+			break;
+	}
+
+	switch (this->MemoryBankingMode) {
+		case 0x00:
+			cout << "Game uses no Memory Banking." << endl;
+			if ((this->mbc = new MBC(&rom, &ram)) == NULL) exit(3);
+			break;
+		case 0x01:
+			cout << "Game uses MBC1." << endl;
+			if ((this->mbc = new MBC_1(&rom, &ram)) == NULL) exit(3);
+			break;
+		case 0x02:
+			cout << "Game uses MBC2." << endl;
+			break;
+		case 0x03:
+			cout << "Game uses MBC3." << endl;
+			break;
+		case 0x05:
+			cout << "Game uses MBC5." << endl;
+			break;
+		default:
+			cout << "Memory Banking Mode is undefined." << endl;
+			break;
+	}
+
+	switch (this->rom.getMemory(0x0148)) {
+		case 0x00: cout << "32KByte(no ROM banking)" << endl; break;
+		case 0x01: cout << "64KByte(4 banks)" << endl; break;
+		case 0x02: cout << "128KByte(8 banks)" << endl; break;
+		case 0x03: cout << "256KByte(16 banks)" << endl; break;
+		case 0x04: cout << "512KByte(32 banks)" << endl; break;
+		case 0x05: cout << "1MByte(64 banks) - only 63 banks used by MBC1" << endl; break;
+		case 0x06: cout << "2MByte(128 banks) - only 125 banks used by MBC1" << endl; break;
+		case 0x07: cout << "4MByte(256 banks)" << endl; break;
+		case 0x08: cout << "8MByte(512 banks)" << endl; break;
+		case 0x52: cout << "1.1MByte(72 banks)" << endl; break;
+		case 0x53: cout << "1.2MByte(80 banks)" << endl; break;
+		case 0x54: cout << "1.5MByte(96 banks)" << endl; break;
+	}
+
+	switch (this->rom.getMemory(0x0149)) {
+		case 0x00: cout << "None" << endl; break;
+		case 0x01: cout << "2 KBytes" << endl; break;
+		case 0x02: cout << "8 Kbytes" << endl; break;
+		case 0x03: cout << "32 KBytes(4 banks of 8KBytes each)" << endl; break;
+		case 0x04: cout << "128 KBytes(16 banks of 8KBytes each)" << endl; break;
+		case 0x05: cout << "64 KBytes(8 banks of 8KBytes each)" << endl; break;
+	}
+
+	this->ram.reserveRamBankMemory(this->rom.getMemory(0x0149));
 }
