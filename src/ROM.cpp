@@ -78,10 +78,10 @@ void ROM::load() {
 
 	// not working:
 	//gbfile.open("instr_timing.gb", ios::in | ios::binary | ios::ate);
-	gbfile.open("mbc1/rom_8Mb.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("mbc1/rom_8Mb.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
 
 	// unknown:
 	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);

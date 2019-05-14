@@ -628,6 +628,7 @@ void Memory::InitialiseMemoryBanking() {
 			break;
 	}
 
+	cout << "ROM Size: ";
 	switch (this->rom.getMemory(0x0148)) {
 		case 0x00: cout << "32KByte(no ROM banking)" << endl; break;
 		case 0x01: cout << "64KByte(4 banks)" << endl; break;
@@ -643,6 +644,7 @@ void Memory::InitialiseMemoryBanking() {
 		case 0x54: cout << "1.5MByte(96 banks)" << endl; break;
 	}
 
+	cout << "RAM Size: ";
 	switch (this->rom.getMemory(0x0149)) {
 		case 0x00: cout << "None" << endl; break;
 		case 0x01: cout << "2 KBytes" << endl; break;
@@ -650,6 +652,15 @@ void Memory::InitialiseMemoryBanking() {
 		case 0x03: cout << "32 KBytes(4 banks of 8KBytes each)" << endl; break;
 		case 0x04: cout << "128 KBytes(16 banks of 8KBytes each)" << endl; break;
 		case 0x05: cout << "64 KBytes(8 banks of 8KBytes each)" << endl; break;
+	}
+
+	bool presumeMultiMBC1 = ((MemoryBankingMode == 1) 
+		&& (this->rom.getMemory(0x0149) == 0) 
+		&& (this->rom.getMemory(0x0148) == 0x05));
+
+	if (presumeMultiMBC1) {
+		cout << "this MBC1 type is Multi and not supported." << endl;
+		exit(7);
 	}
 
 	this->ram.reserveRamBankMemory(this->rom.getMemory(0x0149));
