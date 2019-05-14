@@ -15,7 +15,7 @@ private:
 
 	// ram banking.
 	Byte *RamBanks;
-	Byte CurrentRamBank;
+	Byte CurrentRamBank, AmountBanks;
 	bool EnableRamBanking;
 
 public:
@@ -37,6 +37,8 @@ public:
 	void setRamBankMemory(Word, Byte);
 
 	void ChangeRamBank(Byte);
+
+	Byte getAmountBanks() { return this->AmountBanks; }
 	
 };
 //----------------------------------------------------------------------------------------------

@@ -8,7 +8,7 @@ class MBC_1: public MBC {
 private:
 
 	bool RomBanking;
-	Byte RomBankingMode;
+	Byte Mode, HigherRBBits;
 
 public:
 
@@ -18,7 +18,7 @@ public:
 	Byte getCurrentRomBank() const;
 	void ChangeLowRomBank(Byte);
 	void ChangeHighRomBank(Byte);
-	void ChangeRomRamMode(Byte);
+	void ChangeMode(Byte);
 	void EnableRamBank(unsigned short, Byte);
 	void HandleBanking(unsigned short, Byte);
 

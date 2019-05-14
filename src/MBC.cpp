@@ -23,7 +23,7 @@ Byte MBC::ReadROM(Word address) {
 }
 
 void MBC::WriteROM(Word address, Byte value) {
-	cout << "wrote to base class" << endl;
+	//cout << "wrote to base class" << endl;
 	return;
 }
 

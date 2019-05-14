@@ -22,10 +22,10 @@ public:
     MBC();
     MBC(class ROM*, class RAM*);
 
-    Byte ReadROM(Word);
-    void WriteROM(Word, Byte);
-    Byte ReadRAM(Word);
-    void WriteRAM(Word, Byte);
+    virtual Byte ReadROM(Word);
+	virtual void WriteROM(Word, Byte);
+	virtual Byte ReadRAM(Word);
+	virtual void WriteRAM(Word, Byte);
 
     bool getRamEnable() const;
     void setRamEnable(bool);

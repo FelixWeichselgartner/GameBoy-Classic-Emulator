@@ -129,7 +129,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 0
+#define MODE 1
 // MODE 0		normal mode
 // MODE 1		input -> next instruction and save in log file
 // MODE 2		show Nintendo Logo

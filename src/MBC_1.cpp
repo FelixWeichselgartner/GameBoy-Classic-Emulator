@@ -8,56 +8,25 @@ using namespace std;
 MBC_1::MBC_1() {
 	this->CurrentRomBank = 0x01;
 	this->CurrentRamBank = 0x00;
-	this->RomBankingMode = 0x00;
-
+	this->Mode = 0x00;
+	this->HigherRBBits = 0x00;
 	this->rom = NULL;
 	this->ram = NULL;
-
 	RomBanking = true;
 }
 
 MBC_1::MBC_1(class ROM* rom, class RAM* ram) {
 	this->CurrentRomBank = 0x01;
 	this->CurrentRamBank = 0x00;
-	this->RomBankingMode = 0x00;
-
+	this->Mode = 0x00;
+	this->HigherRBBits = 0x00;
 	this->rom = rom;
 	this->ram = ram;
-
-	RomBanking = true;
+	this->RomBanking = true;
 }
 
 Byte MBC_1::getCurrentRomBank() const {
 	return this->CurrentRomBank;
-}
-
-void MBC_1::ChangeLowRomBank(Byte value) {
-	CurrentRomBank = (CurrentRomBank & 0xE0) | (value & 0x1F);
-	if (CurrentRomBank == 0x00 || CurrentRomBank == 0x20
-		|| CurrentRomBank == 0x40 || CurrentRomBank == 0x60) {
-		CurrentRomBank++;
-	}
-	CurrentRomBank &= (this->rom->getRomSize() / 0x4000 - 1);
-
-	return;
-}
-
-void MBC_1::ChangeHighRomBank(Byte value) {
-	cout << "changed high rom bank" << endl;
-	CurrentRomBank = (CurrentRomBank & 0x1F) | ((value & 0x03) << 5);
-	if (CurrentRomBank == 0x00 || CurrentRomBank == 0x20
-		|| CurrentRomBank == 0x40 || CurrentRomBank == 0x60) {
-		CurrentRomBank++;
-	}
-	CurrentRomBank &= (this->rom->getRomSize() / 0x4000 - 1);
-
-	return;
-}
-
-void MBC_1::ChangeRomRamMode(Byte value) {
-	this->RomBanking = !testBit(value, 0);
-
-	return;
 }
 
 void MBC_1::EnableRamBank(unsigned short address, Byte value) {
@@ -67,6 +36,47 @@ void MBC_1::EnableRamBank(unsigned short address, Byte value) {
 			case 0x00: this->ram->setRamEnable(false); break;
 		}
 	}
+
+	return;
+}
+
+void MBC_1::ChangeLowRomBank(Byte value) {
+	if (this->Mode == 0)
+		this->CurrentRomBank = value & 0x1F | (HigherRBBits << 5);
+	else
+		this->CurrentRomBank = value & 0x1F;
+
+	if (CurrentRomBank == 0x00 || CurrentRomBank == 0x20
+		|| CurrentRomBank == 0x40 || CurrentRomBank == 0x60) {
+		CurrentRomBank++;
+	}
+
+	CurrentRomBank &= (this->rom->getRomSize() / 0x4000 - 1); // -2 if bank0 doesnt count
+
+	return;
+}
+
+void MBC_1::ChangeHighRomBank(Byte value) {
+	if (this->Mode == 1) {
+		this->CurrentRamBank = value & 0x03;
+		this->CurrentRamBank &= (this->ram->getAmountBanks() - 1);
+	} else {
+		HigherRBBits = value & 0x03;
+		CurrentRomBank = (CurrentRomBank & 0x1F) | (HigherRBBits << 5);
+		/*
+		if (CurrentRomBank == 0x00 || CurrentRomBank == 0x20
+			|| CurrentRomBank == 0x40 || CurrentRomBank == 0x60) {
+			CurrentRomBank++;
+		} */
+		CurrentRomBank &= (this->rom->getRomSize() / 0x4000 - 1);
+	}
+	
+	return;
+}
+
+void MBC_1::ChangeMode(Byte value) {
+	if (!(this->ram->getAmountBanks() != 3 && testBit(value, 0)))
+		this->Mode = value & 0x01;
 
 	return;
 }
@@ -82,15 +92,11 @@ void MBC_1::HandleBanking(unsigned short address, Byte value) {
 	}
 	// rom or ram bank change.
 	else if (address >= 0x4000 && address < 0x6000) {
-		if (RomBanking) { //RomBanking
-			ChangeHighRomBank(value);
-		} else {
-			this->ram->ChangeRamBank(value);
-		}
+		ChangeHighRomBank(value);
 	}
 	// rom and ram banking.
 	else if (address >= 0x6000 && address < 0x8000) {
-		ChangeRomRamMode(value);
+		ChangeMode(value);
 	}
 }
 
@@ -98,14 +104,11 @@ Byte MBC_1::ReadROM(Word address) {
 	if (address < ADDR_ROM_1) {
 		return this->rom->getMemory(address);
 	} else {
-		//if (address > 0x8000) 
-		//	cout << HEX16 << address - ADDR_ROM_1 + (this->rom->getCurrentRomBank() * 0x4000) << endl;
-		return this->rom->getMemory(address + ((this->CurrentRomBank % (this->rom->getRomSize() / 0x4000) - 1) * 0x4000));
+		return this->rom->getMemory(address - 0x4000 + this->CurrentRomBank * 0x4000);
 	}
 }
 
 void MBC_1::WriteROM(Word address, Byte value) {
-	cout << "wrote to rom" << endl;
 	HandleBanking(address, value);
 }
 

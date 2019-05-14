@@ -502,6 +502,11 @@ void Memory::print(Word start, Word end) {
 	}
 }
 
+void NotSupported() {
+	cout << "this mode is currently not supported." << endl;
+	exit(5);
+}
+
 ////////////////////////////////////////////////////////////////
 // initialise mbc
 
@@ -607,15 +612,19 @@ void Memory::InitialiseMemoryBanking() {
 			break;
 		case 0x02:
 			cout << "Game uses MBC2." << endl;
+			NotSupported();
 			break;
 		case 0x03:
 			cout << "Game uses MBC3." << endl;
+			NotSupported();
 			break;
 		case 0x05:
 			cout << "Game uses MBC5." << endl;
+			NotSupported();
 			break;
 		default:
 			cout << "Memory Banking Mode is undefined." << endl;
+			NotSupported();
 			break;
 	}
 

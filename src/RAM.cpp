@@ -9,7 +9,7 @@ using namespace std;
 //----------------------------------------------------------------------------------------------
 
 void RAM::reserveRamBankMemory(Byte AmountBanks) {
-	
+	this->AmountBanks = AmountBanks;
 	/*cout << "reserved: " << HEX16 << 0x2000 * AmountBanks << " of RamBankMemory" << endl;
 	if ((this->RamBanks = new Byte[0x2000 * AmountBanks]) == NULL) exit(2);
 
