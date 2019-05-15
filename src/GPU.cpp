@@ -47,7 +47,6 @@ void GPU::setScanline(Byte s) {
 
 void GPU::IncScanline() {
 	this->memory->setScanline(getScanline() + 1);
-	//cout << "wrote: " << (int)(getScanline() + 1) << endl;
 }
 
 void GPU::resetScanline() {
@@ -327,8 +326,6 @@ void GPU::renderDisplay(Byte currentline) {
 void GPU::UpdateGraphics(int cycles) {
 	Byte currentline;
 
-	//cout << "scanline: " << (int)getScanline() << endl;
-
 	SetLCDStatus();
 
 	if (IsLCDEnabled()) {
@@ -349,10 +346,6 @@ void GPU::UpdateGraphics(int cycles) {
 				renderDisplay(currentline);
 			}
 		}
-	}
-
-	else {
-		//cout << "disabled" << endl;
 	}
 
 	return;

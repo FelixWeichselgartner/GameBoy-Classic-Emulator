@@ -105,12 +105,21 @@ Word Registers::getPC() const {
 void Registers::setPC(Word value) {
     this->PC = value;
 }
+void Registers::incPC() {
+	this->PC++;
+}
 
 Word Registers::getSP() const {
     return this->SP;
 }
 void Registers::setSP(Word value) {
     this->SP = value;
+}
+void Registers::incSP() {
+	this->SP++;
+}
+void Registers::decSP() {
+	this->SP--;
 }
 
 Byte Registers::getFlag(char type) {

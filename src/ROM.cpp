@@ -67,7 +67,6 @@ Byte ROM::getMemory(unsigned int address) const {
 
 void ROM::load() {
 	streampos size;
-
 	ifstream gbfile;
 
 	// working:
@@ -77,11 +76,12 @@ void ROM::load() {
 	//gbfile.open("Game Boy Controller Kensa Cartridge.gb", ios::in | ios::binary | ios::ate);
 
 	// not working:
-	//gbfile.open("instr_timing.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("mbc1/rom_8Mb.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("instr_timing.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("mem_timing.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("mbc1/ram_256Kb.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
-	gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
 
 	// unknown:
 	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);
@@ -102,6 +102,7 @@ void ROM::load() {
 		gbfile.close();
 	} else {
 		cout << "unable to open file" << endl;
+		exit(9);
 	}
 
 	return;

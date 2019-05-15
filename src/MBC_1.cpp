@@ -114,9 +114,15 @@ void MBC_1::WriteROM(Word address, Byte value) {
 
 Byte MBC_1::ReadRAM(Word address) {
 	if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
-		if (this->ram->getRamEnable())
-			return this->ram->getRamBankMemory(address - ADDR_EXT_RAM + (this->ram->getCurrentRamBank() * 0x2000));
-		else return 0xFF; //not quite sure if this is correct
+		if (this->ram->getRamEnable()) {
+			if (this->Mode == 0) {
+				return this->ram->getRamBankMemory(address - ADDR_EXT_RAM);
+			} else {
+				return this->ram->getRamBankMemory(address - ADDR_EXT_RAM + this->ram->getCurrentRamBank() * 0x2000);
+			}
+		} else {
+			return 0xFF;
+		}
 	} else {
 		return this->ram->getMemory(address - ADDR_INT_RAM_1);
 	}
@@ -124,9 +130,16 @@ Byte MBC_1::ReadRAM(Word address) {
 
 void MBC_1::WriteRAM(Word address, Byte value) {
 	if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
-		if (this->ram->getRamEnable())
-			this->ram->setRamBankMemory(address - ADDR_EXT_RAM + (this->ram->getCurrentRamBank() * 0x2000), value);
-		else cout << "didnt write @ address: " << HEX16 << address << " value: " << HEX << (int)value << endl;
+		if (this->ram->getRamEnable()) {
+			if (this->Mode == 0) {
+				this->ram->setRamBankMemory(address - ADDR_EXT_RAM, value);
+			} else {
+				this->ram->setRamBankMemory(address - ADDR_EXT_RAM + this->ram->getCurrentRamBank() * 0x2000, value);
+			}
+		}
+		else {
+			cout << "didnt write to " << HEX16 << address << " with " << HEX << (int)value << endl;
+		}
 	} else {
 		this->ram->setMemory(address - ADDR_INT_RAM_1, value);
 	}

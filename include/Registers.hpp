@@ -114,10 +114,13 @@ private:
     // PC Register
     Word getPC() const;
     void setPC(Word);
+	void incPC();
 
     // SP Register
     Word getSP() const;
     void setSP(Word);
+	void incSP();
+	void decSP();
 
     // Flag handling.
 	Byte getFlag(char);

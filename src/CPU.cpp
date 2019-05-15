@@ -1391,7 +1391,7 @@ Byte CPU::set(int bit, Byte value) {
 }
 
 int CPU::executeExtendedOpcodes() {
-	this->registers.setPC(this->registers.getPC() + 1);
+	this->registers.incPC();
 	Byte exOpcode = memory.ReadByte(this->registers.getPC());
 
 	switch (exOpcode) {
@@ -2180,7 +2180,7 @@ int CPU::CPUstep() {
 	// may not increase program counter after jumps.
 	if (!this->jump) {
 		if (!gb_halt)
-			this->registers.setPC(this->registers.getPC() + 1);
+			this->registers.incPC();
 	} else {
 		this->jump = false;
 	}
