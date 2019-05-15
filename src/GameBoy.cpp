@@ -97,11 +97,8 @@ void GameBoy::run() {
 	int delaytime = 1000 / 60;
 	bool screen = false;
 
-	clock_t starttime;
-
 	while (this->cpu.getRunning()) {
 		cyclesInstruction = 0;
-		starttime = clock();
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {

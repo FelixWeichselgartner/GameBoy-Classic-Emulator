@@ -26,7 +26,7 @@ public:
 	const int clockSpeed = 4194304;
 	const float fps = (float)59.7;
 	const int MAXCYCLES = (int)(clockSpeed / fps);
-	const int CYCLEFACTOR = 8;
+	const int CYCLEFACTOR = 4;
 
     // general purpose registers + stack pointer & program counter.
     class Registers registers;
@@ -125,7 +125,7 @@ public:
 	// execute extended opcodes.
 	int executeExtendedOpcodes();
 
-	// interupts
+	// interrupts
 	void RequestInterupt(int);
 	void DoInterupts();
 	void ServiceInterupts(int);

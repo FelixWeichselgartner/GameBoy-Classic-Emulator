@@ -38,9 +38,11 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44) << " ";
 	file << "ir:" << HEX << (int)this->cpu.memory.ReadByte(0xff0f) << " ";
 	file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff) << " ";
-	file << "cp:" << HEX << (int)this->cpu.memory.ReadByte(0xa000) << " ";
-	file << "rbn:" << HEX << (int)this->cpu.memory.mbc->getCurrentRomBank() << " ";
-	file << "ran:" << HEX << (int)this->cpu.memory.ram.getCurrentRamBank() << endl;
+	file << "tc:" << HEX << (int)this->cpu.memory.ReadByte(0xff05) << " ";
+	file << "c:" << dec << this->cpu.timer.getTimerCounter() << endl;
+	//file << "cp:" << HEX << (int)this->cpu.memory.ReadByte(0xa000) << " ";
+	//file << "rbn:" << HEX << (int)this->cpu.memory.mbc->getCurrentRomBank() << " ";
+	//file << "ran:" << HEX << (int)this->cpu.memory.ram.getCurrentRamBank() << endl;
 	//file << "mben:" << boolalpha << this->cpu.memory.rom.RomBanking << " ";
 	//file << "rben:" << boolalpha << this->cpu.memory.ram.EnableRamBanking << endl;
 }

@@ -3,7 +3,7 @@
 
 Timer::Timer(class CPU* cpu) {
 	if ((this->cpu = cpu) == NULL) exit(2);
-	this->TimerCounter = 1024;
+	this->TimerCounter = 0;
 	this->DividerRegister = 0;
 }
 
@@ -23,6 +23,16 @@ bool Timer::IsEnabled() const {
 	return testBit(this->cpu->memory.ReadByte(ADDR_TMC), 2);
 }
 
+int Timer::getClockCycles() const {
+	switch (getClockFrequency()) {
+		case 0: return 1024; // => frequency = 4096
+		case 1: return   16; // => frequency = 262144
+		case 2: return   64; // => frequency = 65536
+		case 3: return  256; // => frequency = 16384
+		default: exit(3);
+	}
+}
+
 Byte Timer::getClockFrequency() const {
 	return this->cpu->memory.ReadByte(ADDR_TMC) & 0b00000011;
 }
@@ -30,9 +40,9 @@ Byte Timer::getClockFrequency() const {
 void Timer::setClockFrequency() {
 	switch (getClockFrequency()) {
 		case 0: this->TimerCounter = 1024; break; // => frequency = 4096
-		case 1: this->TimerCounter = 16;   break; // => frequency = 262144
-		case 2: this->TimerCounter = 64;   break; // => frequency = 65536
-		case 3: this->TimerCounter = 256;  break; // => frequency = 16382
+		case 1: this->TimerCounter =   16; break; // => frequency = 262144
+		case 2: this->TimerCounter =   64; break; // => frequency = 65536
+		case 3: this->TimerCounter =  256; break; // => frequency = 16384
 	}
 }
 
@@ -49,10 +59,10 @@ void Timer::update(int cycles) {
 	DividerRegisterStep(cycles);
 
 	if (IsEnabled()) {
-		this->TimerCounter -= cycles;
+		this->TimerCounter += cycles;
 
-		if (getTimerCounter() <= 0) {
-			setClockFrequency();
+		if (getTimerCounter() >= getClockCycles()) {
+			this->TimerCounter -= getClockCycles();
 
 			if (this->cpu->memory.ReadByte(ADDR_TIMA) == 0xFF) {
 				this->cpu->memory.WriteByte(ADDR_TIMA, this->cpu->memory.ReadByte(ADDR_TMA));

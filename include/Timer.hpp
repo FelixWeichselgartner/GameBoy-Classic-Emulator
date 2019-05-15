@@ -21,13 +21,12 @@ public:
 	int getTimerCounter();
 
 	void enable();
-
 	void disable();
 
 	bool IsEnabled() const;
 
+	int getClockCycles() const;
 	Byte getClockFrequency() const;
-
 	void setClockFrequency();
 
 	void DividerRegisterStep(int);
