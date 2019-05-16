@@ -26,6 +26,7 @@ public:
 	const int clockSpeed = 4194304;
 	const float fps = (float)59.7;
 	const int MAXCYCLES = (int)(clockSpeed / fps);
+	// 1 machine cycle = 4 cpu cycles
 	const int CYCLEFACTOR = 4;
 
     // general purpose registers + stack pointer & program counter.

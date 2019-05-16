@@ -6,6 +6,7 @@
 #include "ROM.hpp"
 #include "MBC.hpp"
 #include "MBC_1.hpp"
+#include "SerialDataTransfer.hpp"
 #include "Timer.hpp"
 
 #include "bit.hpp"
@@ -37,6 +38,7 @@ public:
 	class RAM ram;
 	class ROM rom = ROM(&ram, &EnableBootstrap);
 	class MBC* mbc;
+	class SerialDataTransfer sdt = SerialDataTransfer(true /*false*/);
 
 private:
 

@@ -27,7 +27,6 @@ public:
 
 	int getClockCycles() const;
 	Byte getClockFrequency() const;
-	void setClockFrequency();
 
 	void DividerRegisterStep(int);
 

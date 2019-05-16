@@ -101,10 +101,18 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 ## Known Issues:
 
 * on Ubuntu screen is flickering in the upper line (however not on windows).
+* performance seems to be better when compiled with g++ on linux, than with vs2019 on windows.
+* timer is not working correct.
 * MBC1 is not working. Games that use rom banking don't load.
 * blarggs test roms: only passing cpu_instrs so far.
 * cmake and mingw32 compiling on windows does not bring a sdl2 window at execution.
-* emulator is running in slower speed -> at least in the bootstrap sequence.
+* emulator is running in slower speed -> at least when compiled with vs2019 on windows.
+
+## Currently in Work:
+
+* serial data transfer.
+* making timer work correctly.
+* instruction timing.
 
 ## Resources:
 

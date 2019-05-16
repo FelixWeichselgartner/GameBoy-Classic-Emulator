@@ -1,15 +1,17 @@
 #include "../include/CPU.hpp"
 
-#define INTERUPT_VBLANK 0x40
-#define INTERUPT_LCD	0x48
-#define INTERUPT_TIMER	0x50
-#define INTERUPT_JOYPAD 0x60
+#define INTERRUPT_VBLANK 0x40
+#define INTERRUPT_LCD	 0x48
+#define INTERRUPT_TIMER	 0x50
+#define INTERRUPT_SERIAL 0x58
+#define INTERRUPT_JOYPAD 0x60
 
 enum {
     VBLANK,
     LCD,
     TIMER,
-    JOYPAD = 4
+	SERIAL,
+    JOYPAD
 };
 
 void CPU::RequestInterupt(int id) {
@@ -41,25 +43,28 @@ void CPU::DoInterupts() {
 	return;
 }
 
-void CPU::ServiceInterupts(int interupt) {
-	Byte req = resetBit(this->memory.ReadByte(ADDR_INTR_REQ), interupt);
+void CPU::ServiceInterupts(int interrupt) {
+	Byte req = resetBit(this->memory.ReadByte(ADDR_INTR_REQ), interrupt);
     gb_ime = false;
 
 	this->memory.WriteByte(ADDR_INTR_REQ, req);
 	this->memory.PushWord(this->registers.getPC());
 
-	switch (interupt) {
+	switch (interrupt) {
 		case VBLANK:
-			this->registers.setPC(INTERUPT_VBLANK);
+			this->registers.setPC(INTERRUPT_VBLANK);
 			break;
 		case LCD:
-			this->registers.setPC(INTERUPT_LCD);
+			this->registers.setPC(INTERRUPT_LCD);
 			break;
 		case TIMER:
-			this->registers.setPC(INTERUPT_TIMER);
+			this->registers.setPC(INTERRUPT_TIMER);
+			break;
+		case SERIAL:
+			//this->registers.setPC(INTERRUPT_SERIAL);
 			break;
 		case JOYPAD:
-			this->registers.setPC(INTERUPT_JOYPAD);
+			this->registers.setPC(INTERRUPT_JOYPAD);
 			break;
 		default:
 			break;

@@ -36,7 +36,11 @@ Byte Memory::ReadIO(Word WordAddress) {
 		case 0x00:
 			return this->joypad->getJoypadState();
 
-		// SIO control.
+		// serial data transfer.
+		case 0x01:
+			return sdt.getInput();
+
+		// serial transfer control.
 		case 0x02:
 			return io[address] | 0b01111110;
 
@@ -201,8 +205,15 @@ void Memory::WriteUNUSABLE(Word, Byte) {
 
 void Memory::WriteIO(Word address, Byte value) {
 	Word setAddress = address - 0xFF00;
-	Byte currentFrequency, newFrequency;
 
+	/* serial data transfer.
+	http://gbdev.gg8.se/wiki/articles/Serial_Data_Transfer_(Link_Cable)
+	Bit 7 - Transfer Start Flag(0 = No transfer is in progress or requested, 1 = Transfer in progress, or requested)
+	Bit 1 - Clock Speed(0 = Normal, 1 = Fast) * *CGB Mode Only * *
+	Bit 0 - Shift Clock(0 = External Clock, 1 = Internal Clock) */
+	if (address == 0xFF00) {
+		sdt.setOutput(value);
+	}
 	// divider register.
 	if (address == 0xFF04) {
 		io[setAddress] = 0x00;
@@ -214,16 +225,6 @@ void Memory::WriteIO(Word address, Byte value) {
 	// do the dma transfer.
 	else if (address == 0xFF46) {
 		DoDMATransfer(value);
-	}
-	// timer handling.
-	else if (address == ADDR_TMC) {
-		currentFrequency = this->timer->getClockFrequency();
-		io[setAddress] = value;
-		newFrequency = this->timer->getClockFrequency();
-
-		if (currentFrequency != newFrequency) {
-			this->timer->setClockFrequency();
-		}
 	}
 	// other io registers.
 	else {

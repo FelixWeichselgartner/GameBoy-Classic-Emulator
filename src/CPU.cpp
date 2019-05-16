@@ -487,6 +487,25 @@ Byte CyclesPerOPCode[0x100] {
 	 3,  3,  2,  0,  0,  4,  2,  4,  4,  1,  4,  0,  0,  0,  2,  4, 	// 0xE0
 	 3,  3,  2,  1,  0,  4,  2,  4,  3,  2,  4,  1,  0,  0,  2,  4  	// 0xF0
 };
+Byte CyclesPerOPCodeConditionals[0x100] {
+//   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+	 1,  3,  2,  2,  1,  1,  2,  1,  5,  2,  2,  2,  1,  1,  2,  1, 	// 0x00
+     0,  3,  2,  2,  1,  1,  2,  1,  3,  2,  2,  2,  1,  1,  2,  1, 	// 0x10
+     3,  3,  2,  2,  1,  1,  2,  1,  3,  2,  2,  2,  1,  1,  2,  1, 	// 0x20
+     3,  3,  2,  2,  3,  3,  3,  1,  3,  2,  2,  2,  1,  1,  2,  1, 	// 0x30
+     1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x40
+     1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x50
+     1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x60
+     2,  2,  2,  2,  2,  2,  0,  2,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x70
+     1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x80
+     1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0x90
+     1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0xA0
+     1,  1,  1,  1,  1,  1,  2,  1,  1,  1,  1,  1,  1,  1,  2,  1, 	// 0xB0
+     5,  3,  4,  4,  6,  4,  2,  4,  5,  4,  4,  0,  6,  6,  2,  4, 	// 0xC0
+     5,  3,  4,  0,  6,  4,  2,  4,  5,  4,  4,  0,  6,  0,  2,  4, 	// 0xD0
+     3,  3,  2,  0,  0,  4,  2,  4,  4,  1,  4,  0,  0,  0,  2,  4, 	// 0xE0
+     3,  3,  2,  1,  0,  4,  2,  4,  3,  2,  4,  1,  0,  0,  2,  4  	// 0xF0
+};
 
 Byte CyclesPerCBOPCode[0x100] = {
 //   0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
@@ -509,7 +528,7 @@ Byte CyclesPerCBOPCode[0x100] = {
 };
 
 void CPU::executeInstruction(Byte opcode) {
-	this->cycles += CyclesPerOPCode[opcode] * CYCLEFACTOR;
+	bool CycleConditionals = false;
 	Word jumpAddress;
 	Byte jumpRelAddress;
 
@@ -614,6 +633,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpRelAddress = memory.LoadByte();
 			if (!registers.getFlag('Z')) {
 				this->registers.setPC(addSignedWordAddress(this->registers.getPC(), jumpRelAddress));
+				CycleConditionals = true;
 			}
             break;
         case 0x21: // LD HL, nn     load 16-bit immediate into HL.
@@ -642,6 +662,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpRelAddress = memory.LoadByte();
 			if (registers.getFlag('Z')) {
 				this->registers.setPC(addSignedWordAddress(this->registers.getPC(), jumpRelAddress));
+				CycleConditionals = true;
 			}
             break;
         case 0x29: // ADD HL, HL    add 16-bit HL to HL.
@@ -670,6 +691,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpRelAddress = memory.LoadByte();
 			if (!registers.getFlag('C')) {
 				this->registers.setPC(addSignedWordAddress(this->registers.getPC(), jumpRelAddress));
+				CycleConditionals = true;
 			}
             break;
         case 0x31: // LD SP, nn     load 16-bit immediate into SP.
@@ -700,6 +722,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpRelAddress = memory.LoadByte();
 			if (registers.getFlag('C')) {
 				this->registers.setPC(addSignedWordAddress(this->registers.getPC(), jumpRelAddress));
+				CycleConditionals = true;
 			}
             break;
         case 0x39: // ADD HL, SP    add 16-bit SP to HL.
@@ -1115,6 +1138,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (!registers.getFlag('Z')) {
 				this->registers.setPC(memory.PopWord());
 				jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xC1: // POP BC        pop 16-bit value from stack into BC.
@@ -1125,6 +1149,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (!registers.getFlag('Z')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xC3: // JP nn         absolute jump to 16-bit location.
@@ -1135,6 +1160,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpAddress = memory.LoadWord();
 			if (!registers.getFlag('Z')) {
 				call(jumpAddress);
+				CycleConditionals = true;
 			}
             break;
         case 0xC5: // PUSH BC       push 16-bit BC onto stack.
@@ -1150,6 +1176,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (registers.getFlag('Z')) {
 				this->registers.setPC(memory.PopWord());
 				jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xC9: // RET           return to calling routine.
@@ -1161,6 +1188,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (registers.getFlag('Z')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xCB: // Ext ops       extended operations (two-Byte instruction code).
@@ -1170,6 +1198,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpAddress = memory.LoadWord();
 			if (registers.getFlag('Z')) {
 				call(jumpAddress);
+				CycleConditionals = true;
 			}
             break;
         case 0xCD: // CALL nn       call routine at 16-bit location.
@@ -1185,6 +1214,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (!registers.getFlag('C')) {
 				this->registers.setPC(memory.PopWord());
 				jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xD1: // POP DE        pop 16-bit value from stack into DE.
@@ -1195,6 +1225,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (!registers.getFlag('C')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xD3: // XX            operation removed in this CPU.
@@ -1204,6 +1235,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpAddress = memory.LoadWord();
 			if (!registers.getFlag('C')) {
 				call(jumpAddress);
+				CycleConditionals = true;
 			}
             break;
         case 0xD5: // PUSH DE       push 16-bit DE onto stack.
@@ -1219,6 +1251,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (registers.getFlag('C')) {
 				this->registers.setPC(memory.PopWord());
 				jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xD9: // RETI          enable interrupts and return to calling routine.
@@ -1231,6 +1264,7 @@ void CPU::executeInstruction(Byte opcode) {
 			if (registers.getFlag('C')) {
 				this->registers.setPC(jumpAddress);
 				this->jump = true;
+				CycleConditionals = true;
 			}
             break;
         case 0xDB: // XX            operation removed in this CPU. 
@@ -1240,6 +1274,7 @@ void CPU::executeInstruction(Byte opcode) {
 			jumpAddress = memory.LoadWord();
 			if (registers.getFlag('C')) {
 				call(jumpAddress);
+				CycleConditionals = true;
 			}
             break;
         case 0xDD: // XX            operation removed in this CPU.
@@ -1349,6 +1384,12 @@ void CPU::executeInstruction(Byte opcode) {
 			rst(0x0038);
             break;
     }
+
+	if (!CycleConditionals) {
+		this->cycles += CyclesPerOPCode[opcode] * CYCLEFACTOR;
+	} else {
+		this->cycles += CyclesPerOPCodeConditionals[opcode] * CYCLEFACTOR;
+	}
 }
 
 Byte CPU::swap(Byte value) {

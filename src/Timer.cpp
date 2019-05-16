@@ -37,15 +37,6 @@ Byte Timer::getClockFrequency() const {
 	return this->cpu->memory.ReadByte(ADDR_TMC) & 0b00000011;
 }
 
-void Timer::setClockFrequency() {
-	switch (getClockFrequency()) {
-		case 0: this->TimerCounter = 1024; break; // => frequency = 4096
-		case 1: this->TimerCounter =   16; break; // => frequency = 262144
-		case 2: this->TimerCounter =   64; break; // => frequency = 65536
-		case 3: this->TimerCounter =  256; break; // => frequency = 16384
-	}
-}
-
 void Timer::DividerRegisterStep(int cycles) {
 	this->DividerRegister += cycles;
 
