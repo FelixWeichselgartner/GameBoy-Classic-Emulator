@@ -25,6 +25,10 @@ cpu_instrs:
 
 ![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/04b0382e-acc7-4381-b469-3ba1b6c15255.png)
 
+instr_timing:
+
+![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/1b7c192f-0c23-49eb-86da-9db3dd4a832a.png)
+
 Tetris - Loading Screen:
 
 ![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/a71e0f5e-81b3-4aa6-aa23-17d5fcbc632f.png)
@@ -102,17 +106,15 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 
 * on Ubuntu screen is flickering in the upper line (however not on windows).
 * performance seems to be better when compiled with g++ on linux, than with vs2019 on windows.
-* timer is not working correct.
 * MBC1 is not working. Games that use rom banking don't load.
-* blarggs test roms: only passing cpu_instrs so far.
+* blarggs test roms: only passing cpu_instrs and instr_timing so far.
 * cmake and mingw32 compiling on windows does not bring a sdl2 window at execution.
 * emulator is running in slower speed -> at least when compiled with vs2019 on windows.
 
 ## Currently in Work:
 
 * serial data transfer.
-* making timer work correctly.
-* instruction timing.
+* other memory bank controllers.
 
 ## Resources:
 

@@ -24,6 +24,8 @@ public:
 	void sendByte();
 	void receiveByte();
 
+	void update();
+
 };
 
 #endif

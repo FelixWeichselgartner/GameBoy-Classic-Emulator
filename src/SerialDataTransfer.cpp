@@ -17,3 +17,7 @@ void SerialDataTransfer::sendByte() {
 void SerialDataTransfer::receiveByte() {
 
 }
+
+void SerialDataTransfer::update() {
+
+}

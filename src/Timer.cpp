@@ -25,10 +25,10 @@ bool Timer::IsEnabled() const {
 
 int Timer::getClockCycles() const {
 	switch (getClockFrequency()) {
-		case 0: return 1024; // => frequency = 4096
-		case 1: return   16; // => frequency = 262144
-		case 2: return   64; // => frequency = 65536
-		case 3: return  256; // => frequency = 16384
+		case 0: return 1024; // == 2^10 => frequency = 4096   == 2^12
+		case 1: return   16; // == 2^4  => frequency = 262144 == 2^18
+		case 2: return   64; // == 2^6  => frequency = 65536  == 2^16
+		case 3: return  256; // == 2^8  => frequency = 16384  == 2^14
 		default: exit(3);
 	}
 }
@@ -41,8 +41,8 @@ void Timer::DividerRegisterStep(int cycles) {
 	this->DividerRegister += cycles;
 
 	if (this->DividerRegister >= 0xFF) {
-		this->DividerRegister = 0x00;
-		this->cpu->memory.setDividerRegister(this->cpu->memory.ReadByte(0xFF04) + 1);
+		this->DividerRegister -= 0xFF;
+		this->cpu->memory.setDividerRegister(this->cpu->memory.ReadByte(ADDR_DIV_REG) + 1);
 	}
 }
 
@@ -52,7 +52,10 @@ void Timer::update(int cycles) {
 	if (IsEnabled()) {
 		this->TimerCounter += cycles;
 
-		if (getTimerCounter() >= getClockCycles()) {
+		// it can be possible that the TimerCounter is twice the 
+		// size of getClockCycles (or maybe even more)
+		// => while loop and not if
+		while (this->TimerCounter >= getClockCycles()) {
 			this->TimerCounter -= getClockCycles();
 
 			if (this->cpu->memory.ReadByte(ADDR_TIMA) == 0xFF) {

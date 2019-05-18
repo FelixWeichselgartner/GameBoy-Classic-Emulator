@@ -16,9 +16,10 @@
 #define ADDR_OAM			0xFE00		// Sprite Attribute Table (OAM) (Can't change during screen redraw)
 #define ADDR_UNUSABLE		0xFEA0		// Not Usable
 #define ADDR_IO				0xFF00		// I/O Ports
-#define ADDR_TIMA			0xFF05
-#define ADDR_TMA			0xFF06
-#define ADDR_TMC			0xFF07
+#define ADDR_DIV_REG		0xFF04		// divider register state
+#define ADDR_TIMA			0xFF05		// current state if the timer counting
+#define ADDR_TMA			0xFF06		// timer is reset to this value after overflow
+#define ADDR_TMC			0xFF07		// timer control
 #define ADDR_INTR_REQ		0xFF0F		// Interupt Request Register
 #define ADDR_HRAM			0xFF80		// High RAM (HRAM) (Stack)
 #define ADDR_INTR_EN		0xFFFF		// Interupt Enable Register

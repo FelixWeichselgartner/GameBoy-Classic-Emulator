@@ -114,6 +114,7 @@ void GameBoy::run() {
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);
+			cpu.memory.sdt.update();
 			gpu.UpdateGraphics(c);
 			cpu.DoInterupts();
 		}
@@ -126,7 +127,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
-#define MODE 1
+#define MODE 0
 // MODE 0		normal mode
 // MODE 1		input -> next instruction and save in log file
 // MODE 2		show Nintendo Logo

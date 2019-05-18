@@ -237,6 +237,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);
+			cpu.memory.sdt.update();
 			gpu.UpdateGraphics(c);
 			cpu.DoInterupts();
 			counter++;
