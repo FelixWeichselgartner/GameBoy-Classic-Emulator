@@ -331,19 +331,23 @@ void GPU::UpdateGraphics(int cycles) {
 	if (IsLCDEnabled()) {
 		ScanLineCounter += cycles;
 
-		if (ScanLineCounter >= 456) {
-			IncScanline();
+		if (ScanLineCounter >= SCANLINECYCLES) {
 			currentline = getScanline();
-
-			ScanLineCounter -= 456;
+			ScanLineCounter -= SCANLINECYCLES;
 
 			if (currentline == Y_RES) {
 				cpu->RequestInterupt(0);
+				IncScanline();
 			} else if (currentline > 0x99) {
 				resetScanline();
+				// dont increase scanline here, because
+				// line 0 would never be drawn.
 			} else if (currentline < Y_RES) {
 				DrawScanLine();
 				renderDisplay(currentline);
+				IncScanline();
+			} else {
+				IncScanline();
 			}
 		}
 	}

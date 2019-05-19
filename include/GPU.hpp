@@ -80,6 +80,8 @@ private:
 	Byte display[Y_RES][X_RES] = { 0 };
 	int GpuMode;
 
+	const int SCANLINECYCLES = 456;
+
 public:
 
     GPU(class CPU*);

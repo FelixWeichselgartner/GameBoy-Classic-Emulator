@@ -104,7 +104,6 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 
 ## Known Issues:
 
-* on Ubuntu screen is flickering in the upper line (however not on windows).
 * performance seems to be better when compiled with g++ on linux, than with vs2019 on windows.
 * MBC1 is not working. Games that use rom banking don't load.
 * blarggs test roms: only passing cpu_instrs and instr_timing so far.
@@ -115,6 +114,7 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 
 * serial data transfer.
 * other memory bank controllers.
+* memory timing
 
 ## Resources:
 
