@@ -24,8 +24,9 @@ void CPU::RequestInterupt(int id) {
 	return;
 }
 
-void CPU::DoInterupts() {
+int CPU::DoInterupts() {
 	Byte req, enabled;
+	int c = 0;
 
 	if (gb_ime) {
 		req = this->memory.ReadByte(ADDR_INTR_REQ);
@@ -34,16 +35,16 @@ void CPU::DoInterupts() {
 		if (req > 0) {
 			for (int i = 0; i < 8; i++) {
 				if (testBit(req, i) && testBit(enabled, i)) {
-					ServiceInterupts(i);
+					c += ServiceInterupts(i);
 				}
 			}
 		}
 	}
 
-	return;
+	return c;
 }
 
-void CPU::ServiceInterupts(int interrupt) {
+int CPU::ServiceInterupts(int interrupt) {
 	Byte req = resetBit(this->memory.ReadByte(ADDR_INTR_REQ), interrupt);
     gb_ime = false;
 
@@ -53,21 +54,21 @@ void CPU::ServiceInterupts(int interrupt) {
 	switch (interrupt) {
 		case VBLANK:
 			this->registers.setPC(INTERRUPT_VBLANK);
-			break;
+			return 20;
 		case LCD:
 			this->registers.setPC(INTERRUPT_LCD);
-			break;
+			return 20;
 		case TIMER:
 			this->registers.setPC(INTERRUPT_TIMER);
-			break;
+			return 20;
 		case SERIAL:
 			//this->registers.setPC(INTERRUPT_SERIAL);
-			break;
+			return 20;
 		case JOYPAD:
 			this->registers.setPC(INTERRUPT_JOYPAD);
-			break;
+			return 20;
 		default:
-			break;
+			return 0;
 	}
 
 

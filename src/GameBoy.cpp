@@ -93,12 +93,13 @@ bool GameBoy::winEvent(SDL_Event &windowEvent, bool &screen) {
 void GameBoy::run() {
 	SDL_Event windowEvent;
 
-	int c, cyclesInstruction;
+	int c, cyclesInstruction = cpu.MAXCYCLES;
 	int delaytime = 1000 / 60;
 	bool screen = false;
 
 	while (this->cpu.getRunning()) {
-		cyclesInstruction = 0;
+		//cyclesInstruction = 0;
+		cyclesInstruction -= cpu.MAXCYCLES;
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
 			if (SDL_PollEvent(&windowEvent)) {
@@ -116,7 +117,7 @@ void GameBoy::run() {
 			cpu.UpdateTimers(c);
 			cpu.memory.sdt.update();
 			gpu.UpdateGraphics(c);
-			cpu.DoInterupts();
+			c += cpu.DoInterupts();
 		}
 
 		gpu.render();

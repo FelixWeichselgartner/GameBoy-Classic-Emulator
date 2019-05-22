@@ -71,7 +71,7 @@ void ROM::load() {
 
 	// working:
 	//	games:
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
 	//	blargg's test roms:
 	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
@@ -83,7 +83,7 @@ void ROM::load() {
 	//gbfile.open("interrupt_time.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("mem_timing.gb", ios::in | ios::binary | ios::ate);
 		//gbfile.open("individual_m/01-read_timing.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("acceptance/timer/div_write.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("acceptance/ppu/intr_1_2_timing-GS.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("mbc1/ram_256Kb.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);

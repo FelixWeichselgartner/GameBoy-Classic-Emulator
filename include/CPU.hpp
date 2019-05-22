@@ -15,6 +15,12 @@ class CPU {
 
 private:
 
+	bool CycleConditionals;
+	Word jumpAddress;
+	Byte jumpRelAddress;
+	void (CPU::*opcode[0x0100])();
+	void (CPU::*cb_opcode[0x0100])();
+
 	Byte running, gb_stop;
 	bool jump;
 	bool gb_halt, gb_ime;
@@ -39,6 +45,9 @@ public:
 
     CPU();
 	~CPU();
+
+	void Init_OPCODE();
+	void Init_CBOPCODE();
 
 	void setJoypadLink(class Joypad*);
 
@@ -128,14 +137,17 @@ public:
 
 	// interrupts
 	void RequestInterupt(int);
-	void DoInterupts();
-	void ServiceInterupts(int);
+	int DoInterupts();
+	int ServiceInterupts(int);
 
 	// update the timers.
 	void UpdateTimers(int);
 
 	// one cpu step.
 	int CPUstep();
+
+	#include "opcodes.hpp"
+	#include "cb_opcodes.hpp"
 };
 //----------------------------------------------------------------------------------------------
 
