@@ -29,6 +29,10 @@ instr_timing:
 
 ![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/1b7c192f-0c23-49eb-86da-9db3dd4a832a.png)
 
+halt_bug:
+
+![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/5cd5efaf-c9b8-4b57-b3fa-1b48d2111440.png)
+
 Tetris - Loading Screen:
 
 ![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/a71e0f5e-81b3-4aa6-aa23-17d5fcbc632f.png)
@@ -106,15 +110,16 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 
 * performance seems to be better when compiled with g++ on linux, than with vs2019 on windows.
 * MBC1 is not working. Games that use rom banking don't load.
-* blarggs test roms: only passing cpu_instrs and instr_timing so far.
+* blarggs test roms: only passing cpu_instrs, instr_timing and halt_bug so far.
 * cmake and mingw32 compiling on windows does not bring a sdl2 window at execution.
 * emulator is running in slower speed -> at least when compiled with vs2019 on windows.
 
 ## Currently in Work:
 
+* memory timing
+* making peace with blargg's test roms :P.
 * serial data transfer.
 * other memory bank controllers.
-* memory timing
 
 ## Resources:
 

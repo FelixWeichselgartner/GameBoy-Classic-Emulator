@@ -19,7 +19,7 @@ class Memory {
 
 private:
 
-	bool EnableBootstrap = true;
+	bool EnableBootstrap = false;
 	Byte MemoryBankingMode;
 
 	Byte vram[ADDR_EXT_RAM - ADDR_VRAM_T_S] = { 0 };

@@ -132,6 +132,7 @@ void GameBoy::run() {
 // MODE 0		normal mode
 // MODE 1		input -> next instruction and save in log file
 // MODE 2		show Nintendo Logo
+// MODE 3		prints lowest rom bank to console
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;

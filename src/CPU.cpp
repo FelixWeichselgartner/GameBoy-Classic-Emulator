@@ -24,6 +24,7 @@ CPU::CPU() {
 	Init_CBOPCODE();
 	this->jumpRelAddress = 0x00;
 	this->jumpAddress = 0x0000;
+	this->gb_halt_bug = 0x00;
 }
 
 CPU::~CPU() {
@@ -601,10 +602,26 @@ int CPU::executeExtendedOpcodes() {
 	return CyclesPerCBOPCode[cb_op] * this->CYCLEFACTOR;
 }
 
+void CPU::halt_bug() {
+	if (!this->gb_ime && (this->memory.ReadByte(0xFF0F) & this->memory.ReadByte(0xFFFF) & 0x1F)) {
+	//if (!this->gb_ime) {
+		if (this->gb_halt_bug == 0x01) {
+			this->gb_halt_bug = 0x02;
+		}
+		else if (this->gb_halt_bug == 0x02) {
+			this->registers.halt_bug();
+			this->gb_halt_bug = 0x00;
+		}
+	}
+}
+
 int CPU::CPUstep() {
 	this->cycles = 0;
 
 	executeInstruction(this->gb_halt ? 0x00 : this->memory.ReadByte(this->registers.getPC()));
+
+	
+	halt_bug();
 
 	// may not increase program counter after jumps.
 	if (!this->jump) {
@@ -613,6 +630,8 @@ int CPU::CPUstep() {
 	} else {
 		this->jump = false;
 	}
+
+	
 
 	return this->cycles;
 }

@@ -488,8 +488,8 @@ void Memory::WriteByte(Word address, Byte value) {
 }
 
 void Memory::print(Word start, Word end) {
-	cout << "Hexdump: " << endl;
-	cout << "          ";
+	char content;
+	cout << endl << "Hexdump:  ";
 	for (int i = 0; i < 16; i++) {
 		cout << HEX << i << " ";
 	}
@@ -499,8 +499,18 @@ void Memory::print(Word start, Word end) {
 		for (int k = 0; k < 16; k++) {
 			cout << HEX << (int)ReadByte(start + c * 16 + k) << " ";
 		}
+		cout << "\t";
+		for (int k = 0; k < 16; k++) {
+			content = ReadByte(start + c * 16 + k);
+			if (content > 31 && content < 127) {
+				cout << content;
+			} else {
+				cout << ".";
+			}
+		}
 		cout << endl;
 	}
+	cout << endl;
 }
 
 void NotSupported() {

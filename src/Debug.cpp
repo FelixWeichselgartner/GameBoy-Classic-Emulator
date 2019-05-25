@@ -274,5 +274,8 @@ void GameBoy::tests(int mode) {
 		SDL_DestroyWindow(gpu.getWindow());
 		SDL_Quit();
 		break;
+	case 3:
+		this->cpu.memory.print(0x0000, 0x2000);
+		break;
 	}
 }

@@ -21,7 +21,7 @@ private:
 	void (CPU::*opcode[0x0100])();
 	void (CPU::*cb_opcode[0x0100])();
 
-	Byte running, gb_stop;
+	Byte running, gb_stop, gb_halt_bug;
 	bool jump;
 	bool gb_halt, gb_ime;
 	int cycles;
@@ -142,6 +142,9 @@ public:
 
 	// update the timers.
 	void UpdateTimers(int);
+
+	// halt bug.
+	void halt_bug();
 
 	// one cpu step.
 	int CPUstep();

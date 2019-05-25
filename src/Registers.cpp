@@ -13,6 +13,7 @@ Registers::Registers() {
 	this->HL = 0x014D;
 	this->PC = 0x0100; // PC initialised in CPU().
 	this->SP = 0xFFFE;
+	this->halt_bug_pc_no_increase = false;
 }
     
 Byte Registers::getA() const {
@@ -106,7 +107,15 @@ void Registers::setPC(Word value) {
     this->PC = value;
 }
 void Registers::incPC() {
-	this->PC++;
+	if (!this->halt_bug_pc_no_increase) {
+		this->PC++;
+	} else {
+		this->halt_bug_pc_no_increase = false;
+	}
+}
+
+void Registers::halt_bug() {
+	this->halt_bug_pc_no_increase = true;
 }
 
 Word Registers::getSP() const {

@@ -52,6 +52,7 @@ private:
 
     // program counter - the memory address of the next instruction to be fetched.
     Word PC;
+	bool halt_bug_pc_no_increase;
     // stack pointer - the memory address of the top of the stack.
     Word SP;
 
@@ -115,6 +116,7 @@ private:
     Word getPC() const;
     void setPC(Word);
 	void incPC();
+	void halt_bug();
 
     // SP Register
     Word getSP() const;

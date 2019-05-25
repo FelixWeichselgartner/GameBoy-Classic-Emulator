@@ -878,6 +878,7 @@ void CPU::opcode_75() {
 // HALT         halt processor.
 void CPU::opcode_76() {
 	this->gb_halt = true;
+	this->gb_halt_bug = 0x01;
 	this->registers.setPC(this->registers.getPC() + 1);
 }
 
