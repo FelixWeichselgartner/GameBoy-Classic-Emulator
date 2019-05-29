@@ -42,7 +42,7 @@ void Joypad::KeyPressed(int key) {
 	bool requestInterupt = (button && testBit(keyReq, BUTTON)) || (!button && testBit(keyReq, DIRECTION));
 
 	if (requestInterupt && !previouslySet) {
-		this->cpu->RequestInterupt(4);
+		this->cpu->RequestInterrupt(4);
 	}
 
 	return;

@@ -1,5 +1,6 @@
 #include "../include/Memory.hpp"
 #include "../include/Joypad.hpp"
+#include "../include/GPU.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -27,10 +28,11 @@ Byte Memory::ReadUNUSABLE(Word) {
 Byte Memory::ReadIO(Word WordAddress) {
 	Byte address = (Byte)(WordAddress & 0x00FF);
 	// waveform storage for arbitrary sound data, some lcd registers.
-	if (WordAddress >= 0xFF30 && WordAddress <= 0xFF3F || WordAddress >= 0xFF42 && WordAddress <= 0xFF4B) {
+	if (WordAddress >= 0xFF30 && WordAddress <= 0xFF3F || WordAddress >= 0xFF45 && WordAddress <= 0xFF4B || WordAddress == 0xFF42 || WordAddress == 0xFF43) {
 		return io[address];
 	}
 
+	//if (address == 0x0044) cout << "address:" << HEX16 << (int)address << endl;
 	switch (address) {
 		// joypad register.
 		case 0x00:
@@ -46,19 +48,19 @@ Byte Memory::ReadIO(Word WordAddress) {
 
 		// divider register (r/w).
 		case 0x04:
-			return io[address];
+			return this->timer->getDiv();
 
 		// timer counter (r/w).
 		case 0x05:
-			return io[address];
+			return this->timer->getTima();
 
 		// timer modulo (r/w).
 		case 0x06:
-			return io[address];
+			return this->timer->getTma();
 
 		// timer control.
 		case 0x07:
-			return io[address] | 0b11111000;
+			return this->timer->getTac();
 
 		// interrupt flags.
 		case 0x0F:
@@ -214,9 +216,18 @@ void Memory::WriteIO(Word address, Byte value) {
 	if (address == 0xFF00) {
 		sdt.setOutput(value);
 	}
-	// divider register.
+	// timer registers.
 	if (address == 0xFF04) {
-		io[setAddress] = 0x00;
+		this->timer->setDiv(0x00);
+	}
+	else if (address == 0xFF05) {
+		this->timer->setTima(value);
+	}
+	else if (address == 0xFF06) {
+		this->timer->setTma(value);
+	}
+	else if (address == 0xFF07) {
+		this->timer->setTac(value);
 	}
 	// set current line to 0.
 	else if (address == 0xFF44) {
@@ -424,6 +435,7 @@ Byte Memory::ReadByte(Word address) {
 	}
 	// io registers
 	else if (address >= ADDR_IO && address < ADDR_HRAM) {
+		//if (address == 0xFF44) cout << "well" << endl;
 		return ReadIO(address);
 	} 
 	// high ram.

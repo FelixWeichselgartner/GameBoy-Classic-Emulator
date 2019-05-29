@@ -16,7 +16,7 @@ GPU::GPU(class CPU* cpu) {
 	if ((this->cpu = cpu) == NULL) exit(2);
 	if ((this->memory = &this->cpu->memory) == NULL) exit(2);
 	windowName = this->memory->rom.getGameName();
-	ScanLineCounter = 0;
+	ScanLineCounter = 3;
 	this->GpuMode = GPU_MODE_HBLANK;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -37,7 +37,64 @@ GPU::GPU(class CPU* cpu) {
 	return;
 }
 
-Byte GPU::getScanline() {
+////////////////////////////////////////////////////////////////
+// video register methods.
+
+// 0xFF40 - control.
+
+Byte GPU::getControl() const {
+	return this->memory->ReadByte(0xFF40);
+}
+
+void GPU::setControl(Byte value) {
+	this->memory->WriteByte(0xFF40, value);
+}
+
+bool GPU::IsLCDEnabled() const {
+	return testBit(getControl(), 7);
+}
+
+// 0xFF41 - status.
+
+/*
+http://gbdev.gg8.se/files/docs/mirrors/pandocs.html#videodisplay
+FF41 - STAT - LCDC Status (R/W)
+
+  Bit 6 - LYC=LY Coincidence Interrupt (1=Enable) (Read/Write)
+  Bit 5 - Mode 2 OAM Interrupt         (1=Enable) (Read/Write)
+  Bit 4 - Mode 1 V-Blank Interrupt     (1=Enable) (Read/Write)
+  Bit 3 - Mode 0 H-Blank Interrupt     (1=Enable) (Read/Write)
+  Bit 2 - Coincidence Flag  (0:LYC<>LY, 1:LYC=LY) (Read Only)
+  Bit 1-0 - Mode Flag       (Mode 0-3, see below) (Read Only)
+			0: During H-Blank
+			1: During V-Blank
+			2: During Searching OAM-RAM
+			3: During Transfering Data to LCD Driver
+*/
+
+Byte GPU::getStatus() const {
+	return this->memory->ReadByte(0xFF41);
+}
+
+void GPU::setStatus(Byte value) {
+	this->memory->WriteByte(0xFF41, value);
+}
+
+void GPU::setStatusBit(int pos, Byte state) {
+	Byte status = this->memory->ReadByte(0xFF41);
+	Byte mask = 1 << pos;
+	state ? status |= mask : status &= ~mask;
+	this->memory->WriteByte(0xFF41, status);
+}
+
+void GPU::setStatusMode(Byte mode) {
+	setStatusBit(1, mode & 0x02);
+	setStatusBit(0, mode & 0x01);
+}
+
+// 0xFF44 - scanline.
+
+Byte GPU::getScanline() const {
 	return this->memory->ReadByte(0xFF44);
 }
 
@@ -46,16 +103,17 @@ void GPU::setScanline(Byte s) {
 }
 
 void GPU::IncScanline() {
-	this->memory->setScanline(getScanline() + 1);
+	if (this->inc_en)
+		this->memory->setScanline(getScanline() + 1);
+	else
+		this->inc_en = true;
 }
 
 void GPU::resetScanline() {
 	this->memory->setScanline(0);
 }
 
-bool GPU::IsLCDEnabled() const {
-	return testBit(this->memory->ReadByte(0xFF40), 7);
-}
+////////////////////////////////////////////////////////////////
 
 void GPU::clearScreen() {
 	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
@@ -74,20 +132,21 @@ void GPU::clearScreen() {
 }
 
 void GPU::SetLCDStatus() {
-	Byte status = this->memory->ReadByte(0xFF41);
+	Byte status = getStatus();
 	Byte currentline = getScanline();
 	Byte currentmode = status & 0x03, mode = 0x00;
 	bool reqInt = false;
 	int mode2bounds, mode3bounds;
 
 	if (!IsLCDEnabled()) {
-		ScanLineCounter = 456;
+		ScanLineCounter = 0;
 		resetScanline();
 		status = setBit(status & 0b11111100, 0);
 		this->memory->WriteByte(0xFF41, status);
 		return;
 	} 
 	
+
 	if (currentline >= Y_RES) {
 		mode = 1;
 		status = setBit(status, 0);
@@ -115,13 +174,13 @@ void GPU::SetLCDStatus() {
 	}
 
 	if (reqInt && (mode != currentmode)) {
-		this->cpu->RequestInterupt(1);
+		this->cpu->RequestInterrupt(1);
 	}
 
-	if (currentline == this->memory->ReadByte(0xFF45)) { // conincidence flag
+	if (currentline == this->memory->ReadByte(0xFF45)) { // coincidence flag
 		status = setBit(status, 2);
 		if (testBit(status, 6)) {
-			this->cpu->RequestInterupt(1);
+			this->cpu->RequestInterrupt(1);
 		}
 	} else {
 		status = resetBit(status, 2);
@@ -323,33 +382,140 @@ void GPU::renderDisplay(Byte currentline) {
 	return;
 }
 
+void GPU::requestLcdcInterrupt(int statBit) {
+	if ((this->memory->ReadByte(0xFF41) & (1 << statBit)) != 0) {
+		this->cpu->RequestInterrupt(1);
+	}
+}
+
+const int factor = 1;
+
+const int CLOCKS_PER_HBLANK = 204 * factor; /* Mode 0 */
+const int CLOCKS_PER_SCANLINE_OAM = 80 * factor; /* Mode 2 */
+const int CLOCKS_PER_SCANLINE_VRAM = 172 * factor; /* Mode 3 */
+const int CLOCKS_PER_SCANLINE = (CLOCKS_PER_SCANLINE_OAM + CLOCKS_PER_SCANLINE_VRAM + CLOCKS_PER_HBLANK);
+
+const int CLOCKS_PER_VBLANK = 4560 * factor; /* Mode 1 */
+const int SCANLINES_PER_FRAME = 144 * factor;
+const int CLOCKS_PER_FRAME = (CLOCKS_PER_SCANLINE * SCANLINES_PER_FRAME) + CLOCKS_PER_VBLANK;
+
+void GPU::tick() {
+	Byte currentline = getScanline();
+
+	
+	if (currentline == 153) {
+		resetScanline();// this->ScanLineCounter -= SCANLINECYCLES;
+		this->inc_en = false;
+
+	}
+
+	/*
+	Byte status;
+
+	switch (this->GpuMode) {
+	case GPU_MODE_HBLANK:
+		if (this->ScanLineCounter >= CLOCKS_PER_HBLANK) {
+			DrawScanLine();
+			renderDisplay(currentline);
+			IncScanline();
+			this->ScanLineCounter %= CLOCKS_PER_HBLANK;
+
+			if (getScanline() == 144) {
+				this->GpuMode = GPU_MODE_VBLANK;
+				setStatusBit(1, 0);
+				setStatusBit(0, 1);
+				this->cpu->RequestInterrupt(0);
+			} else {
+				this->GpuMode = GPU_MODE_OAM;
+				setStatusBit(1, 1);
+				setStatusBit(0, 0);
+			}
+		}
+		break;
+	case GPU_MODE_VBLANK:
+		if (this->ScanLineCounter >= CLOCKS_PER_SCANLINE) {
+			IncScanline();
+			this->ScanLineCounter %= CLOCKS_PER_SCANLINE;
+
+			if (getScanline() == 154) {
+				RenderSprites(this->memory->ReadByte(0xFF40));
+				renderDisplay(currentline);
+				resetScanline();
+				this->GpuMode = GPU_MODE_OAM;
+				setStatusBit(1, 1);
+				setStatusBit(0, 0);
+			}
+		}
+		break;
+	case GPU_MODE_OAM:
+		if (this->ScanLineCounter >= CLOCKS_PER_SCANLINE_OAM) {
+			this->ScanLineCounter %= CLOCKS_PER_SCANLINE_OAM;
+			setStatusBit(1, 1);
+			setStatusBit(0, 1);
+			this->GpuMode = GPU_MODE_VRAM;
+		}
+		break;
+	case GPU_MODE_VRAM:
+		status = this->memory->ReadByte(0xFF40);
+
+		if (this->ScanLineCounter >= CLOCKS_PER_SCANLINE_VRAM) {
+			this->ScanLineCounter %= CLOCKS_PER_SCANLINE_VRAM;
+			this->GpuMode = GPU_MODE_HBLANK;
+
+			bool coincidence = currentline == this->memory->ReadByte(0xFF45);
+
+			if ((testBit(status, 3)) || 
+				(testBit(status, 6) && coincidence)) {
+				this->cpu->RequestInterrupt(1);
+			}
+
+			setStatusBit(2, coincidence ? 0xFF : 0x00);
+			setStatusBit(1, 0);
+			setStatusBit(0, 0);
+		}
+		break;
+	default:
+		exit(10);
+		break;
+	}*/
+
+	
+	if (ScanLineCounter >= SCANLINECYCLES) {
+		currentline = getScanline();
+		ScanLineCounter -= SCANLINECYCLES;
+
+		if (currentline == Y_RES) {
+			cpu->RequestInterrupt(0);
+			IncScanline();
+		}
+		// maximum value for scanline is 0x99.
+		else if (currentline == 0x99) {
+			resetScanline();
+			// dont increase scanline here, because
+			// line 0 would never be drawn.
+		}
+		else if (currentline < Y_RES) {
+			DrawScanLine();
+			renderDisplay(currentline);
+			IncScanline();
+		}
+		else {
+			IncScanline();
+		}
+	}
+
+
+	
+}
+
 void GPU::UpdateGraphics(int cycles) {
-	Byte currentline;
 
 	SetLCDStatus();
 
 	if (IsLCDEnabled()) {
 		ScanLineCounter += cycles;
 
-		if (ScanLineCounter >= SCANLINECYCLES) {
-			currentline = getScanline();
-			ScanLineCounter -= SCANLINECYCLES;
-
-			if (currentline == Y_RES) {
-				cpu->RequestInterupt(0);
-				IncScanline();
-			} else if (currentline > 0x99) {
-				resetScanline();
-				// dont increase scanline here, because
-				// line 0 would never be drawn.
-			} else if (currentline < Y_RES) {
-				DrawScanLine();
-				renderDisplay(currentline);
-				IncScanline();
-			} else {
-				IncScanline();
-			}
-		}
+		tick();
 	}
 
 	return;

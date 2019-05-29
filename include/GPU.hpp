@@ -73,12 +73,13 @@ private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	std::string windowName;
-	int ScanLineCounter;
-	const int pixelsPerTile = 8;
+public:int ScanLineCounter;
+private:const int pixelsPerTile = 8;
 	const int scaleWidth = 2, scaleHeight = 2;
 	const int windowWidth = X_RES * scaleWidth, windowHeight = Y_RES * scaleHeight;
 	Byte display[Y_RES][X_RES] = { 0 };
 	int GpuMode;
+	bool inc_en = true;
 
 	const int SCANLINECYCLES = 456;
 
@@ -89,7 +90,15 @@ public:
 	SDL_Window* getWindow() const { return window; }
 	SDL_Renderer* getRenderer() const { return renderer; }
 
-	Byte getScanline();
+	Byte getControl() const;
+	void setControl(Byte);
+
+	Byte getStatus() const;
+	void setStatus(Byte);
+	void setStatusBit(int, Byte);
+	void setStatusMode(Byte);
+
+	Byte getScanline() const;
 	void setScanline(Byte);
 	void IncScanline();
 	void resetScanline();
@@ -109,6 +118,9 @@ public:
 
 	void renderDisplay(Byte);
 
+	void requestLcdcInterrupt(int);
+
+	void tick();
 	void UpdateGraphics(int);
 
 	void render();

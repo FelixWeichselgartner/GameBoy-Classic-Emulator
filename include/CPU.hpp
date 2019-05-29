@@ -136,9 +136,9 @@ public:
 	int executeExtendedOpcodes();
 
 	// interrupts
-	void RequestInterupt(int);
-	int DoInterupts();
-	int ServiceInterupts(int);
+	void RequestInterrupt(int);
+	int DoInterrupts();
+	int ServiceInterrupts(int);
 
 	// update the timers.
 	void UpdateTimers(int);

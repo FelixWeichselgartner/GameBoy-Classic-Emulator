@@ -34,22 +34,25 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "bc:" << HEX16 << this->cpu.registers.getBC() << " ";
 	file << "de:" << HEX16 << this->cpu.registers.getDE() << " ";
 	file << "hl:" << HEX16 << this->cpu.registers.getHL() << " ";
-	file << "sp:" << HEX16 << this->cpu.registers.getSP() << " ";
-	file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44) << " ";
-	file << "ir:" << HEX << (int)this->cpu.memory.ReadByte(0xff0f) << " ";
-	file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff) << " ";
+	//file << "sp:" << HEX16 << this->cpu.registers.getSP() << " ";
+	
+	//file << "ir:" << HEX << (int)this->cpu.memory.ReadByte(0xff0f) << " ";
+	//file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff) << " ";
 	file << "tc:" << HEX << (int)this->cpu.memory.ReadByte(0xff05) << " ";
 	file << "tcn:" << HEX << (int)this->cpu.memory.ReadByte(0xff07) << " ";
-	file << "c:" << dec << this->cpu.timer.getTimerCounter() << endl;
+	file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44);
+	file << " c:" << HEX16 << (int)this->gpu.ScanLineCounter;
+	//file << "c:" << dec << this->cpu.timer.getTimerCounter() << endl;
 	//file << "cp:" << HEX << (int)this->cpu.memory.ReadByte(0xa000) << " ";
 	//file << "rbn:" << HEX << (int)this->cpu.memory.mbc->getCurrentRomBank() << " ";
 	//file << "ran:" << HEX << (int)this->cpu.memory.ram.getCurrentRamBank() << endl;
 	//file << "mben:" << boolalpha << this->cpu.memory.rom.RomBanking << " ";
 	//file << "rben:" << boolalpha << this->cpu.memory.ram.EnableRamBanking << endl;
+	file << endl;
 }
 
 void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
-	int c, cyclesInstruction;
+	int c, cyclesInstruction = cpu.MAXCYCLES;
 	int delaytime = 1000 / 60;
 	unsigned long long counter = 0;
 	bool screen = false;
@@ -71,7 +74,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 	while (this->cpu.getRunning()) {
 
-		cyclesInstruction = 0;
+		cyclesInstruction -= cpu.MAXCYCLES;
 		starttime = clock();
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
@@ -237,9 +240,10 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			c = cpu.CPUstep();
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);
+			// sound tick
 			cpu.memory.sdt.update();
 			gpu.UpdateGraphics(c);
-			cpu.DoInterupts();
+			cpu.DoInterrupts();
 			counter++;
 
 		}

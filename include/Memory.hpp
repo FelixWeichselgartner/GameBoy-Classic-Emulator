@@ -14,6 +14,8 @@
 #include "format.hpp"
 #include "MemoryMap.hpp"
 
+class GPU;
+
 //----------------------------------------------------------------------------------------------
 class Memory {
 
@@ -32,6 +34,7 @@ private:
 	class Registers* registers;
 	class Joypad* joypad;
 	class Timer* timer;
+	class GPU* gpu;
 
 public:
 

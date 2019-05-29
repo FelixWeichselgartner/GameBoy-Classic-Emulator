@@ -14,7 +14,7 @@ enum {
     JOYPAD
 };
 
-void CPU::RequestInterupt(int id) {
+void CPU::RequestInterrupt(int id) {
 	Byte req = this->memory.ReadByte(ADDR_INTR_REQ);
 	req = setBit(req, id);
 	this->memory.WriteByte(ADDR_INTR_REQ, req);
@@ -24,7 +24,7 @@ void CPU::RequestInterupt(int id) {
 	return;
 }
 
-int CPU::DoInterupts() {
+int CPU::DoInterrupts() {
 	Byte req, enabled;
 	int c = 0;
 
@@ -35,7 +35,7 @@ int CPU::DoInterupts() {
 		if (req > 0) {
 			for (int i = 0; i < 8; i++) {
 				if (testBit(req, i) && testBit(enabled, i)) {
-					c += ServiceInterupts(i);
+					c += ServiceInterrupts(i);
 				}
 			}
 		}
@@ -44,7 +44,7 @@ int CPU::DoInterupts() {
 	return c;
 }
 
-int CPU::ServiceInterupts(int interrupt) {
+int CPU::ServiceInterrupts(int interrupt) {
 	Byte req = resetBit(this->memory.ReadByte(ADDR_INTR_REQ), interrupt);
     gb_ime = false;
 

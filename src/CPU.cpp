@@ -620,7 +620,6 @@ int CPU::CPUstep() {
 
 	executeInstruction(this->gb_halt ? 0x00 : this->memory.ReadByte(this->registers.getPC()));
 
-	
 	halt_bug();
 
 	// may not increase program counter after jumps.

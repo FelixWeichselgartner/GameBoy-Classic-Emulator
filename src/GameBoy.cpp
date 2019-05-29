@@ -94,11 +94,9 @@ void GameBoy::run() {
 	SDL_Event windowEvent;
 
 	int c, cyclesInstruction = cpu.MAXCYCLES;
-	int delaytime = 1000 / 60;
 	bool screen = false;
 
 	while (this->cpu.getRunning()) {
-		//cyclesInstruction = 0;
 		cyclesInstruction -= cpu.MAXCYCLES;
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
@@ -117,7 +115,7 @@ void GameBoy::run() {
 			cpu.UpdateTimers(c);
 			cpu.memory.sdt.update();
 			gpu.UpdateGraphics(c);
-			c += cpu.DoInterupts();
+			c += cpu.DoInterrupts();
 		}
 
 		gpu.render();

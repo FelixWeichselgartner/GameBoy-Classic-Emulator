@@ -9,27 +9,37 @@ class Timer {
 
 private:
 
-	int TimerCounter;
-	int DividerRegister;
+	// timer registers.
+	int div;
+	Byte tima, tma, tac;
+
+	// supporting variables.
+	bool TimerOverflowFlag, previousBit;
+	int TicksSinceOverflow;
+	int FreqBitPos[4] = { 9, 3, 5, 7 };
 
 	class CPU* cpu;
+
+	// private methods.
+	void updateDiv(int);
+	void incTima();
+	void tick();
 
 public:
 
 	Timer(class CPU*);
 
-	int getTimerCounter();
+	// getter and setter.
+	Byte getDiv() const { return this->div >> 8; }
+	Byte getTima() const { return this->tima; }
+	Byte getTma() const { return this->tma; }
+	Byte getTac() const { return this->tac | 0b11111000; }
+	void setDiv(Byte div) { updateDiv(0); }
+	void setTima(Byte);
+	void setTma(Byte tma) { this->tma = tma; }
+	void setTac(Byte tac) { this->tac = tac; }
 
-	void enable();
-	void disable();
-
-	bool IsEnabled() const;
-
-	int getClockCycles() const;
-	Byte getClockFrequency() const;
-
-	void DividerRegisterStep(int);
-
+	// update the timer.
 	void update(int);
 
 };
