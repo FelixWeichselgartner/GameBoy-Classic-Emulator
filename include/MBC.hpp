@@ -11,13 +11,16 @@ class MBC {
 
 protected:
 
-    bool EnableRamBanking;
+    bool EnableRamBanking, battery;
     Byte CurrentRomBank, CurrentRamBank;
 
     class ROM *rom;
     class RAM *ram;
 
 public:
+
+	void resetVar();
+    void reset();
 
     MBC();
     MBC(class ROM*, class RAM*);
@@ -29,6 +32,8 @@ public:
 
     bool getRamEnable() const;
     void setRamEnable(bool);
+	bool getBattery() const { return this->battery; }
+	void setBattery(bool battery) { this->battery = battery; }
 
 	Byte getCurrentRomBank() { return this->CurrentRomBank; }
 

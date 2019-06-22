@@ -72,18 +72,22 @@ private:
 	class Memory* memory;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
-	std::string windowName;
-public:int ScanLineCounter;
-private:const int pixelsPerTile = 8;
+	
+public:int ScanLineCounter; // public for debug.
+private:
+    const int pixelsPerTile = 8;
 	const int scaleWidth = 2, scaleHeight = 2;
 	const int windowWidth = X_RES * scaleWidth, windowHeight = Y_RES * scaleHeight;
-	Byte display[Y_RES][X_RES] = { 0 };
-	int GpuMode;
-	bool inc_en = true;
+    const int SCANLINECYCLES = 456;
 
-	const int SCANLINECYCLES = 456;
+    Byte display[Y_RES][X_RES] = { 0 };
+	int GpuMode;
+	bool inc_en;
+    std::string windowName;
 
 public:
+
+    void reset();
 
     GPU(class CPU*);
 

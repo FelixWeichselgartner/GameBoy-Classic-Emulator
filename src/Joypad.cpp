@@ -1,9 +1,13 @@
 #include "../include/Joypad.hpp"
 #include "../include/CPU.hpp"
 
+void Joypad::reset() {
+    this->JoypadState = 0xFF;
+}
+
 Joypad::Joypad(class CPU* cpu) {
 	if ((this->cpu = cpu) == NULL) exit(2);
-	this->JoypadState = 0xFF;
+	reset();
 }
 
 Byte Joypad::getJoypadState() const {
@@ -13,20 +17,23 @@ Byte Joypad::getJoypadState() const {
 	// 3 = down, 2 = up, 1 = left, 0 = down.
 	if (!testBit(retval, DIRECTION)) { 
 		for (int i = 4; i < 8; i++) {
-			if ((JoypadState >> i) & 1)
+			if ((JoypadState >> i) & 1) {
 				retval |= (1 << (i - 4));
-			else
+            } else {
 				retval &= ~(1 << (i - 4));
+            }
 		}
 	} 
+    
 	// gameboy: for buttons:
 	// 3 = start, 2 = select, 1 = B, 0 = A.
 	else if (!testBit(retval, BUTTON)) {
 		for (int i = 0; i < 4; i++) {
-			if ((JoypadState >> i) & 1)
+			if ((JoypadState >> i) & 1) {
 				retval |= (1 << i);
-			else
+            } else {
 				retval &= ~(1 << i);
+            }
 		}
 	}
 

@@ -27,6 +27,8 @@ private:
 
 public:
 
+    void reset();
+
 	Timer(class CPU*);
 
 	// getter and setter.

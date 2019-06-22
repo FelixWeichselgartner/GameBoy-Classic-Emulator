@@ -250,20 +250,55 @@ void Memory::WriteHRAM(Word address, Byte value) {
 ////////////////////////////////////////////////////////////////
 // constructor and destructor.
 
+void Memory::resetVar() {
+    this->EnableBootstrap = false;
+
+    for (int i = 0; i < VRAM_SIZE; i++) {
+        vram[i] = 0;
+    }
+
+    for (int i = 0; i < ECHO_SIZE; i++) {
+        echo[i] = 0;
+    }
+
+    for (int i = 0; i < OAM_SIZE; i++) {
+        oam[i] = 0;
+    }
+
+    for (int i = 0; i < IO_SIZE; i++) {
+        io[i] = 0;
+    }
+
+    for (int i = 0; i < HRAM_SIZE; i++) {
+        hram[i] = 0;
+    }
+    
+    interrupt_enable_register = 0;
+
+    InitMemory();
+    this->rom.load();
+    InitialiseMemoryBanking();
+}
+
+void Memory::reset() {
+    resetVar();
+    this->ram.reset();
+    this->rom.reset();
+    this->sdt.reset();
+}
+
 Memory::Memory() {
 	this->registers = NULL;
 	this->joypad = NULL;
 	this->timer = NULL;
-	InitMemory();
+	//InitMemory();
 }
 
 Memory::Memory(class Registers* registers, class Timer *timer) {
 	if ((this->registers = registers) == NULL) exit(2);
 	if ((this->timer = timer) == NULL) exit(2);
 	this->joypad = NULL;
-	InitMemory();
-	this->rom.load();
-	InitialiseMemoryBanking();
+	resetVar();
 }
 
 Memory::~Memory() {
@@ -274,36 +309,36 @@ Memory::~Memory() {
 // initialise memory.
 
 void Memory::InitMemory() {
-	io[0xFF05 - 0xFF00] = 0x00;
-	io[0xFF06 - 0xFF00] = 0x00;
-	io[0xFF07 - 0xFF00] = 0x00;
-	io[0xFF10 - 0xFF00] = 0x80;
-	io[0xFF11 - 0xFF00] = 0xBF;
-	io[0xFF12 - 0xFF00] = 0xF3;
-	io[0xFF14 - 0xFF00] = 0xBF;
-	io[0xFF16 - 0xFF00] = 0x3F;
-	io[0xFF17 - 0xFF00] = 0x00;
-	io[0xFF19 - 0xFF00] = 0xBF;
-	io[0xFF1A - 0xFF00] = 0x7F;
-	io[0xFF1B - 0xFF00] = 0xFF;
-	io[0xFF1C - 0xFF00] = 0x9F;
-	io[0xFF1E - 0xFF00] = 0xBF;
-	io[0xFF20 - 0xFF00] = 0xFF;
-	io[0xFF21 - 0xFF00] = 0x00;
-	io[0xFF22 - 0xFF00] = 0x00;
-	io[0xFF23 - 0xFF00] = 0xBF;
-	io[0xFF24 - 0xFF00] = 0x77;
-	io[0xFF25 - 0xFF00] = 0xF3;
-	io[0xFF26 - 0xFF00] = 0xF1;
-	io[0xFF40 - 0xFF00] = 0x91;
-	io[0xFF42 - 0xFF00] = 0x00;
-	io[0xFF43 - 0xFF00] = 0x00;
-	io[0xFF45 - 0xFF00] = 0x00;
-	io[0xFF47 - 0xFF00] = 0xFC;
-	io[0xFF48 - 0xFF00] = 0xFF;
-	io[0xFF49 - 0xFF00] = 0xFF;
-	io[0xFF4A - 0xFF00] = 0x00;
-	io[0xFF4B - 0xFF00] = 0x00;
+	io[0xFF05 - ADDR_IO] = 0x00;
+	io[0xFF06 - ADDR_IO] = 0x00;
+	io[0xFF07 - ADDR_IO] = 0x00;
+	io[0xFF10 - ADDR_IO] = 0x80;
+	io[0xFF11 - ADDR_IO] = 0xBF;
+	io[0xFF12 - ADDR_IO] = 0xF3;
+	io[0xFF14 - ADDR_IO] = 0xBF;
+	io[0xFF16 - ADDR_IO] = 0x3F;
+	io[0xFF17 - ADDR_IO] = 0x00;
+	io[0xFF19 - ADDR_IO] = 0xBF;
+	io[0xFF1A - ADDR_IO] = 0x7F;
+	io[0xFF1B - ADDR_IO] = 0xFF;
+	io[0xFF1C - ADDR_IO] = 0x9F;
+	io[0xFF1E - ADDR_IO] = 0xBF;
+	io[0xFF20 - ADDR_IO] = 0xFF;
+	io[0xFF21 - ADDR_IO] = 0x00;
+	io[0xFF22 - ADDR_IO] = 0x00;
+	io[0xFF23 - ADDR_IO] = 0xBF;
+	io[0xFF24 - ADDR_IO] = 0x77;
+	io[0xFF25 - ADDR_IO] = 0xF3;
+	io[0xFF26 - ADDR_IO] = 0xF1;
+	io[0xFF40 - ADDR_IO] = 0x91;
+	io[0xFF42 - ADDR_IO] = 0x00;
+	io[0xFF43 - ADDR_IO] = 0x00;
+	io[0xFF45 - ADDR_IO] = 0x00;
+	io[0xFF47 - ADDR_IO] = 0xFC;
+	io[0xFF48 - ADDR_IO] = 0xFF;
+	io[0xFF49 - ADDR_IO] = 0xFF;
+	io[0xFF4A - ADDR_IO] = 0x00;
+	io[0xFF4B - ADDR_IO] = 0x00;
 	interrupt_enable_register = 0x00;
 }
 
@@ -534,6 +569,8 @@ void NotSupported() {
 // initialise mbc
 
 void Memory::InitialiseMemoryBanking() {
+	bool battery = false;
+
 	// memory bank controller modes:
 	// http://gbdev.gg8.se/wiki/articles/The_Cartridge_Header
 	// http://gbdev.gg8.se/wiki/articles/Memory_Bank_Controllers
@@ -554,6 +591,7 @@ void Memory::InitialiseMemoryBanking() {
 		// 03h  MBC1+RAM+BATTERY
 		case 3: 
 			this->MemoryBankingMode = 1;
+			battery = true;
 			break;
 		// 05h  MBC2
 		case 5: 
@@ -575,6 +613,7 @@ void Memory::InitialiseMemoryBanking() {
 		// 10h  MBC3+TIMER+RAM+BATTERY
 		case 0x10:
 			this->MemoryBankingMode = 3;
+			battery = true;
 			break;
 		// 11h  MBC3
 		case 0x11:
@@ -587,6 +626,7 @@ void Memory::InitialiseMemoryBanking() {
 		// 13h  MBC3+RAM+BATTERY
 		case 0x13:
 			this->MemoryBankingMode = 3;
+			battery = true;
 			break;
 		// 19h  MBC5
 		case 0x19:
@@ -599,6 +639,7 @@ void Memory::InitialiseMemoryBanking() {
 	    // 1Bh  MBC5+RAM+BATTERY
 		case 0x1B:
 			this->MemoryBankingMode = 5;
+			battery = true;
 			break;
 	    // 1Ch  MBC5+RUMBLE
 		case 0x1C:
@@ -611,6 +652,7 @@ void Memory::InitialiseMemoryBanking() {
 	    // 1Eh  MBC5+RUMBLE+RAM+BATTERY
 		case 0x1E:
 			this->MemoryBankingMode = 5;
+			battery = true;
 			break;
 	    // 20h  MBC6
 	    // 22h  MBC7+SENSOR+RUMBLE+RAM+BATTERY
@@ -650,6 +692,9 @@ void Memory::InitialiseMemoryBanking() {
 			NotSupported();
 			break;
 	}
+
+	// enable or disable battery status.
+	this->mbc->setBattery(battery);
 
 	bool presumeMultiMBC1 = ((MemoryBankingMode == 1)
 		&& (this->rom.getMemory(0x0149) == 0)

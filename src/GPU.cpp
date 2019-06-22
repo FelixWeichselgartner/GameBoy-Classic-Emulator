@@ -12,12 +12,27 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
+void GPU::reset() {
+    this->windowName = this->memory->rom.getGameName();
+    this->ScanLineCounter = 3;
+    this->GpuMode = GPU_MODE_HBLANK;
+    this->inc_en = true;
+
+    // Byte display[Y_RES][X_RES] = { 0 };
+    // not needed for first.
+    // set zero for 2nd, 3rd ... reset.
+    for (int i = 0; i < X_RES; i++) {
+        for (int k = 0; k < Y_RES; k++) {
+            display[k][i] = 0;
+        }
+    }
+}
+
 GPU::GPU(class CPU* cpu) {
-	if ((this->cpu = cpu) == NULL) exit(2);
+ 	if ((this->cpu = cpu) == NULL) exit(2);
 	if ((this->memory = &this->cpu->memory) == NULL) exit(2);
-	windowName = this->memory->rom.getGameName();
-	ScanLineCounter = 3;
-	this->GpuMode = GPU_MODE_HBLANK;
+
+	reset();
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		cout << "[Error] SDL coult not be initialised! SDL Error: " << SDL_GetError() << endl;
@@ -402,11 +417,9 @@ const int CLOCKS_PER_FRAME = (CLOCKS_PER_SCANLINE * SCANLINES_PER_FRAME) + CLOCK
 void GPU::tick() {
 	Byte currentline = getScanline();
 
-	
 	if (currentline == 153) {
-		resetScanline();// this->ScanLineCounter -= SCANLINECYCLES;
+		resetScanline();
 		this->inc_en = false;
-
 	}
 
 	/*

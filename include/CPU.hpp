@@ -43,6 +43,9 @@ public:
 
 public:
 
+    void resetVar();
+    void reset();
+
     CPU();
 	~CPU();
 

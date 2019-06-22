@@ -26,6 +26,8 @@ private:
 
 public:
 
+    void reset();
+
     GameBoy();
 
 	// debug functions.

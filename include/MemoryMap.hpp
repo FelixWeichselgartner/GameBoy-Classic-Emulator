@@ -24,5 +24,12 @@
 #define ADDR_HRAM			0xFF80		// High RAM (HRAM) (Stack)
 #define ADDR_INTR_EN		0xFFFF		// Interupt Enable Register
 //----------------------------------------------------------------------------------------------
+// Size of memory regions.
+const int VRAM_SIZE = ADDR_EXT_RAM - ADDR_VRAM_T_S;
+const int ECHO_SIZE = ADDR_OAM - ADDR_ECHO;
+const int OAM_SIZE = ADDR_UNUSABLE - ADDR_OAM;
+const int IO_SIZE = ADDR_HRAM - ADDR_IO;
+const int HRAM_SIZE = ADDR_INTR_EN - ADDR_HRAM;
+//----------------------------------------------------------------------------------------------
 
 #endif

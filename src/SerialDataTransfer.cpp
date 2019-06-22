@@ -1,13 +1,17 @@
 #include "../include/SerialDataTransfer.hpp"
 
+void SerialDataTransfer::reset() {
+    this->input = this->output = 0x00;
+}
+
 SerialDataTransfer::SerialDataTransfer() {
 	this->MasterDevice = false;
-	this->input = this->output = 0x00;
+    reset();
 }
 
 SerialDataTransfer::SerialDataTransfer(bool MasterDevice) {
 	this->MasterDevice = MasterDevice;
-	this->input = this->output = 0x00;
+    reset();
 }
 
 void SerialDataTransfer::sendByte() {

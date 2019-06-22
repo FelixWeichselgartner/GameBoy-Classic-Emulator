@@ -34,18 +34,22 @@ Byte bootstrap[] = {
 	0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50, // 0xF0
 };
 
+void ROM::reset() {
+    this->RomSize = 0;
+}
+
 ROM::ROM() {
 	this->rom = NULL;
-	this->RomSize = 0;
 	this->EnableBootstrap = NULL;
 	this->ram = NULL;
+    reset();
 }
 
 ROM::ROM(class RAM* ram, bool *EnableBootstrap) {
 	this->rom = NULL;
-	this->RomSize = 0;
 	if ((this->EnableBootstrap = EnableBootstrap) == NULL) exit(2);
 	if ((this->ram = ram) == NULL) exit(2);
+    reset();
 }
 
 ROM::~ROM() {
@@ -71,18 +75,18 @@ void ROM::load() {
 
 	// working:
 	//	games:
-	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
 	//	blargg's test roms:
 	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("instr_timing.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("halt_bug.gb", ios::in | ios::binary | ios::ate);
 	//	other test roms:
 	//gbfile.open("Game Boy Controller Kensa Cartridge.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("timer/tma_write_reloading.gb", ios::in | ios::binary | ios::ate);
 
 	// not working:
 	//gbfile.open("interrupt_time.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("halt_bug.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("halt_tests.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("mem_timing.gb", ios::in | ios::binary | ios::ate);
 		//gbfile.open("individual_m/01-read_timing.gb", ios::in | ios::binary | ios::ate);

@@ -4,18 +4,25 @@
 #include <iomanip>
 using namespace std;
 
+void MBC::resetVar() {
+	this->EnableRamBanking = this->battery = false;
+	this->CurrentRomBank = this->CurrentRamBank = 0;
+}
+
+void MBC::reset() {
+    resetVar();
+}
+
 MBC::MBC() {
 	this->rom = NULL;
     this->ram = NULL;
-	this->EnableRamBanking = false;
-	this->CurrentRomBank = this->CurrentRamBank = 0;
+	resetVar();
 }
 
 MBC::MBC(class ROM *rom, class RAM * ram) {
 	this->rom = rom;
     this->ram = ram;
-	this->EnableRamBanking = false;
-	this->CurrentRomBank = this->CurrentRamBank = 0;
+	resetVar();
 }
 
 Byte MBC::ReadROM(Word address) {

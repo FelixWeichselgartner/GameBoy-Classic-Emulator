@@ -31,6 +31,7 @@ https://github.com/trekawek/coffee-gb/blob/master/src/main/java/eu/rekawek/coffe
 */
 
 // private methods.
+
 void Timer::incTima() {
     this->tima++;
     this->tima %= 0x100;
@@ -42,12 +43,16 @@ void Timer::incTima() {
 
 // public methods.
 
+void Timer::reset() {
+    this->TimerOverflowFlag = false;
+    this->TicksSinceOverflow = 0;
+    this->div = this->tima = this->tma = this->tac = 0x00;
+    this->previousBit = true;
+}
+
 Timer::Timer(class CPU* cpu) {
 	if ((this->cpu = cpu) == NULL) exit(2);
-	this->TimerOverflowFlag = false;
-	this->TicksSinceOverflow = 0;
-	this->div = this->tima = this->tma = this->tac = 0x00;
-	this->previousBit = true;
+	reset();
 }
 
 void Timer::setTima(Byte tima) { 

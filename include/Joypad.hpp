@@ -32,6 +32,8 @@ private:
 
 public:
 
+    void reset();
+
 	Joypad(class CPU*);
 	
 	Byte getJoypadState() const;

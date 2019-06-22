@@ -15,9 +15,22 @@ void RAM::reserveRamBankMemory(Byte AmountBanks) {
 	this->CurrentRamBank = 0;
 }
 
+void RAM::reset() {
+    // Byte ram[ADDR_ECHO - ADDR_EXT_RAM] = {0};
+    // not needed for first reset.
+    // needed for 2nd, 3rd ... reset.
+    for (int i = 0; i < ADDR_ECHO - ADDR_EXT_RAM; i++) {
+        this->ram[i] = 0;
+    }
+
+    this->CurrentRamBank = 0;
+    this->AmountBanks = 1;
+    bool EnableRamBanking = false;
+}
+
 RAM::RAM() {
 	this->RamBanks = NULL;
-	this->EnableRamBanking = false;
+    reset();
 }
 
 Byte RAM::getMemory(Word address) const {

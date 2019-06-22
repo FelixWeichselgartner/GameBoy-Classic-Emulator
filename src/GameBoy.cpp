@@ -10,6 +10,12 @@ using namespace std;
 #include <fstream>
 //----------------------------------------------------------------------------------------------
 
+void GameBoy::reset() {
+    this->cpu.reset();
+    this->gpu.reset();
+    this->joypad.reset();
+}
+
 GameBoy::GameBoy() {
 	if (&joypad != NULL)
 		cpu.setJoypadLink(&joypad);

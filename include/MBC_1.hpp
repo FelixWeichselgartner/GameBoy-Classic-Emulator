@@ -12,6 +12,9 @@ private:
 
 public:
 
+	void resetVar();
+    void reset();
+
 	MBC_1();
 	MBC_1(class ROM*, class RAM*);
 
@@ -26,6 +29,11 @@ public:
 	void WriteROM(Word, Byte);
 	Byte ReadRAM(Word);
 	void WriteRAM(Word, Byte);
+
+	// save external ram to .sav file.
+	void saveExtRam();
+	// load external ram from .sav file.
+	void loadExtRam();
 
 };
 

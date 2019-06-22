@@ -20,11 +20,13 @@ private:
 
 public:
 
-	void reserveRamBankMemory(Byte);
+    void reset();
 
     RAM();
 
-	Byte getMemory(Word) const;
+    void reserveRamBankMemory(Byte);
+
+    Byte getMemory(Word) const;
     void setMemory(Word, Byte);
 
 	Byte getCurrentRamBank() const;

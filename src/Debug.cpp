@@ -38,10 +38,10 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	
 	//file << "ir:" << HEX << (int)this->cpu.memory.ReadByte(0xff0f) << " ";
 	//file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff) << " ";
-	file << "tc:" << HEX << (int)this->cpu.memory.ReadByte(0xff05) << " ";
-	file << "tcn:" << HEX << (int)this->cpu.memory.ReadByte(0xff07) << " ";
+	//file << "tc:" << HEX << (int)this->cpu.memory.ReadByte(0xff05) << " ";
+	//file << "tcn:" << HEX << (int)this->cpu.memory.ReadByte(0xff07) << " ";
 	file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44);
-	file << " c:" << HEX16 << (int)this->gpu.ScanLineCounter;
+	//file << " c:" << HEX16 << (int)this->gpu.ScanLineCounter;
 	//file << "c:" << dec << this->cpu.timer.getTimerCounter() << endl;
 	//file << "cp:" << HEX << (int)this->cpu.memory.ReadByte(0xa000) << " ";
 	//file << "rbn:" << HEX << (int)this->cpu.memory.mbc->getCurrentRomBank() << " ";

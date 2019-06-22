@@ -5,24 +5,25 @@
 #include <iomanip>
 using namespace std;
 
-MBC_1::MBC_1() {
+void MBC_1::resetVar() {
 	this->CurrentRomBank = 0x01;
 	this->CurrentRamBank = 0x00;
 	this->Mode = 0x00;
 	this->HigherRBBits = 0x00;
-	this->rom = NULL;
-	this->ram = NULL;
-	RomBanking = true;
+	this->RomBanking = true;
 }
 
-MBC_1::MBC_1(class ROM* rom, class RAM* ram) {
-	this->CurrentRomBank = 0x01;
-	this->CurrentRamBank = 0x00;
-	this->Mode = 0x00;
-	this->HigherRBBits = 0x00;
-	this->rom = rom;
-	this->ram = ram;
-	this->RomBanking = true;
+void MBC_1::reset() {
+    MBC::reset();
+    resetVar();
+}
+
+MBC_1::MBC_1(): MBC() {
+	resetVar();
+}
+
+MBC_1::MBC_1(class ROM* rom, class RAM* ram): MBC(rom, ram) {
+	resetVar();
 }
 
 Byte MBC_1::getCurrentRomBank() const {
@@ -30,12 +31,17 @@ Byte MBC_1::getCurrentRomBank() const {
 }
 
 void MBC_1::EnableRamBank(unsigned short address, Byte value) {
-	if ((address & 0x0010) != 0x0010) {
+	//if ((address & 0x0010) != 0x0010) {
+		//cout << endl << "address: " << HEX16 << address << " value: " << HEX << value << endl;
 		switch (value & 0x0F) {
-			case 0x0A: this->ram->setRamEnable(true); break;
-			case 0x00: this->ram->setRamEnable(false); break;
+		case 0x0A: this->ram->setRamEnable(true); /*cout << "en" << endl; */break;
+		case 0x00: this->ram->setRamEnable(false);/* cout << "dis" << endl; */break;
 		}
-	}
+	//}
+
+	//else {
+		//cout << "not address:" << HEX16 << address << " with value: " << HEX << value << endl;
+	//}
 
 	return;
 }
@@ -113,17 +119,21 @@ void MBC_1::WriteROM(Word address, Byte value) {
 }
 
 Byte MBC_1::ReadRAM(Word address) {
+	//cout << "read ram" << endl;
 	if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
 		if (this->ram->getRamEnable()) {
+			//cout << "1" << endl;
 			if (this->Mode == 0) {
 				return this->ram->getRamBankMemory(address - ADDR_EXT_RAM);
 			} else {
 				return this->ram->getRamBankMemory(address - ADDR_EXT_RAM + this->ram->getCurrentRamBank() * 0x2000);
 			}
 		} else {
+			//cout << "2" << endl;
 			return 0xFF;
 		}
 	} else {
+		//cout << "normal" << endl;
 		return this->ram->getMemory(address - ADDR_INT_RAM_1);
 	}
 }

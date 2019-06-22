@@ -12,6 +12,8 @@ private:
 
 public:
 
+    void reset();
+
 	SerialDataTransfer();
 	SerialDataTransfer(bool);
 

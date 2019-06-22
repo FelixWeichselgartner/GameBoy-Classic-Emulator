@@ -58,6 +58,8 @@ private:
 
   public:
 
+    void reset();
+
     Registers();
 
     // A Register

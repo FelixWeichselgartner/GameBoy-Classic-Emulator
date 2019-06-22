@@ -6,20 +6,24 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
-Registers::Registers() {
-	/*
+void Registers::reset() {
+    /*
 	this->AF = 0x01B0;
 	this->BC = 0x0013;
 	this->DE = 0x00D8;
 	this->HL = 0x014D;
 	*/
-	this->AF = 0x11b0;
-	this->BC = 0x0013;
-	this->DE = 0x00d8;
-	this->HL = 0x014d;
-	this->PC = 0x0100; // PC initialised in CPU().
-	this->SP = 0xFFFE;
-	this->halt_bug_pc_no_increase = false;
+    this->AF = 0x11b0;
+    this->BC = 0x0013;
+    this->DE = 0x00d8;
+    this->HL = 0x014d;
+    this->PC = 0x0100; // PC initialised in CPU().
+    this->SP = 0xFFFE;
+    this->halt_bug_pc_no_increase = false;
+}
+
+Registers::Registers() {
+	reset();
 }
     
 Byte Registers::getA() const {

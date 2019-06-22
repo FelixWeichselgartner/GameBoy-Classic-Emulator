@@ -21,6 +21,8 @@ private:
 
 public:
 
+    void reset();
+
     ROM();
 	ROM(class RAM*, bool*);
 	~ROM();

@@ -10,21 +10,32 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
+void CPU::resetVar() {
+    this->joypad = NULL;
+    this->running = 0x01;
+    this->jump = false;
+    this->gb_ime = false;
+    this->cycles = 0;
+    this->gb_halt = false;
+    this->gb_stop = 0x00;
+    this->memory.getEnableBootstrap() ? this->registers.setPC(0x0000) : this->registers.setPC(0x0100);
+    this->CycleConditionals = false;
+    this->jumpRelAddress = 0x00;
+    this->jumpAddress = 0x0000;
+    this->gb_halt_bug = 0x00;
+}
+
+void CPU::reset() {
+    resetVar();
+    this->registers.reset();
+    this->timer.reset();
+    this->memory.reset();
+}
+
 CPU::CPU() {
-	this->joypad = NULL;
-	this->running = 0x01;
-	this->jump = false;
-	this->gb_ime = false;
-	this->cycles = 0;
-	this->gb_halt = false;
-	this->gb_stop = 0x00;
-	this->memory.getEnableBootstrap() ? this->registers.setPC(0x0000) : this->registers.setPC(0x0100);
-	this->CycleConditionals = false;
+    resetVar();
 	Init_OPCODE();
 	Init_CBOPCODE();
-	this->jumpRelAddress = 0x00;
-	this->jumpAddress = 0x0000;
-	this->gb_halt_bug = 0x00;
 }
 
 CPU::~CPU() {

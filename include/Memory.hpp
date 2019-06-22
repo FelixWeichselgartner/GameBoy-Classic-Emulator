@@ -21,15 +21,15 @@ class Memory {
 
 private:
 
-	bool EnableBootstrap = false;
-	Byte MemoryBankingMode;
+    bool EnableBootstrap;
+    Byte MemoryBankingMode;
 
-	Byte vram[ADDR_EXT_RAM - ADDR_VRAM_T_S] = { 0 };
-	Byte echo[ADDR_OAM - ADDR_ECHO] 		= { 0 };
-	Byte oam[ADDR_UNUSABLE - ADDR_OAM] 		= { 0 };
-	Byte io[ADDR_HRAM - ADDR_IO] 			= { 0 };
-	Byte hram[ADDR_INTR_EN - ADDR_HRAM] 	= { 0 };
-	Byte interrupt_enable_register 			= 0;
+	Byte vram[VRAM_SIZE]    = { 0 };
+	Byte echo[ECHO_SIZE]    = { 0 };
+	Byte oam [OAM_SIZE] 	= { 0 };
+	Byte io  [IO_SIZE] 		= { 0 };
+	Byte hram[HRAM_SIZE] 	= { 0 };
+	Byte interrupt_enable_register = 0;
 
 	class Registers* registers;
 	class Joypad* joypad;
@@ -60,6 +60,9 @@ private:
 	void WriteHRAM(Word, Byte);
 
 public:
+
+    void resetVar();
+    void reset();
 
 	Memory();
 	Memory(class Registers *, class Timer *);
