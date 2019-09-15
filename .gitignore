@@ -1,0 +1,6 @@
+*.gb
+*.sav
+build/
+.vscode/
+lib/
+resources/
