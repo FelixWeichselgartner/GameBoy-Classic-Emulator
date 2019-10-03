@@ -21,14 +21,15 @@ class GameBoy {
 private:
 
     class CPU cpu;
-    class GPU gpu = GPU(&cpu);
+    class GPU *gpu;
 	class Joypad joypad = Joypad(&cpu);
 
 public:
 
     void reset();
 
-    GameBoy();
+    GameBoy(std::string);
+	~GameBoy();
 
 	// debug functions.
 	void PrintRegisters();

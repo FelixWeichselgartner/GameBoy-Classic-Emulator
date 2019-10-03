@@ -4,23 +4,25 @@
 #include <iostream>
 #include <iomanip>
 using namespace std;
-
-#include <SDL2/SDL.h>
-
-#include <fstream>
 //----------------------------------------------------------------------------------------------
 
 void GameBoy::reset() {
     this->cpu.reset();
-    this->gpu.reset();
+    this->gpu->reset();
     this->joypad.reset();
 }
 
-GameBoy::GameBoy() {
+GameBoy::GameBoy(string inputFile) {
+	this->cpu.loadROM(inputFile);
+	this->gpu = new GPU(&this->cpu);
 	if (&joypad != NULL)
 		cpu.setJoypadLink(&joypad);
 	else
 		exit(2);
+}
+
+GameBoy::~GameBoy() {
+	delete this->gpu;
 }
 
 bool GameBoy::winEvent(SDL_Event &windowEvent, bool &screen) {
@@ -55,7 +57,7 @@ bool GameBoy::winEvent(SDL_Event &windowEvent, bool &screen) {
 					break;
 				case SDLK_F6:
 					if (!screen)
-						gpu.screenshot();
+						gpu->screenshot();
 					screen = true;
 					break;
 			}
@@ -120,15 +122,15 @@ void GameBoy::run() {
 			cyclesInstruction += c;
 			cpu.UpdateTimers(c);
 			cpu.memory.sdt.update();
-			gpu.UpdateGraphics(c);
+			gpu->UpdateGraphics(c);
 			c += cpu.DoInterrupts();
 		}
 
-		gpu.render();
+		gpu->render();
 	}
 
-	SDL_DestroyRenderer(gpu.getRenderer());
-	SDL_DestroyWindow(gpu.getWindow());
+	SDL_DestroyRenderer(gpu->getRenderer());
+	SDL_DestroyWindow(gpu->getWindow());
 	SDL_Quit();
 }
 
@@ -140,7 +142,7 @@ void GameBoy::run() {
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
-    class GameBoy gameboy;
+    class GameBoy gameboy(argv[1]);
 	(MODE) ? gameboy.tests(MODE) : gameboy.run();
 	cout << "Gameboy-Classic-Emulator closed." << endl;
     return 0;

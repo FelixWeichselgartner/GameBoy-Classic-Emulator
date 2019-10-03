@@ -8,6 +8,8 @@
 #include "Joypad.hpp"
 #include "datatypes.h"
 #include "bit.hpp"
+
+#include <iostream>
 //----------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------
@@ -45,6 +47,7 @@ public:
 
     void resetVar();
     void reset();
+	void loadROM(std::string);
 
     CPU();
 	~CPU();

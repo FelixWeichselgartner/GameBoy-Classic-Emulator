@@ -10,6 +10,10 @@
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
+void CPU::loadROM(string inputFile) {
+	this->memory.setROMFile(inputFile);
+}
+
 void CPU::resetVar() {
     this->joypad = NULL;
     this->running = 0x01;

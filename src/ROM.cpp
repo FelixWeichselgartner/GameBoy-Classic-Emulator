@@ -69,13 +69,14 @@ Byte ROM::getMemory(unsigned int address) const {
 	}
 }
 
-void ROM::load() {
+void ROM::load(string inputFile) {
 	streampos size;
 	ifstream gbfile;
 
+	gbfile.open(inputFile, ios::in | ios::binary | ios::ate);
 	// working:
 	//	games:
-	gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
 	//	blargg's test roms:
 	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);

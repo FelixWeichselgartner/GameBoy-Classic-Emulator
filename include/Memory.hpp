@@ -14,12 +14,16 @@
 #include "format.hpp"
 #include "MemoryMap.hpp"
 
+#include <iostream>
+
 class GPU;
 
 //----------------------------------------------------------------------------------------------
 class Memory {
 
 private:
+
+	std::string inputFile;
 
     bool EnableBootstrap;
     Byte MemoryBankingMode;
@@ -61,13 +65,16 @@ private:
 
 public:
 
-    void resetVar();
+	void resetArrays();
+    void resetVar(bool);
     void reset();
 
 	Memory();
 	Memory(class Registers *, class Timer *);
 	~Memory();
 
+	void setROMFile(std::string);
+	void loadROM();
 	void InitMemory();
 
 	void setJoypadLink(class Joypad*);

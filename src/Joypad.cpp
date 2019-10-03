@@ -1,6 +1,9 @@
 #include "../include/Joypad.hpp"
 #include "../include/CPU.hpp"
 
+#include <iostream>
+using namespace std;
+
 void Joypad::reset() {
     this->JoypadState = 0xFF;
 }

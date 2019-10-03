@@ -29,7 +29,7 @@ public:
 
 	Byte getMemory(unsigned int) const;
 
-	void load();
+	void load(std::string);
 
 	int getRomSize() const { return this->RomSize; }
 

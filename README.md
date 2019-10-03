@@ -125,6 +125,12 @@ Probably the best method to compile on windows is to use Microsoft Visual Studio
 * serial data transfer.
 * other memory bank controllers.
 
+## To Do:
+
+* maybe make pointers of all self-made objects. make references & of them and use . to access.
+* implement sound.
+* finish MBC_Cartridge to be able to play form real cartidges (maybe one version for pi, arduino).
+
 ## Resources:
 
 * http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf

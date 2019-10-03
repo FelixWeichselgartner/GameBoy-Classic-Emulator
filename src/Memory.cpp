@@ -250,10 +250,8 @@ void Memory::WriteHRAM(Word address, Byte value) {
 ////////////////////////////////////////////////////////////////
 // constructor and destructor.
 
-void Memory::resetVar() {
-    this->EnableBootstrap = false;
-
-    for (int i = 0; i < VRAM_SIZE; i++) {
+void Memory::resetArrays() {
+	for (int i = 0; i < VRAM_SIZE; i++) {
         vram[i] = 0;
     }
 
@@ -272,16 +270,19 @@ void Memory::resetVar() {
     for (int i = 0; i < HRAM_SIZE; i++) {
         hram[i] = 0;
     }
-    
-    interrupt_enable_register = 0;
+}
 
+void Memory::resetVar(bool reset_arr) {
+    this->EnableBootstrap = false;
+    interrupt_enable_register = 0;
+	if (reset_arr) {
+		resetArrays();
+	}
     InitMemory();
-    this->rom.load();
-    InitialiseMemoryBanking();
 }
 
 void Memory::reset() {
-    resetVar();
+    resetVar(true);
     this->ram.reset();
     this->rom.reset();
     this->sdt.reset();
@@ -291,14 +292,13 @@ Memory::Memory() {
 	this->registers = NULL;
 	this->joypad = NULL;
 	this->timer = NULL;
-	//InitMemory();
 }
 
 Memory::Memory(class Registers* registers, class Timer *timer) {
 	if ((this->registers = registers) == NULL) exit(2);
 	if ((this->timer = timer) == NULL) exit(2);
 	this->joypad = NULL;
-	resetVar();
+	resetVar(false);
 }
 
 Memory::~Memory() {
@@ -307,6 +307,16 @@ Memory::~Memory() {
 
 ////////////////////////////////////////////////////////////////
 // initialise memory.
+
+void Memory::setROMFile(std::string inputFile) {
+	this->inputFile = inputFile;
+	loadROM();
+}
+
+void Memory::loadROM() {
+	this->rom.load(this->inputFile);
+    InitialiseMemoryBanking();
+}
 
 void Memory::InitMemory() {
 	io[0xFF05 - ADDR_IO] = 0x00;

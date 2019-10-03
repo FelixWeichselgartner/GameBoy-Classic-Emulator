@@ -113,7 +113,7 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 						break;
 					case SDLK_F6:
 						if (!screen)
-							gpu.screenshot();
+							gpu->screenshot();
 						screen = true;
 						break;
 					}
@@ -242,17 +242,17 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 			cpu.UpdateTimers(c);
 			// sound tick
 			cpu.memory.sdt.update();
-			gpu.UpdateGraphics(c);
+			gpu->UpdateGraphics(c);
 			cpu.DoInterrupts();
 			counter++;
 
 		}
 
-		gpu.render();
+		gpu->render();
 	}
 
-	SDL_DestroyRenderer(gpu.getRenderer());
-	SDL_DestroyWindow(gpu.getWindow());
+	SDL_DestroyRenderer(gpu->getRenderer());
+	SDL_DestroyWindow(gpu->getWindow());
 	SDL_Quit();
 }
 
@@ -265,17 +265,17 @@ void GameBoy::tests(int mode) {
 		Debug_InputAndLog(windowEvent);
 		break;
 	case 2:
-		gpu.RenderNintendoLogo();
+		gpu->RenderNintendoLogo();
 		for (int i = 0; i < Y_RES; i++) {
-			gpu.renderDisplay(i);
+			gpu->renderDisplay(i);
 		}
 
 		while (1) {
 			
 		}
 
-		SDL_DestroyRenderer(gpu.getRenderer());
-		SDL_DestroyWindow(gpu.getWindow());
+		SDL_DestroyRenderer(gpu->getRenderer());
+		SDL_DestroyWindow(gpu->getWindow());
 		SDL_Quit();
 		break;
 	case 3:
