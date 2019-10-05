@@ -59,7 +59,7 @@ void MBC::setRamEnable(bool EnableRamBanking) {
     this->EnableRamBanking = EnableRamBanking;
 }
 
-void MBC_1::saveExtRam() {
+void MBC::saveExtRam() {
 	if (this->battery) {
 		ofstream savefile;
 		savefile.open("save.sav", ios::out | ios::binary);
@@ -70,6 +70,6 @@ void MBC_1::saveExtRam() {
 	}
 }
 
-void MBC_1::loadExtRam() {
+void MBC::loadExtRam() {
 
 }

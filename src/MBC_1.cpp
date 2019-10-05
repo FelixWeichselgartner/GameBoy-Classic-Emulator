@@ -34,7 +34,8 @@ Byte MBC_1::getCurrentRomBank() const {
 }
 
 void MBC_1::EnableRamBank(unsigned short address, Byte value) {
-	this->ram->setRamEnable((value & 0x0F) == 0x0A);
+	if ((address & 0x0010) != 0x0010)
+		this->ram->setRamEnable((value & 0x0F) == 0x0A);
 
 	return;
 }
@@ -52,7 +53,7 @@ void MBC_1::ChangeLowRomBank(Byte value) {
 
 void MBC_1::ChangeHighRomBank(Byte value) {
 	this->SelectedRomBank &= 0x1F;
-	this->SelectedRomBank |= (value & 0b01100000);
+	this->SelectedRomBank |= ((value << 5) & 0b11);
 	
 	return;
 }
