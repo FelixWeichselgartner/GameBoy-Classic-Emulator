@@ -404,6 +404,7 @@ Word Memory::LoadWord() {
 // stack operations,
 
 void Memory::PushByte(Byte value) {
+	cout << this->registers << endl;
 	this->registers->decSP();
 	WriteByte(this->registers->getSP(), value);
 }
@@ -417,6 +418,7 @@ Byte Memory::PopByte() {
 void Memory::PushWord(Word value) {
 	Byte firstHalf, secondHalf;
 	firstHalf = HIGH_BYTE(value);
+
 	secondHalf = LOW_BYTE(value);
 	PushByte(firstHalf);
 	PushByte(secondHalf);

@@ -1618,7 +1618,16 @@ void CPU::opcode_FE() {
 	cp(this->registers.getA(), this->memory.LoadByte());
 }
 
+#include <iostream>
+using namespace std;
 // RST 38    	call routine at address 0038h.
 void CPU::opcode_FF() {
+	static int count = 0;
+	cout << count << endl;
+	if (count == 0x7f28) {
+		//this is my breakpoint
+		cout << "break;" << endl;
+	}
+	count++;
 	rst(0x0038);
 }

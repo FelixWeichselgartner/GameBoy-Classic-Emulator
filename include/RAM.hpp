@@ -17,6 +17,7 @@ private:
 	Byte *RamBanks;
 	Byte CurrentRamBank, AmountBanks;
 	bool EnableRamBanking;
+	int RamLength;
 
 public:
 

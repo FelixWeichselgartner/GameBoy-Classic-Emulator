@@ -9,6 +9,7 @@ private:
 
 	bool RomBanking;
 	Byte Mode, HigherRBBits;
+	int LowRomBank = -1, HighRomBank = -1;
 
 public:
 
@@ -21,9 +22,12 @@ public:
 	Byte getCurrentRomBank() const;
 	void ChangeLowRomBank(Byte);
 	void ChangeHighRomBank(Byte);
+	void ChangeRamBank(Byte);
 	void ChangeMode(Byte);
-	void EnableRamBank(unsigned short, Byte);
-	void HandleBanking(unsigned short, Byte);
+	void EnableRamBank(Word, Byte);
+	void HandleBanking(Word, Byte);
+	int getAdjustedRomBankLow();
+	int getAdjustedRomBankHigh();
 
 	Byte ReadROM(Word);
 	void WriteROM(Word, Byte);

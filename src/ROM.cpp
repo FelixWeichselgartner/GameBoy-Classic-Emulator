@@ -61,7 +61,7 @@ Byte ROM::getMemory(unsigned int address) const {
 		if (!(address >= RomSize)) {
 			return this->rom[address];
 		} else {
-			cout << "out of range: " << HEX16 << address << endl;
+			cout << "rom out of range: " << HEX16 << address << endl;
 			return 0x00;
 		}
 	} else {
@@ -73,6 +73,7 @@ void ROM::load(string inputFile) {
 	streampos size;
 	ifstream gbfile;
 
+	cout << "opening file." << endl;
 	gbfile.open(inputFile, ios::in | ios::binary | ios::ate);
 	// working:
 	//	games:

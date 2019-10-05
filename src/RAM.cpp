@@ -1,14 +1,17 @@
 //----------------------------------------------------------------------------------------------
 #include "../include/RAM.hpp"
 #include <cstdlib>
+#include <iostream>
+using namespace std;
 //----------------------------------------------------------------------------------------------
 
 void RAM::reserveRamBankMemory(Byte AmountBanks) {
 	this->AmountBanks = AmountBanks;
+	this->RamLength = 0x2000 * this->AmountBanks;
 
-	if ((this->RamBanks = new Byte[0x2000 * AmountBanks]) == NULL) exit(2);
+	if ((this->RamBanks = new Byte[this->RamLength]) == NULL) exit(2);
 
-	for (int i = 0; i < 0x2000 * AmountBanks; i++) {
+	for (int i = 0; i < this->RamLength; i++) {
 		RamBanks[i] = 0xFF;
 	}
 
@@ -58,7 +61,12 @@ void RAM::setRamEnable(bool en) {
 }
 
 Byte RAM::getRamBankMemory(Word address) const {
-	return this->RamBanks[address];
+	if (address >= this->RamLength) {
+		return 0xFF;
+	} else {
+		cout << "not in ram bank memory range" << endl;
+		return this->RamBanks[address];
+	}
 }
 
 void RAM::setRamBankMemory(Word address, Byte value) {
