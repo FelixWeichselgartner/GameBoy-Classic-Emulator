@@ -10,6 +10,7 @@ private:
 	bool RomBanking;
 	Byte Mode, HigherRBBits;
 	int LowRomBank = -1, HighRomBank = -1;
+	Byte SelectedRomBank = 1, SelectedRamBank = 0;
 
 public:
 
@@ -33,11 +34,6 @@ public:
 	void WriteROM(Word, Byte);
 	Byte ReadRAM(Word);
 	void WriteRAM(Word, Byte);
-
-	// save external ram to .sav file.
-	void saveExtRam();
-	// load external ram from .sav file.
-	void loadExtRam();
 
 };
 

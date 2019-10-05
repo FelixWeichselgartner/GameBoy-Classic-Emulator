@@ -36,6 +36,11 @@ public:
 	void setBattery(bool battery) { this->battery = battery; }
 
 	Byte getCurrentRomBank() { return this->CurrentRomBank; }
+    
+    // save external ram to .sav file.
+	void saveExtRam();
+	// load external ram from .sav file.
+	void loadExtRam();
 
 };
 

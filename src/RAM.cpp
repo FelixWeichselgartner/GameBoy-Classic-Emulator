@@ -2,6 +2,7 @@
 #include "../include/RAM.hpp"
 #include <cstdlib>
 #include <iostream>
+#include "../include/format.hpp"
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
@@ -62,9 +63,9 @@ void RAM::setRamEnable(bool en) {
 
 Byte RAM::getRamBankMemory(Word address) const {
 	if (address >= this->RamLength) {
+		cout << HEX16 << address << " not in ram bank memory range of ram length: " << this->RamLength << endl;
 		return 0xFF;
 	} else {
-		cout << "not in ram bank memory range" << endl;
 		return this->RamBanks[address];
 	}
 }

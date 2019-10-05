@@ -1,4 +1,5 @@
 #include "../include/MBC.hpp"
+#include <fstream>
 
 #include <iostream>
 #include <iomanip>
@@ -56,4 +57,19 @@ bool MBC::getRamEnable() const {
 
 void MBC::setRamEnable(bool EnableRamBanking) {
     this->EnableRamBanking = EnableRamBanking;
+}
+
+void MBC_1::saveExtRam() {
+	if (this->battery) {
+		ofstream savefile;
+		savefile.open("save.sav", ios::out | ios::binary);
+
+		if (savefile.is_open()) {
+			//savefile.write() // buffer, size
+		}
+	}
+}
+
+void MBC_1::loadExtRam() {
+
 }

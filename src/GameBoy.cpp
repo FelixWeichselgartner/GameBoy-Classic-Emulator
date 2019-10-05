@@ -110,7 +110,7 @@ void GameBoy::run() {
 		cyclesInstruction -= cpu.MAXCYCLES;
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
-			cout << "c" << counter << endl;
+			//cout << "c" << counter << endl;
 			counter++;
 			if (SDL_PollEvent(&windowEvent)) {
 				if (winEvent(windowEvent, screen)) {
