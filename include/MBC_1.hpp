@@ -7,10 +7,9 @@ class MBC_1: public MBC {
 
 private:
 
-	bool RomBanking;
-	Byte Mode, HigherRBBits;
-	int LowRomBank = -1, HighRomBank = -1;
+	Byte Mode;
 	Byte SelectedRomBank = 1, SelectedRamBank = 0;
+	Byte Bank1, Bank2;
 
 public:
 
@@ -21,14 +20,12 @@ public:
 	MBC_1(class ROM*, class RAM*);
 
 	Byte getCurrentRomBank() const;
-	void ChangeLowRomBank(Byte);
-	void ChangeHighRomBank(Byte);
+	void BankReg1(Byte);
+	void BankReg2(Byte);
 	void ChangeRamBank(Byte);
 	void ChangeMode(Byte);
 	void EnableRamBank(Word, Byte);
 	void HandleBanking(Word, Byte);
-	int getAdjustedRomBankLow();
-	int getAdjustedRomBankHigh();
 
 	Byte ReadROM(Word);
 	void WriteROM(Word, Byte);

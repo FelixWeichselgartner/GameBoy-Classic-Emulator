@@ -404,7 +404,6 @@ Word Memory::LoadWord() {
 // stack operations,
 
 void Memory::PushByte(Byte value) {
-	cout << this->registers << endl;
 	this->registers->decSP();
 	WriteByte(this->registers->getSP(), value);
 }

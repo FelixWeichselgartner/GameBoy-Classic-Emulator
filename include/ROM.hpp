@@ -13,7 +13,7 @@ class ROM {
 private:
 
 	char* rom;
-	unsigned int RomSize;
+	int RomSize, AmountRomBanks;
 	bool* EnableBootstrap;
 
 	// ram link.
@@ -32,6 +32,7 @@ public:
 	void load(std::string);
 
 	int getRomSize() const { return this->RomSize; }
+	int getAmountRomBanks() const { return this->AmountRomBanks; }
 
 	std::string getGameName();
 

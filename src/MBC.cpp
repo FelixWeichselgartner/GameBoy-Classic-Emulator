@@ -6,8 +6,7 @@
 using namespace std;
 
 void MBC::resetVar() {
-	this->EnableRamBanking = this->battery = false;
-	this->CurrentRomBank = this->CurrentRamBank = 0;
+	this->battery = false;
 }
 
 void MBC::reset() {
@@ -49,14 +48,6 @@ void MBC::WriteRAM(Word address, Byte value) {
 	} else {
 		this->ram->setMemory(address - ADDR_INT_RAM_1, value);
 	}
-}
-
-bool MBC::getRamEnable() const {
-    return this->EnableRamBanking;
-}
-
-void MBC::setRamEnable(bool EnableRamBanking) {
-    this->EnableRamBanking = EnableRamBanking;
 }
 
 void MBC::saveExtRam() {

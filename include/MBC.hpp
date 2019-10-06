@@ -11,8 +11,7 @@ class MBC {
 
 protected:
 
-    bool EnableRamBanking, battery;
-    Byte CurrentRomBank, CurrentRamBank;
+    bool battery;
 
     class ROM *rom;
     class RAM *ram;
@@ -30,12 +29,8 @@ public:
 	virtual Byte ReadRAM(Word);
 	virtual void WriteRAM(Word, Byte);
 
-    bool getRamEnable() const;
-    void setRamEnable(bool);
 	bool getBattery() const { return this->battery; }
 	void setBattery(bool battery) { this->battery = battery; }
-
-	Byte getCurrentRomBank() { return this->CurrentRomBank; }
     
     // save external ram to .sav file.
 	void saveExtRam();

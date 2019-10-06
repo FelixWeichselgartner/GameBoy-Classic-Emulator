@@ -58,11 +58,11 @@ ROM::~ROM() {
 
 Byte ROM::getMemory(unsigned int address) const {
 	if (!(*EnableBootstrap) || address > 0x00FF) {
-		if (!(address >= RomSize)) {
+		if ((address < RomSize)) {
 			return this->rom[address];
 		} else {
 			cout << "rom out of range: " << HEX16 << address << endl;
-			return 0x00;
+			return 0xFF;
 		}
 	} else {
 		return bootstrap[address];
@@ -95,7 +95,7 @@ void ROM::load(string inputFile) {
 		//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);
 		//gbfile.open("mem_timing-2/rom_singles/01-read_timing.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("acceptance/ppu/intr_1_2_timing-GS.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("mbc1/ram_256Kb.gb", ios::in | ios::binary | ios::ate);
+	//gbfile.open("mbc1/ram_64Kb.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
 	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
@@ -111,6 +111,7 @@ void ROM::load(string inputFile) {
 		cout << "file length: " << HEX16 << size << endl;
 		gbfile.seekg(0, ios::beg);
 		RomSize = (int)size;
+		this->AmountRomBanks = this->RomSize / 0x4000;
 		this->rom = new char[RomSize];
 		if (this->rom != NULL) {
 			gbfile.read(rom, size);
