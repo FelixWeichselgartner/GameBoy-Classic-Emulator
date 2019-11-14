@@ -137,6 +137,7 @@ Byte MBC_1::ReadRAM(Word address) {
 			// all RAM Banks can be accessed during MODE_RAM.
 			else {
 				this->SelectedRamBank = this->Bank2;
+				this->SelectedRamBank %= this->ram->getAmountBanks();
 				return this->ram->getRamBankMemory(address - ADDR_EXT_RAM + this->SelectedRamBank * 0x2000);
 			}
 		} 
@@ -163,6 +164,7 @@ void MBC_1::WriteRAM(Word address, Byte value) {
 			// all RAM Banks can be accessed during MODE_RAM.
 			else {
 				this->SelectedRamBank = this->Bank2;
+				this->SelectedRamBank %= this->ram->getAmountBanks();
 				this->ram->setRamBankMemory(address - ADDR_EXT_RAM + this->SelectedRamBank * 0x2000, value);
 			}
 		}

@@ -438,7 +438,7 @@ void CPU::opcode_21() {
 // LDI (HL), A  save A to address pointed by HL, and increment HL.
 void CPU::opcode_22() {
 	this->memory.WriteByte(this->registers.getHL(), this->registers.getA());
-	this->registers.setHL(this->registers.getHL() + 1);
+	this->registers.setHL(this->registers.getHL() + 1); 
 }
 
 // INC HL       increment 16-bit HL.

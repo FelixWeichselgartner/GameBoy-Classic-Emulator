@@ -29,7 +29,7 @@ void RAM::reset() {
 
     this->CurrentRamBank = 0;
     this->AmountBanks = 1;
-    bool EnableRamBanking = false;
+    this->EnableRamBanking = false;
 }
 
 RAM::RAM() {
@@ -71,7 +71,11 @@ Byte RAM::getRamBankMemory(Word address) const {
 }
 
 void RAM::setRamBankMemory(Word address, Byte value) {
-	this->RamBanks[address] = value;
+	if (address >= this->RamLength) {
+		cout << HEX16 << address << " not in ram bank memory range of ram length: " << this->RamLength << endl;
+	} else {
+		this->RamBanks[address] = value;
+	}
 }
 
 void RAM::ChangeRamBank(Byte value) {

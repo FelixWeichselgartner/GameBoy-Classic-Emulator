@@ -13,7 +13,7 @@ class ROM {
 private:
 
 	char* rom;
-	int RomSize, AmountRomBanks;
+	unsigned int RomSize, AmountRomBanks;
 	bool* EnableBootstrap;
 
 	// ram link.

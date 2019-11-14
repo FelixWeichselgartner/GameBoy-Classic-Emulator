@@ -5,7 +5,11 @@
 #include "../include/CPU.hpp"
 #include "../include/format.hpp"
 
+#ifdef _WIN32
+#include <SDL.h>
+#else
 #include <SDL2/SDL.h>
+#endif
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -28,9 +32,12 @@ void GPU::reset() {
     }
 }
 
+CPU** cpu_ptr;
+
 GPU::GPU(class CPU* cpu) {
  	if ((this->cpu = cpu) == NULL) exit(2);
 	if ((this->memory = &this->cpu->memory) == NULL) exit(2);
+	cpu_ptr = &this->cpu;
 
 	reset();
 
@@ -515,19 +522,14 @@ void GPU::tick() {
 		else {
 			IncScanline();
 		}
-	}
-
-
-	
+	}	
 }
 
 void GPU::UpdateGraphics(int cycles) {
-
 	SetLCDStatus();
 
 	if (IsLCDEnabled()) {
 		ScanLineCounter += cycles;
-
 		tick();
 	}
 

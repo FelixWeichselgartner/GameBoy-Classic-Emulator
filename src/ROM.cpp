@@ -75,35 +75,6 @@ void ROM::load(string inputFile) {
 
 	cout << "opening file." << endl;
 	gbfile.open(inputFile, ios::in | ios::binary | ios::ate);
-	// working:
-	//	games:
-	//gbfile.open("Tetris.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("Minesweeper.gb", ios::in | ios::binary | ios::ate);
-	//	blargg's test roms:
-	//gbfile.open("cpu_instrs.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("instr_timing.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("halt_bug.gb", ios::in | ios::binary | ios::ate);
-	//	other test roms:
-	//gbfile.open("Game Boy Controller Kensa Cartridge.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("timer/tma_write_reloading.gb", ios::in | ios::binary | ios::ate);
-
-	// not working:
-	//gbfile.open("interrupt_time.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("halt_tests.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("mem_timing.gb", ios::in | ios::binary | ios::ate);
-		//gbfile.open("individual_m/01-read_timing.gb", ios::in | ios::binary | ios::ate);
-		//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);
-		//gbfile.open("mem_timing-2/rom_singles/01-read_timing.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("acceptance/ppu/intr_1_2_timing-GS.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("mbc1/ram_64Kb.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("Asterix.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("Dr. Mario.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("LinkAwakening.gb", ios::in | ios::binary | ios::ate);
-
-	// unknown:
-	//gbfile.open("rom_singles/2-causes.gb", ios::in | ios::binary | ios::ate);
-	//gbfile.open("individual_m/02-write_timing.gb", ios::in | ios::binary | ios::ate);	
-	
 
 	if (gbfile.is_open()) {
 		gbfile.seekg(0, ios::end);

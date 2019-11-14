@@ -61,7 +61,7 @@ void MBC_Cartridge::WriteRAM(Word address, Byte data) {
 }
 
 Byte MBC_Cartridge::ReadByte(Word address) {
-    
+	return 0xFF;
 }
 
 void MBC_Cartridge::WriteByte(Word address, Byte data){

@@ -4,6 +4,7 @@
 #include "../include/RAM.hpp"
 #include "../include/GameBoy.hpp"
 #include "../include/format.hpp"
+#include "../include/GPU.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -619,7 +620,6 @@ int CPU::executeExtendedOpcodes() {
 
 void CPU::halt_bug() {
 	if (!this->gb_ime && (this->memory.ReadByte(0xFF0F) & this->memory.ReadByte(0xFFFF) & 0x1F)) {
-	//if (!this->gb_ime) {
 		if (this->gb_halt_bug == 0x01) {
 			this->gb_halt_bug = 0x02;
 		}
@@ -630,6 +630,7 @@ void CPU::halt_bug() {
 	}
 }
 
+
 int CPU::CPUstep() {
 	this->cycles = 0;
 
@@ -637,15 +638,12 @@ int CPU::CPUstep() {
 
 	halt_bug();
 
-	// may not increase program counter after jumps.
 	if (!this->jump) {
 		if (!this->gb_halt)
 			this->registers.incPC();
 	} else {
 		this->jump = false;
 	}
-
-	
 
 	return this->cycles;
 }

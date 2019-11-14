@@ -12,13 +12,19 @@ void GameBoy::reset() {
     this->joypad.reset();
 }
 
-GameBoy::GameBoy(string inputFile) {
-	this->cpu.loadROM(inputFile);
-	this->gpu = new GPU(&this->cpu);
-	if (&joypad != NULL)
-		cpu.setJoypadLink(&joypad);
-	else
-		exit(2);
+GameBoy::GameBoy(char * inputFile) {
+	if (inputFile != NULL) {
+		this->cpu.loadROM(inputFile);
+		this->gpu = new GPU(&this->cpu);
+		if (&joypad != NULL)
+			cpu.setJoypadLink(&joypad);
+		else
+			exit(2);
+	} else {
+		// usage
+		cout << "specify a valid input file." << endl;
+		exit(3);
+	}
 }
 
 GameBoy::~GameBoy() {
@@ -98,8 +104,6 @@ bool GameBoy::winEvent(SDL_Event &windowEvent, bool &screen) {
 	return false;
 }
 
-static int counter = 0;
-
 void GameBoy::run() {
 	SDL_Event windowEvent;
 
@@ -110,8 +114,7 @@ void GameBoy::run() {
 		cyclesInstruction -= cpu.MAXCYCLES;
 
 		while (cyclesInstruction < cpu.MAXCYCLES) {
-			//cout << "c" << counter << endl;
-			counter++;
+
 			if (SDL_PollEvent(&windowEvent)) {
 				if (winEvent(windowEvent, screen)) {
 					cpu.setRunning(false);
@@ -138,6 +141,7 @@ void GameBoy::run() {
 	SDL_Quit();
 }
 
+
 #define MODE 0
 // MODE 0		normal mode
 // MODE 1		input -> next instruction and save in log file
@@ -146,7 +150,9 @@ void GameBoy::run() {
 
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
-    class GameBoy gameboy(argv[1]);
+    //class GameBoy gameboy(argv[1]);
+	char game[] = "mbc1/ram_64Kb.gb";
+    class GameBoy gameboy(game);
 	(MODE) ? gameboy.tests(MODE) : gameboy.run();
 	cout << "Gameboy-Classic-Emulator closed." << endl;
     return 0;
