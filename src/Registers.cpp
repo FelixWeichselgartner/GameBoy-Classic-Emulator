@@ -25,97 +25,11 @@ void Registers::reset() {
 Registers::Registers() {
 	reset();
 }
-    
-Byte Registers::getA() const {
-    return this->A;
-}
-void Registers::setA(Byte value) {
-    this->A = value;
-}
 
-Byte Registers::getF() const {
-    return this->F;
-}
-void Registers::setF(Byte value) {
-    this->F = value & 0xF0;
-}
-
-Word Registers::getAF() const {
-    return this->AF;
-}
-void Registers::setAF(Word value) {
-    this->AF = value & 0xFFF0;
-}
-
-Byte Registers::getB() const {
-    return this->B;
-}
-void Registers::setB(Byte value) {
-    this->B = value;
-}
-
-Byte Registers::getC() const {
-    return this->C;
-}
-void Registers::setC(Byte value) {
-    this->C = value;
-}
-
-Word Registers::getBC() const {
-    return this->BC;
-}
-void Registers::setBC(Word value) {
-    this->BC = value;
-}
-
-Byte Registers::getD() const {
-    return this->D;
-}
-void Registers::setD(Byte value) {
-    this->D = value;
-}
-
-Byte Registers::getE() const {
-    return this->E;
-}
-void Registers::setE(Byte value) {
-    this->E = value;
-}
-
-Word Registers::getDE() const {
-    return this->DE;
-}
-void Registers::setDE(Word value) {
-    this->DE = value;
-}
-
-Byte Registers::getH() const {
-    return this->H;
-}
-void Registers::setH(Byte value) {
-    this->H = value;
-}
-
-Byte Registers::getL() const {
-    return this->L;
-}
-void Registers::setL(Byte value) {
-    this->L = value;
-}
-
-Word Registers::getHL() const {
-    return this->HL;
-}
-void Registers::setHL(Word value) {
-    this->HL = value;
-}
-
-Word Registers::getPC() const {
-    return this->PC;
-}
-void Registers::setPC(Word value) {
-    this->PC = value;
-}
+/**
+ * @brief increase the program counter according to halt bug.
+ * 
+ */
 void Registers::incPC() {
 	if (!this->halt_bug_pc_no_increase) {
 		this->PC++;
@@ -124,23 +38,13 @@ void Registers::incPC() {
 	}
 }
 
-void Registers::halt_bug() {
-	this->halt_bug_pc_no_increase = true;
-}
-
-Word Registers::getSP() const {
-    return this->SP;
-}
-void Registers::setSP(Word value) {
-    this->SP = value;
-}
-void Registers::incSP() {
-	this->SP++;
-}
-void Registers::decSP() {
-	this->SP--;
-}
-
+/**
+ * @brief get one flag from flag register.
+ * 
+ * @param type character representing the flag.
+ * @return Byte 0x01 if flag is set,
+ * 				0x00 if flag is not set.
+ */
 Byte Registers::getFlag(char type) {
 	Byte tmp = this->F;
 
@@ -155,6 +59,11 @@ Byte Registers::getFlag(char type) {
 	return tmp ? 0x01 : 0x00;
 }
 
+/**
+ * @brief set one flag in flag register.
+ * 
+ * @param type character representing the flag to set.
+ */
 void Registers::setFlag(char type) {
 	switch (type) {
 	case 'Z': this->setF(this->getF() | 0b10000000); break;
@@ -165,6 +74,11 @@ void Registers::setFlag(char type) {
 	}
 }
 
+/**
+ * @brief reset one flag in flag register.
+ * 
+ * @param type character representing the flag to reset.
+ */
 void Registers::resetFlag(char type) {
 	switch (type) {
 		case 'Z': this->setF(this->getF() & 0b01111111); break;
@@ -175,6 +89,11 @@ void Registers::resetFlag(char type) {
 	}
 }
 
+/**
+ * @brief flip one flag in flag register.
+ * 
+ * @param type character representing the flag to flip.
+ */
 void Registers::flipFlag(char type) {
 	switch (type) {
 		case 'Z': this->F ^= 0b10000000; break;
@@ -185,10 +104,20 @@ void Registers::flipFlag(char type) {
 	}
 }
 
+/**
+ * @brief set one flag in flag register to specified state.
+ * 
+ * @param type character representing the flag to set.
+ * @param state state to set the flag to.
+ */
 void Registers::setFlagState(char type, bool state) {
 	state ? setFlag(type) : resetFlag(type);
 }
 
+/**
+ * @brief reset all flags to zero.
+ * 
+ */
 void Registers::resetFlagAll() {
 	this->F = 0x00;
 }

@@ -63,68 +63,68 @@ private:
     Registers();
 
     // A Register
-    Byte getA() const;
-    void setA(Byte);
+    Byte getA() const { return this->A; }
+    void setA(Byte value) { this->A = value; }
 
     // F Register
-    Byte getF() const;
-    void setF(Byte);
+    Byte getF() const { return this->F; }
+    void setF(Byte value) { this->F = value & 0xF0; }
 
     // AF Register
-    Word getAF() const;
-    void setAF(Word);
+    Word getAF() const { return this->AF; }
+    void setAF(Word value) { this->AF = value & 0xFFF0; }
 
 
     // B Register
-    Byte getB() const;
-    void setB(Byte);
+    Byte getB() const { return this->B; }
+    void setB(Byte value) { this->B = value; }
 
     // C Register
-    Byte getC() const;
-    void setC(Byte);
+    Byte getC() const { return this->C; }
+    void setC(Byte value) { this->C = value; }
 
     // BC Register
-    Word getBC() const;
-    void setBC(Word);
+    Word getBC() const { return this->BC; }
+    void setBC(Word value) { this->BC = value; }
 
 
     // D Register
-    Byte getD() const;
-    void setD(Byte);
+    Byte getD() const { return this->D; }
+    void setD(Byte value) { this->D = value; }
 
     // E Register
-    Byte getE() const;
-    void setE(Byte);
+    Byte getE() const { return this->E; }
+    void setE(Byte value) { this->E = value; }
 
     // DE Register
-    Word getDE() const;
-    void setDE(Word);
+    Word getDE() const { return this->DE; }
+    void setDE(Word value) { this->DE = value; }
 
 
     // H Register
-    Byte getH() const;
-    void setH(Byte);
+    Byte getH() const { return this->H; }
+    void setH(Byte value) { this->H = value; }
 
     // L Register
-    Byte getL() const;
-    void setL(Byte);
+    Byte getL() const { return this->L; }
+    void setL(Byte value) { this->L = value; }
 
     // HL Register
-    Word getHL() const;
-    void setHL(Word);
+    Word getHL() const { return this->HL; }
+    void setHL(Word value) { this->HL = value; }
 
 
     // PC Register
-    Word getPC() const;
-    void setPC(Word);
+    Word getPC() const { return this->PC; }
+    void setPC(Word value) { this->PC = value; }
 	void incPC();
-	void halt_bug();
+	void halt_bug() { this->halt_bug_pc_no_increase = true; }
 
     // SP Register
-    Word getSP() const;
-    void setSP(Word);
-	void incSP();
-	void decSP();
+    Word getSP() const { return this->SP; }
+    void setSP(Word value) { this->SP = value; }
+	void incSP() { this->SP++; }
+	void decSP() { this->SP--; }
 
     // Flag handling.
 	Byte getFlag(char);
