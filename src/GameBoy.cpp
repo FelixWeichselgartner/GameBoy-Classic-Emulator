@@ -151,7 +151,7 @@ void GameBoy::run() {
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
     //class GameBoy gameboy(argv[1]);
-	char game[] = "mbc1/ram_64Kb.gb";
+	char game[] = "Tetris.gb";
     class GameBoy gameboy(game);
 	(MODE) ? gameboy.tests(MODE) : gameboy.run();
 	cout << "Gameboy-Classic-Emulator closed." << endl;

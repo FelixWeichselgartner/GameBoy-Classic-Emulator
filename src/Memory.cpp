@@ -10,15 +10,15 @@ using namespace std;
 // private read/write utility functions.
 
 Byte Memory::ReadVRAM(Word address) {
-	return vram[address];
+	return this->vram.get(address);
 }
 
 Byte Memory::ReadECHO(Word address) {
-	return echo[address];
+	return this->echo.get(address);
 }
 
 Byte Memory::ReadOAM(Word address) {
-	return oam[address];
+	return this->oam.get(address);
 }
 
 Byte Memory::ReadUNUSABLE(Word) {
@@ -29,7 +29,7 @@ Byte Memory::ReadIO(Word WordAddress) {
 	Byte address = (Byte)(WordAddress & 0x00FF);
 	// waveform storage for arbitrary sound data, some lcd registers.
 	if (WordAddress >= 0xFF30 && WordAddress <= 0xFF3F || WordAddress >= 0xFF45 && WordAddress <= 0xFF4B || WordAddress == 0xFF42 || WordAddress == 0xFF43) {
-		return io[address];
+		return this->io.get(address);
 	}
 
 	//if (address == 0x0044) cout << "address:" << HEX16 << (int)address << endl;
@@ -44,7 +44,7 @@ Byte Memory::ReadIO(Word WordAddress) {
 
 		// serial transfer control.
 		case 0x02:
-			return io[address] | 0b01111110;
+			return this->io.get(address) | 0b01111110;
 
 		// divider register (r/w).
 		case 0x04:
@@ -64,39 +64,39 @@ Byte Memory::ReadIO(Word WordAddress) {
 
 		// interrupt flags.
 		case 0x0F:
-			return io[address] | 0b11100000;
+			return this->io.get(address) | 0b11100000;
 
 		// sound mode 1 register, sweep register (r/w).
 		case 0x10:
-			return io[address] | 0b10000000;
+			return this->io.get(address) | 0b10000000;
 
 		// sound mode 1 register, sound length/wave pattern duty (r/w).
 		case 0x11:
-			return io[address];
+			return this->io.get(address);
 
 		// sound mode 1 register, envelope (r/w).
 		case 0x12:
-			return io[address];
+			return this->io.get(address);
 
 		// sound mode 1 register, frequency lo (w).
 		case 0x13:
-			return io[address]; // maybe 0xff
+			return this->io.get(address); // maybe 0xff
 
 		// sound mode 1 register, frequency hi (r/w).
 		case 0x14:
-			return io[address] | 0b00111000;
+			return this->io.get(address) | 0b00111000;
 
 		// sound mode 2 register, sound length; wave pattern duty (r/w).
 		case 0x16:
-			return io[address];
+			return this->io.get(address);
 
 		// sound mode 2 register, envelope (r/w).
 		case 0x17:
-			return io[address];
+			return this->io.get(address);
 
 		// sound mode 2 register, frequency lo data (w).
 		case 0x18:
-			return io[address]; //0xff
+			return this->io.get(address); //0xff
 
 		// sound mode 2 register, frequency hi data (r/w).
 		case 0x19:
@@ -104,23 +104,23 @@ Byte Memory::ReadIO(Word WordAddress) {
 
 		// sound mode 3 register, sound on/off (r/w).
 		case 0x1A:
-			return io[address] | 0b01111111;
+			return this->io.get(address) | 0b01111111;
 
 		// sound mode 3 register, sound length (r/w).
 		case 0x1B:
-			return io[address];
+			return this->io.get(address);
 
 		// sound mode 3 register, select output.
 		case 0x1C:
-			return io[address] | 0b10011111;
+			return this->io.get(address) | 0b10011111;
 
 		// sound mode 3 register, frequency's lower data (w).
 		case 0x1D:
-			return io[address]; // maybe 0xff
+			return this->io.get(address); // maybe 0xff
 
 		// sound mode 3 register, frequency's higher data (r/w).
 		case 0x1E:
-			return io[address] | 0b10111111;
+			return this->io.get(address) | 0b10111111;
 
 		// sound mode 4 register, sound length (r/w);
 		case 0x20:
@@ -129,48 +129,48 @@ Byte Memory::ReadIO(Word WordAddress) {
 
 		// sound mode 4 register, envelope (r/w).
 		case 0x21:
-			return io[address];
+			return this->io.get(address);
 
 		// sound mode 4 register, polynomial counter (r/w).
 		case 0x22:
-			return io[address];
+			return this->io.get(address);
 
 		// sound mode 4 register, counter/consecutive; initial (r/w).
 		case 0x23:
-			return io[address] | 0b00111111;
+			return this->io.get(address) | 0b00111111;
 
 		// channel control / on-off / volume (r/w).
 		case 0x24:
-			return io[address];
+			return this->io.get(address);
 
 		// selection of sound ouput terminal (r/w).
 		case 0x25:
-			return io[address];
+			return this->io.get(address);
 
 		// sound on/off
 		case 0x26:
-			return io[address] | 0b01110000;
+			return this->io.get(address) | 0b01110000;
 
 		// lcd control.
 		case 0x40:
-			return io[address];
+			return this->io.get(address);
 
 		// lcd status.
 		case 0x41:
-			return io[address] | 0b10000000;
+			return this->io.get(address) | 0b10000000;
 
 		// scanline.
 		case 0x44:
-			return io[address];
+			return this->io.get(address);
 
 		case 0x72:
-			return io[address];
+			return this->io.get(address);
 
 		case 0x73:
-			return io[address];
+			return this->io.get(address);
 
 		case 0x75:
-			return io[address] | 0x8F;
+			return this->io.get(address) | 0x8F;
 
 		case 0x76:
 			return 0x00;
@@ -185,19 +185,19 @@ Byte Memory::ReadIO(Word WordAddress) {
 }
 
 Byte Memory::ReadHRAM(Word address) {
-	return hram[address];
+	return this->hram.get(address);
 }
 
 void Memory::WriteVRAM(Word address, Byte value) {
-	vram[address] = value;
+	this->vram.set(address, value);
 }
 
 void Memory::WriteECHO(Word address, Byte value) {
-	echo[address] = value;	
+	this->echo.set(address, value);
 }
 
 void Memory::WriteOAM(Word address, Byte value) {
-	oam[address] = value;
+	this->oam.set(address, value);
 	
 }
 
@@ -231,7 +231,7 @@ void Memory::WriteIO(Word address, Byte value) {
 	}
 	// set current line to 0.
 	else if (address == 0xFF44) {
-		io[setAddress] = 0x00;
+		this->io.set(setAddress, 0x00);
 	}
 	// do the dma transfer.
 	else if (address == 0xFF46) {
@@ -239,12 +239,12 @@ void Memory::WriteIO(Word address, Byte value) {
 	}
 	// other io registers.
 	else {
-		io[setAddress] = value;
+		this->io.set(setAddress, value);
 	}
 }
 
 void Memory::WriteHRAM(Word address, Byte value) {
-	hram[address] = value;
+	this->hram.set(address, value);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -252,23 +252,23 @@ void Memory::WriteHRAM(Word address, Byte value) {
 
 void Memory::resetArrays() {
 	for (int i = 0; i < VRAM_SIZE; i++) {
-        vram[i] = 0;
+        this->vram.set(i, 0);
     }
 
     for (int i = 0; i < ECHO_SIZE; i++) {
-        echo[i] = 0;
+        this->echo.set(i, 0);
     }
 
     for (int i = 0; i < OAM_SIZE; i++) {
-        oam[i] = 0;
+        this->oam.set(i, 0);
     }
 
     for (int i = 0; i < IO_SIZE; i++) {
-        io[i] = 0;
+        this->io.set(i, 0);
     }
 
     for (int i = 0; i < HRAM_SIZE; i++) {
-        hram[i] = 0;
+        this->hram.set(i, 0);
     }
 }
 
@@ -319,36 +319,36 @@ void Memory::loadROM() {
 }
 
 void Memory::InitMemory() {
-	io[0xFF05 - ADDR_IO] = 0x00;
-	io[0xFF06 - ADDR_IO] = 0x00;
-	io[0xFF07 - ADDR_IO] = 0x00;
-	io[0xFF10 - ADDR_IO] = 0x80;
-	io[0xFF11 - ADDR_IO] = 0xBF;
-	io[0xFF12 - ADDR_IO] = 0xF3;
-	io[0xFF14 - ADDR_IO] = 0xBF;
-	io[0xFF16 - ADDR_IO] = 0x3F;
-	io[0xFF17 - ADDR_IO] = 0x00;
-	io[0xFF19 - ADDR_IO] = 0xBF;
-	io[0xFF1A - ADDR_IO] = 0x7F;
-	io[0xFF1B - ADDR_IO] = 0xFF;
-	io[0xFF1C - ADDR_IO] = 0x9F;
-	io[0xFF1E - ADDR_IO] = 0xBF;
-	io[0xFF20 - ADDR_IO] = 0xFF;
-	io[0xFF21 - ADDR_IO] = 0x00;
-	io[0xFF22 - ADDR_IO] = 0x00;
-	io[0xFF23 - ADDR_IO] = 0xBF;
-	io[0xFF24 - ADDR_IO] = 0x77;
-	io[0xFF25 - ADDR_IO] = 0xF3;
-	io[0xFF26 - ADDR_IO] = 0xF1;
-	io[0xFF40 - ADDR_IO] = 0x91;
-	io[0xFF42 - ADDR_IO] = 0x00;
-	io[0xFF43 - ADDR_IO] = 0x00;
-	io[0xFF45 - ADDR_IO] = 0x00;
-	io[0xFF47 - ADDR_IO] = 0xFC;
-	io[0xFF48 - ADDR_IO] = 0xFF;
-	io[0xFF49 - ADDR_IO] = 0xFF;
-	io[0xFF4A - ADDR_IO] = 0x00;
-	io[0xFF4B - ADDR_IO] = 0x00;
+	this->io.set(0xFF05 - ADDR_IO, 0x00);
+	this->io.set(0xFF06 - ADDR_IO, 0x00);
+	this->io.set(0xFF07 - ADDR_IO, 0x00);
+	this->io.set(0xFF10 - ADDR_IO, 0x80);
+	this->io.set(0xFF11 - ADDR_IO, 0xBF);
+	this->io.set(0xFF12 - ADDR_IO, 0xF3);
+	this->io.set(0xFF14 - ADDR_IO, 0xBF);
+	this->io.set(0xFF16 - ADDR_IO, 0x3F);
+	this->io.set(0xFF17 - ADDR_IO, 0x00);
+	this->io.set(0xFF19 - ADDR_IO, 0xBF);
+	this->io.set(0xFF1A - ADDR_IO, 0x7F);
+	this->io.set(0xFF1B - ADDR_IO, 0xFF);
+	this->io.set(0xFF1C - ADDR_IO, 0x9F);
+	this->io.set(0xFF1E - ADDR_IO, 0xBF);
+	this->io.set(0xFF20 - ADDR_IO, 0xFF);
+	this->io.set(0xFF21 - ADDR_IO, 0x00);
+	this->io.set(0xFF22 - ADDR_IO, 0x00);
+	this->io.set(0xFF23 - ADDR_IO, 0xBF);
+	this->io.set(0xFF24 - ADDR_IO, 0x77);
+	this->io.set(0xFF25 - ADDR_IO, 0xF3);
+	this->io.set(0xFF26 - ADDR_IO, 0xF1);
+	this->io.set(0xFF40 - ADDR_IO, 0x91);
+	this->io.set(0xFF42 - ADDR_IO, 0x00);
+	this->io.set(0xFF43 - ADDR_IO, 0x00);
+	this->io.set(0xFF45 - ADDR_IO, 0x00);
+	this->io.set(0xFF47 - ADDR_IO, 0xFC);
+	this->io.set(0xFF48 - ADDR_IO, 0xFF);
+	this->io.set(0xFF49 - ADDR_IO, 0xFF);
+	this->io.set(0xFF4A - ADDR_IO, 0x00);
+	this->io.set(0xFF4B - ADDR_IO, 0x00);
 	interrupt_enable_register = 0x00;
 }
 
@@ -360,18 +360,18 @@ void Memory::setJoypadLink(class Joypad* joypad) {
 }
 
 Byte Memory::getJoypadRequest() {
-	return io[0x0000];
+	return this->io.get(0x0000);
 }
 
 ////////////////////////////////////////////////////////////////
 // direct access to scanline & divider register.
 
 void Memory::setScanline(Byte scanline) {
-	io[0x0044] = scanline;
+	this->io.set(0x0044, scanline);
 }
 
 void Memory::setDividerRegister(Byte reg) {
-	io[0x0004] = reg;
+	this->io.set(0x0004, reg);
 }
 
 ////////////////////////////////////////////////////////////////

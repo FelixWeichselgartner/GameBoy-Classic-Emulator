@@ -16,15 +16,12 @@ private:
 	unsigned int RomSize, AmountRomBanks;
 	bool* EnableBootstrap;
 
-	// ram link.
-	class RAM* ram;
-
 public:
 
     void reset();
 
     ROM();
-	ROM(class RAM*, bool*);
+	ROM(bool*);
 	~ROM();
 
 	Byte getMemory(unsigned int) const;

@@ -28,11 +28,11 @@ private:
     bool EnableBootstrap;
     Byte MemoryBankingMode;
 
-	Byte vram[VRAM_SIZE]    = { 0 };
-	Byte echo[ECHO_SIZE]    = { 0 };
-	Byte oam [OAM_SIZE] 	= { 0 };
-	Byte io  [IO_SIZE] 		= { 0 };
-	Byte hram[HRAM_SIZE] 	= { 0 };
+	Array_Type(Byte) vram = Array(Byte, VRAM_SIZE);
+	Array_Type(Byte) echo = Array(Byte, ECHO_SIZE);
+	Array_Type(Byte) oam  = Array(Byte, OAM_SIZE);
+	Array_Type(Byte) io   = Array(Byte, IO_SIZE);
+	Array_Type(Byte) hram = Array(Byte, HRAM_SIZE);
 	Byte interrupt_enable_register = 0;
 
 	class Registers* registers;
@@ -43,7 +43,7 @@ private:
 public:
 
 	class RAM ram;
-	class ROM rom = ROM(&ram, &EnableBootstrap);
+	class ROM rom = ROM(&EnableBootstrap);
 	class MBC* mbc;
 	class SerialDataTransfer sdt = SerialDataTransfer(true /*false*/);
 

@@ -11,10 +11,10 @@ class RAM {
 
 private:
 
-	Byte ram[ADDR_ECHO - ADDR_EXT_RAM] = { 0 };
+	Array_Type(Byte) ram = Array(Byte, ADDR_ECHO - ADDR_EXT_RAM);
 
 	// ram banking.
-	Byte *RamBanks;
+	Array_Type(Byte) RamBanks;
 	Byte CurrentRamBank, AmountBanks;
 	bool EnableRamBanking;
 	int RamLength;

@@ -32,12 +32,9 @@ void GPU::reset() {
     }
 }
 
-CPU** cpu_ptr;
-
 GPU::GPU(class CPU* cpu) {
  	if ((this->cpu = cpu) == NULL) exit(2);
 	if ((this->memory = &this->cpu->memory) == NULL) exit(2);
-	cpu_ptr = &this->cpu;
 
 	reset();
 

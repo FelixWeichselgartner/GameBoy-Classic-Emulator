@@ -1,0 +1,3 @@
+[submodule "lib/GenericSaveArrays"]
+	path = lib/GenericSaveArrays
+	url = https://github.com/FelixWeichselgartner/GenericSaveArrays.git

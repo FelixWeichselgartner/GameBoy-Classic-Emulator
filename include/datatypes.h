@@ -9,4 +9,7 @@ typedef uint16_t    Word;
 typedef int8_t      sByte;
 typedef int16_t     sWord;
 
+#include "../lib/GenericSaveArrays/Array.hpp"
+cArray(Byte);
+
 #endif

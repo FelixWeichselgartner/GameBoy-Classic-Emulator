@@ -41,14 +41,12 @@ void ROM::reset() {
 ROM::ROM() {
 	this->rom = NULL;
 	this->EnableBootstrap = NULL;
-	this->ram = NULL;
     reset();
 }
 
-ROM::ROM(class RAM* ram, bool *EnableBootstrap) {
+ROM::ROM(bool *EnableBootstrap) {
 	this->rom = NULL;
 	if ((this->EnableBootstrap = EnableBootstrap) == NULL) exit(2);
-	if ((this->ram = ram) == NULL) exit(2);
     reset();
 }
 

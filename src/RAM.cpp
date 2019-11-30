@@ -10,10 +10,10 @@ void RAM::reserveRamBankMemory(Byte AmountBanks) {
 	this->AmountBanks = AmountBanks;
 	this->RamLength = 0x2000 * this->AmountBanks;
 
-	if ((this->RamBanks = new Byte[this->RamLength]) == NULL) exit(2);
+	this->RamBanks = Array(Byte, this->RamLength);
 
 	for (int i = 0; i < this->RamLength; i++) {
-		RamBanks[i] = 0xFF;
+		RamBanks.set(i, 0xFF);
 	}
 
 	this->CurrentRamBank = 0;
@@ -24,7 +24,7 @@ void RAM::reset() {
     // not needed for first reset.
     // needed for 2nd, 3rd ... reset.
     for (int i = 0; i < ADDR_ECHO - ADDR_EXT_RAM; i++) {
-        this->ram[i] = 0;
+        this->ram.set(i, 0);
     }
 
     this->CurrentRamBank = 0;
@@ -33,16 +33,18 @@ void RAM::reset() {
 }
 
 RAM::RAM() {
-	this->RamBanks = NULL;
+	for(int i = 0; i < this->ram.length(); i++) {
+		this->ram.set(i, 0);
+	}
     reset();
 }
 
 Byte RAM::getMemory(Word address) const {
-	return this->ram[address];
+	return this->ram.get((int)address);
 }
 
 void RAM::setMemory(Word address, Byte value) {
-    this->ram[address] = value;
+    this->ram.set(address, value);
 }
 
 Byte RAM::getCurrentRamBank() const {
@@ -62,20 +64,11 @@ void RAM::setRamEnable(bool en) {
 }
 
 Byte RAM::getRamBankMemory(Word address) const {
-	if (address >= this->RamLength) {
-		cout << HEX16 << address << " not in ram bank memory range of ram length: " << this->RamLength << endl;
-		return 0xFF;
-	} else {
-		return this->RamBanks[address];
-	}
+	return this->RamBanks.get(address);
 }
 
 void RAM::setRamBankMemory(Word address, Byte value) {
-	if (address >= this->RamLength) {
-		cout << HEX16 << address << " not in ram bank memory range of ram length: " << this->RamLength << endl;
-	} else {
-		this->RamBanks[address] = value;
-	}
+	this->RamBanks.set(address, value);
 }
 
 void RAM::ChangeRamBank(Byte value) {

@@ -2,5 +2,4 @@
 *.sav
 build/
 .vscode/
-lib/
 resources/

@@ -21,9 +21,9 @@ info@felix-weichselgartner.de
 | Test Rom       | Passing? | Image                                                                                                                       |
 |----------------|----------|-----------------------------------------------------------------------------------------------------------------------------|
 | Blargg:        |          |                                                                                                                             |
-| cpu_instr      | Yes      | ![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/04b0382e-acc7-4381-b469-3ba1b6c15255.png) |
-| instr_timing   | Yes      | ![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/1b7c192f-0c23-49eb-86da-9db3dd4a832a.png) |
-| halt_bug       | Yes      | ![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/5cd5efaf-c9b8-4b57-b3fa-1b48d2111440.png) |
+| cpu_instr      | Yes      | ![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/04b0382e-acc7-4381-b469-3ba1b6c15255.png) |
+| instr_timing   | Yes      | ![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/1b7c192f-0c23-49eb-86da-9db3dd4a832a.png) |
+| halt_bug       | Yes      | ![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/5cd5efaf-c9b8-4b57-b3fa-1b48d2111440.png) |
 | mem_timing     | No       |                                                                                                                             |
 | mem_timing-2   | No       |                                                                                                                             |
 | oam_bug        | No       |                                                                                                                             |
@@ -39,27 +39,27 @@ info@felix-weichselgartner.de
 
 Tetris - Loading Screen:
 
-![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/a71e0f5e-81b3-4aa6-aa23-17d5fcbc632f.png)
+![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/a71e0f5e-81b3-4aa6-aa23-17d5fcbc632f.png)
 
 Tetris - Menu:
 
-![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/d9b76f5c-2be8-40a9-8e88-b27dfd0c60cb.png)
+![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/d9b76f5c-2be8-40a9-8e88-b27dfd0c60cb.png)
 
 Dr. Mario - Menu:
 
-![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/b0f8e811-818d-40a7-a315-71f117d49859.png)
+![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/b0f8e811-818d-40a7-a315-71f117d49859.png)
 
 Minesweeper - Loading Screen:
 
-![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/95c2a7ea-0ff0-4ade-8f10-78f52beb46c9.png)
+![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/95c2a7ea-0ff0-4ade-8f10-78f52beb46c9.png)
 
 Minesweeper - Menu:
 
-![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/28f172f9-5700-450e-9dea-bae4d31cc402.png)
+![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/28f172f9-5700-450e-9dea-bae4d31cc402.png)
 
 Asterix - Loading Screen:
 
-![img](http://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/49902649-a70e-41b4-967a-a8451a040fcc.png)
+![img](https://felix-weichselgartner.westeurope.cloudapp.azure.com/media/markdownx/49902649-a70e-41b4-967a-a8451a040fcc.png)
 
 
 ## Installation:
