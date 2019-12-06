@@ -22,7 +22,6 @@ public:
 	Byte getCurrentRomBank() const;
 	void BankReg1(Byte);
 	void BankReg2(Byte);
-	void ChangeRamBank(Byte);
 	void ChangeMode(Byte);
 	void EnableRamBank(Word, Byte);
 	void HandleBanking(Word, Byte);

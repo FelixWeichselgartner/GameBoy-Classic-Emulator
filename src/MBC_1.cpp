@@ -33,7 +33,7 @@ Byte MBC_1::getCurrentRomBank() const {
 	return this->SelectedRomBank;
 }
 
-void MBC_1::EnableRamBank(unsigned short address, Byte value) {
+void MBC_1::EnableRamBank(Word address, Byte value) {
 	this->ram->setRamEnable((value & 0x0F) == 0x0A);
 	
 	/*if ((value & 0x0F) == 0x0A) {

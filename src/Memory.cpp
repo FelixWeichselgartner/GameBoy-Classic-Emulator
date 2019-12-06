@@ -251,38 +251,23 @@ void Memory::WriteHRAM(Word address, Byte value) {
 // constructor and destructor.
 
 void Memory::resetArrays() {
-	for (int i = 0; i < VRAM_SIZE; i++) {
-        this->vram.set(i, 0);
-    }
-
-    for (int i = 0; i < ECHO_SIZE; i++) {
-        this->echo.set(i, 0);
-    }
-
-    for (int i = 0; i < OAM_SIZE; i++) {
-        this->oam.set(i, 0);
-    }
-
-    for (int i = 0; i < IO_SIZE; i++) {
-        this->io.set(i, 0);
-    }
-
-    for (int i = 0; i < HRAM_SIZE; i++) {
-        this->hram.set(i, 0);
-    }
+	for (int i = 0; i < VRAM_SIZE; i++) this->vram.set(i, 0);
+    for (int i = 0; i < ECHO_SIZE; i++) this->echo.set(i, 0);
+    for (int i = 0; i < OAM_SIZE; i++) this->oam.set(i, 0);
+    for (int i = 0; i < IO_SIZE; i++) this->io.set(i, 0);
+    for (int i = 0; i < HRAM_SIZE; i++) this->hram.set(i, 0);
+	InitMemory();
 }
 
-void Memory::resetVar(bool reset_arr) {
+void Memory::resetVar() {
     this->EnableBootstrap = false;
     interrupt_enable_register = 0;
-	if (reset_arr) {
-		resetArrays();
-	}
+	resetArrays();
     InitMemory();
 }
 
 void Memory::reset() {
-    resetVar(true);
+    resetVar();
     this->ram.reset();
     this->rom.reset();
     this->sdt.reset();
@@ -298,7 +283,7 @@ Memory::Memory(class Registers* registers, class Timer *timer) {
 	if ((this->registers = registers) == NULL) exit(2);
 	if ((this->timer = timer) == NULL) exit(2);
 	this->joypad = NULL;
-	resetVar(false);
+	resetVar();
 }
 
 Memory::~Memory() {

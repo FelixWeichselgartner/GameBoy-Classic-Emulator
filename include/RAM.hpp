@@ -14,7 +14,7 @@ private:
 	Array_Type(Byte) ram = Array(Byte, ADDR_ECHO - ADDR_EXT_RAM);
 
 	// ram banking.
-	Array_Type(Byte) RamBanks;
+	Array_Type(Byte)* RamBanks;
 	Byte CurrentRamBank, AmountBanks;
 	bool EnableRamBanking;
 	int RamLength;

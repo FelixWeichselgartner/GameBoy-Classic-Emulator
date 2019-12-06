@@ -10,10 +10,10 @@ void RAM::reserveRamBankMemory(Byte AmountBanks) {
 	this->AmountBanks = AmountBanks;
 	this->RamLength = 0x2000 * this->AmountBanks;
 
-	this->RamBanks = Array(Byte, this->RamLength);
+	*this->RamBanks = Array(Byte, this->RamLength);
 
 	for (int i = 0; i < this->RamLength; i++) {
-		RamBanks.set(i, 0xFF);
+		this->RamBanks->set(i, 0xFF);
 	}
 
 	this->CurrentRamBank = 0;
@@ -23,9 +23,7 @@ void RAM::reset() {
     // Byte ram[ADDR_ECHO - ADDR_EXT_RAM] = {0};
     // not needed for first reset.
     // needed for 2nd, 3rd ... reset.
-    for (int i = 0; i < ADDR_ECHO - ADDR_EXT_RAM; i++) {
-        this->ram.set(i, 0);
-    }
+    for (int i = 0; i < ADDR_ECHO - ADDR_EXT_RAM; i++) this->ram.set(i, 0);
 
     this->CurrentRamBank = 0;
     this->AmountBanks = 1;
@@ -33,9 +31,6 @@ void RAM::reset() {
 }
 
 RAM::RAM() {
-	for(int i = 0; i < this->ram.length(); i++) {
-		this->ram.set(i, 0);
-	}
     reset();
 }
 
@@ -64,11 +59,11 @@ void RAM::setRamEnable(bool en) {
 }
 
 Byte RAM::getRamBankMemory(Word address) const {
-	return this->RamBanks.get(address);
+	return this->RamBanks->get(address);
 }
 
 void RAM::setRamBankMemory(Word address, Byte value) {
-	this->RamBanks.set(address, value);
+	this->RamBanks->set(address, value);
 }
 
 void RAM::ChangeRamBank(Byte value) {

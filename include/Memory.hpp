@@ -66,7 +66,7 @@ private:
 public:
 
 	void resetArrays();
-    void resetVar(bool);
+    void resetVar();
     void reset();
 
 	Memory();
