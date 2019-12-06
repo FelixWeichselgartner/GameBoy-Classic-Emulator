@@ -24,6 +24,7 @@ public:
     void reset();
 
     RAM();
+	~RAM();
 
     void reserveRamBankMemory(Byte);
 

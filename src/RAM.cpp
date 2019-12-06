@@ -10,7 +10,7 @@ void RAM::reserveRamBankMemory(Byte AmountBanks) {
 	this->AmountBanks = AmountBanks;
 	this->RamLength = 0x2000 * this->AmountBanks;
 
-	*this->RamBanks = Array(Byte, this->RamLength);
+	this->RamBanks = new Array(Byte, this->RamLength);
 
 	for (int i = 0; i < this->RamLength; i++) {
 		this->RamBanks->set(i, 0xFF);
@@ -32,6 +32,10 @@ void RAM::reset() {
 
 RAM::RAM() {
     reset();
+}
+
+RAM::~RAM() {
+	delete RamBanks;
 }
 
 Byte RAM::getMemory(Word address) const {
