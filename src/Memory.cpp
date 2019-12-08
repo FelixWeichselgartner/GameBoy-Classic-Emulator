@@ -198,7 +198,6 @@ void Memory::WriteECHO(Word address, Byte value) {
 
 void Memory::WriteOAM(Word address, Byte value) {
 	this->oam.set(address, value);
-	
 }
 
 void Memory::WriteUNUSABLE(Word, Byte) {
@@ -493,14 +492,23 @@ void Memory::WriteByte(Word address, Byte value) {
 	else if (address >= ADDR_VRAM_T_S && address < ADDR_EXT_RAM) {
 		WriteVRAM(address - ADDR_VRAM_T_S, value);
 	}
-	// ram banking.
-	else if (address >= ADDR_EXT_RAM && address < ADDR_ECHO) {
+	// external ram.
+	else if (address >= ADDR_EXT_RAM && address < ADDR_INT_RAM_1) {
 		mbc->WriteRAM(address, value);
 	}
-	// echo is copy of oam.
+	// internal ram - this part is copied by echo.
+	else if (address >= ADDR_INT_RAM_1 && address < 0xDDFF) {
+		mbc->WriteRAM(address, value);
+		WriteECHO(address - ADDR_INT_RAM_1, value);
+	}
+	// rest of internal ram.
+	else if (address >= 0xDDFF && address < ADDR_ECHO) {
+		mbc->WriteRAM(address, value);
+	}
+	// echo is copy of internal ram.
 	else if ((address >= ADDR_ECHO) && (address < ADDR_OAM)) {
 		WriteECHO(address - ADDR_ECHO, value);
-		WriteOAM(address - ADDR_ECHO, value);
+		mbc->WriteRAM(address - (ADDR_ECHO - ADDR_INT_RAM_1), value);
 	}
 	// oam.
 	else if (address >= ADDR_OAM && address < ADDR_UNUSABLE) {
@@ -681,7 +689,7 @@ void Memory::InitialiseMemoryBanking() {
 			break;
 		case 0x05:
 			cout << "Game uses MBC5." << endl;
-			NotSupported();
+			if ((this->mbc = new MBC_5(&rom, &ram)) == NULL) exit(3);
 			break;
 		default:
 			cout << "Memory Banking Mode is undefined." << endl;

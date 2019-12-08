@@ -34,6 +34,7 @@ void GameBoy::PrintRegisters() {
 void GameBoy::PrintRegistersFile(ofstream &file) {
 	file << "pc:" << HEX16 << this->cpu.registers.getPC() << " ";
 	file << "op:" << HEX << (int)this->cpu.memory.ReadByte(this->cpu.registers.getPC()) << " ";
+	file << "nb:" << HEX << (int)this->cpu.memory.ReadByte(this->cpu.registers.getPC() + 1) << " ";
 	file << "af:" << HEX16 << this->cpu.registers.getAF() << " ";
 	file << "bc:" << HEX16 << this->cpu.registers.getBC() << " ";
 	file << "de:" << HEX16 << this->cpu.registers.getDE() << " ";
@@ -44,7 +45,7 @@ void GameBoy::PrintRegistersFile(ofstream &file) {
 	//file << "ie:" << HEX << (int)this->cpu.memory.ReadByte(0xffff) << " ";
 	//file << "tc:" << HEX << (int)this->cpu.memory.ReadByte(0xff05) << " ";
 	//file << "tcn:" << HEX << (int)this->cpu.memory.ReadByte(0xff07) << " ";
-	file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44);
+	//file << "ly:" << HEX << (int)this->cpu.memory.ReadByte(0xff44);
 	//file << " c:" << HEX16 << (int)this->gpu.ScanLineCounter;
 	//file << "c:" << dec << this->cpu.timer.getTimerCounter() << endl;
 	//file << "cp:" << HEX << (int)this->cpu.memory.ReadByte(0xa000) << " ";

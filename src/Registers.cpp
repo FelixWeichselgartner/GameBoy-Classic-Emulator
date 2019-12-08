@@ -13,7 +13,8 @@ void Registers::reset() {
 	this->DE = 0x00D8;
 	this->HL = 0x014D;
 	*/
-    this->AF = 0x11b0;
+    //this->AF = 0x11b0;
+	this->AF = 0x01b0;
     this->BC = 0x0013;
     this->DE = 0x00d8;
     this->HL = 0x014d;

@@ -6,6 +6,7 @@
 #include "ROM.hpp"
 #include "MBC.hpp"
 #include "MBC_1.hpp"
+#include "MBC_5.hpp"
 #include "SerialDataTransfer.hpp"
 #include "Timer.hpp"
 
@@ -28,11 +29,11 @@ private:
     bool EnableBootstrap;
     Byte MemoryBankingMode;
 
-	Array_Type(Byte) vram = Array(Byte, VRAM_SIZE);
-	Array_Type(Byte) echo = Array(Byte, ECHO_SIZE);
-	Array_Type(Byte) oam  = Array(Byte, OAM_SIZE);
-	Array_Type(Byte) io   = Array(Byte, IO_SIZE);
-	Array_Type(Byte) hram = Array(Byte, HRAM_SIZE);
+	Array_Type(Byte) vram = Array(Byte, VRAM_SIZE, 0xFF);
+	Array_Type(Byte) echo = Array(Byte, ECHO_SIZE, 0xFF);
+	Array_Type(Byte) oam  = Array(Byte, OAM_SIZE, 0xFF);
+	Array_Type(Byte) io   = Array(Byte, IO_SIZE, 0xFF);
+	Array_Type(Byte) hram = Array(Byte, HRAM_SIZE, 0xFF);
 	Byte interrupt_enable_register = 0;
 
 	class Registers* registers;

@@ -11,7 +11,7 @@ class RAM {
 
 private:
 
-	Array_Type(Byte) ram = Array(Byte, ADDR_ECHO - ADDR_EXT_RAM);
+	Array_Type(Byte) ram = Array(Byte, ADDR_ECHO - ADDR_EXT_RAM, 0xFF);
 
 	// ram banking.
 	Array_Type(Byte)* RamBanks;
