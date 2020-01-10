@@ -52,15 +52,37 @@ void MBC::WriteRAM(Word address, Byte value) {
 
 void MBC::saveExtRam() {
 	if (this->battery) {
+		int length = this->ram->length();
+		char *temp = new char[length];
+		for (int i = 0; i < length; i++) {
+			temp[i] = this->ram->getRamBankMemory(i);
+		}
 		ofstream savefile;
-		savefile.open("save.sav", ios::out | ios::binary);
+		savefile.open(this->rom->getGameName() + ".sav", ios::out | ios::binary);
 
 		if (savefile.is_open()) {
+			savefile.write(temp, length);
 			//savefile.write() // buffer, size
 		}
+		cout << "savved" << endl;
+		delete[] temp;
 	}
 }
 
 void MBC::loadExtRam() {
+	ifstream savefile;
+	savefile.open(this->rom->getGameName() + ".sav", ios::in | ios::binary);
 
+	if (savefile.is_open()) {
+		int length = this->ram->length();
+		char *temp = new char[length];
+		if (temp != NULL) {
+			savefile.read(temp, length);
+		}
+		for (int i = 0; i < length; i++) {
+			this->ram->setRamBankMemory(i, temp[i]);
+		}
+		cout << "loaded" << endl;
+		delete temp;
+	}
 }

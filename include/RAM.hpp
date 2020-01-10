@@ -43,6 +43,8 @@ public:
 	void ChangeRamBank(Byte);
 
 	Byte getAmountBanks() { return this->AmountBanks; }
+
+	int length() const { return this->RamLength; }
 	
 };
 //----------------------------------------------------------------------------------------------

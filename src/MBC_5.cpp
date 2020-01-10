@@ -19,6 +19,9 @@ Byte MBC_5::ReadROM(Word address) {
         return this->rom->getMemory(getRomAddress(0, address));
     } else if (address >= ADDR_ROM_1 && address < ADDR_VRAM_T_S) {
         return this->rom->getMemory(getRomAddress(selectedRomBank, address - 0x4000));
+    } else {
+        cout << "wrong ReadRom(" << HEX16 << address << ")";
+        return 0xFF;
     }
 }
 
