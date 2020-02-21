@@ -255,10 +255,6 @@ void GameBoy::Debug_InputAndLog(SDL_Event &windowEvent) {
 
 		gpu->render();
 	}
-
-	SDL_DestroyRenderer(gpu->getRenderer());
-	SDL_DestroyWindow(gpu->getWindow());
-	SDL_Quit();
 }
 
 void GameBoy::tests(int mode) {
@@ -279,9 +275,6 @@ void GameBoy::tests(int mode) {
 			
 		}
 
-		SDL_DestroyRenderer(gpu->getRenderer());
-		SDL_DestroyWindow(gpu->getWindow());
-		SDL_Quit();
 		break;
 	case 3:
 		this->cpu.memory.print(0x0000, 0x2000);

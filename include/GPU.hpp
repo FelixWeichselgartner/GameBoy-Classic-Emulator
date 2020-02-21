@@ -2,12 +2,9 @@
 #define GPU_HPP_
 
 //----------------------------------------------------------------------------------------------
-#ifdef _WIN32
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
 #include "../include/CPU.hpp"
+#include "../include/PPU.hpp"
+#include "../include/Window.hpp"
 #include <string>
 //----------------------------------------------------------------------------------------------
 
@@ -48,21 +45,7 @@ Bit 0 - BG Display(for CGB see below) (0 = Off, 1 = On)
 // format gameboy:
 // 0xAARRGGBB (Alhpa-Red-Green-Blue)
 
-// format sdl2:
-// red, green, blue, alpha
 
-// white
-#define WHITE 0
-#define white 0xFF, 0xFF, 0xFF, 0xFF
-// light gray
-#define LIGHT_GREY 1
-#define light_grey 0xAA, 0xAA, 0xAA, 0xFF
-// dark gray
-#define DARK_GREY 2
-#define dark_grey 0x55, 0x55, 0x55, 0xFF
-// black
-#define BLACK 3
-#define black 0x00, 0x00, 0x00, 0xFF
 //----------------------------------------------------------------------------------------------
 
 
@@ -74,29 +57,20 @@ private:
 
 	class CPU* cpu;
 	class Memory* memory;
-	SDL_Window* window;
-	SDL_Renderer* renderer;
-	
-public:int ScanLineCounter; // public for debug.
-private:
-    const int pixelsPerTile = 8;
-	const int scaleWidth = 2, scaleHeight = 2;
-	const int windowWidth = X_RES * scaleWidth, windowHeight = Y_RES * scaleHeight;
-    const int SCANLINECYCLES = 456;
+    class Window *window;
 
-    Byte display[Y_RES][X_RES] = { 0 };
+    int ScanLineCounter;
+    const int pixelsPerTile = 8;
+    const int SCANLINECYCLES = 456;
 	int GpuMode;
 	bool inc_en;
-    std::string windowName;
+
 
 public:
 
     void reset();
 
     GPU(class CPU*);
-
-	SDL_Window* getWindow() const { return window; }
-	SDL_Renderer* getRenderer() const { return renderer; }
 
 	Byte getControl() const;
 	void setControl(Byte);

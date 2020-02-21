@@ -5,53 +5,28 @@
 #include "../include/CPU.hpp"
 #include "../include/format.hpp"
 
-#ifdef _WIN32
-#include <SDL.h>
-#else
-#include <SDL2/SDL.h>
-#endif
 #include <iostream>
 #include <iomanip>
-#include <sstream>
 using namespace std;
 //----------------------------------------------------------------------------------------------
 
 void GPU::reset() {
-    this->windowName = this->memory->rom.getGameName();
     this->ScanLineCounter = 3;
     this->GpuMode = GPU_MODE_HBLANK;
     this->inc_en = true;
-
-    // Byte display[Y_RES][X_RES] = { 0 };
-    // not needed for first.
-    // set zero for 2nd, 3rd ... reset.
-    for (int i = 0; i < X_RES; i++) {
-        for (int k = 0; k < Y_RES; k++) {
-            display[k][i] = 0;
-        }
-    }
+    this->window->reset();
 }
 
 GPU::GPU(class CPU* cpu) {
- 	if ((this->cpu = cpu) == NULL) exit(2);
-	if ((this->memory = &this->cpu->memory) == NULL) exit(2);
+ 	if ((this->cpu = cpu) == nullptr) exit(2);
+	if ((this->memory = &this->cpu->memory) == nullptr) exit(2);
+
+	this->window = new Window(cpu);
+	if (this->window == nullptr) {
+	    exit(2);
+	}
 
 	reset();
-
-	if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-		cout << "[Error] SDL coult not be initialised! SDL Error: " << SDL_GetError() << endl;
-	}
-
-	this->window = SDL_CreateWindow(windowName.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_ALLOW_HIGHDPI);
-	this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
-
-	if (window == NULL || renderer == NULL) {
-		cout << "[Error] window couldn't be created! Error: " << SDL_GetError() << endl;
-	}
-
-	SDL_RenderClear(renderer);
-
-	clearScreen();
 
 	return;
 }
@@ -134,22 +109,6 @@ void GPU::resetScanline() {
 
 ////////////////////////////////////////////////////////////////
 
-void GPU::clearScreen() {
-	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
-
-	for (int x = 0; x < X_RES; x++) {
-		for (int y = 0; y < Y_RES; y++) {
-			display[y][x] = 0;
-			SDL_SetRenderDrawColor(renderer, white);
-			SDL_RenderDrawPoint(renderer, x, y);
-		}
-	}
-
-	SDL_RenderPresent(renderer);
-
-	return;
-}
-
 void GPU::SetLCDStatus() {
 	Byte status = getStatus();
 	Byte currentline = getScanline();
@@ -211,15 +170,15 @@ void GPU::SetLCDStatus() {
 }
 
 Byte GPU::getColor(Byte colorNum, Word address) {
-	Byte palette = this->memory->ReadByte(address);
-	int high = 0, low = 0, color;
+	Byte palette = this->memory->ReadByte(address), color;
+	int high = 0, low = 0;
 
 	if (colorNum >= 0 && colorNum <= 3) {
 		high = colorNum * 2 + 1;
 		low = colorNum * 2 + 0;
 	}
 
-	color = ((int) testBit(palette, high) << 1) | (int) testBit(palette, low);
+	color = ((Byte)testBit(palette, high) << 1) | (Byte)testBit(palette, low);
 
 	return color;
 }
@@ -238,11 +197,11 @@ void GPU::RenderNintendoLogo() {
 			x1 = (c % 12) * 4 + t % 4;
 			y1 = (c / 12) * 4 + t / 4;
 			c1 = testBit(data1, k);
-			display[y1][x1] = c1;
+			this->window->set(y1, x1, c1);
 			x2 = x1;
 			y2 = y1 + 2;
 			c2 = testBit(data2, k);
-			display[y2][x2] = c2;
+            this->window->set(y2, x2, c2);
 		}
 	}
 
@@ -306,7 +265,7 @@ void GPU::RenderTiles(Byte lcdControl) {
 		y = getScanline();
 
 		if (!((y < 0) || (y > Y_RES - 1) || (i < 0) || (i > X_RES - 1))) {
-			display[y][i] = color;
+			this->window->set(y, i, color);
 		}
 	}
 
@@ -345,14 +304,15 @@ void GPU::RenderSprites(Byte lcdControl) {
 				colorAddress	= testBit(attributes, 4) ? 0xFF49 : 0xFF48;
 				color			= getColor(colorNum, colorAddress);
 
-				if (!color) { // transparant
+				// pixels with color id 0 are transparent
+				if (!color) {
 					continue;
 				}
 
 				pixel = 7 - tilePixel + xPos;
 
 				if (!((scanline < 0) || (scanline > X_RES - 1) || (pixel < 0) || (pixel > Y_RES - 1))) {
-					display[scanline][pixel] = color;
+					this->window->set(scanline, pixel, color);
 				}
 			}
 		}
@@ -375,48 +335,11 @@ void GPU::DrawScanLine() {
 	return;
 }
 
-void GPU::renderDisplay(Byte currentline) {
-	SDL_RenderSetScale(renderer, (float)scaleWidth, (float)scaleHeight);
-
-	for (int i = 0; i < X_RES; i++) {
-		switch (display[currentline][i]) {
-			case WHITE:
-				SDL_SetRenderDrawColor(renderer, white);
-				break;
-			case LIGHT_GREY: 
-				SDL_SetRenderDrawColor(renderer, light_grey);
-				break;
-			case DARK_GREY: 
-				SDL_SetRenderDrawColor(renderer, dark_grey);
-				break;
-			case BLACK: 
-				SDL_SetRenderDrawColor(renderer, black);
-				break;
-			default: break;
-		}
-
-		SDL_RenderDrawPoint(renderer, i, currentline);
-	}
-
-	return;
-}
-
 void GPU::requestLcdcInterrupt(int statBit) {
 	if ((this->memory->ReadByte(0xFF41) & (1 << statBit)) != 0) {
 		this->cpu->RequestInterrupt(1);
 	}
 }
-
-const int factor = 1;
-
-const int CLOCKS_PER_HBLANK = 204 * factor; /* Mode 0 */
-const int CLOCKS_PER_SCANLINE_OAM = 80 * factor; /* Mode 2 */
-const int CLOCKS_PER_SCANLINE_VRAM = 172 * factor; /* Mode 3 */
-const int CLOCKS_PER_SCANLINE = (CLOCKS_PER_SCANLINE_OAM + CLOCKS_PER_SCANLINE_VRAM + CLOCKS_PER_HBLANK);
-
-const int CLOCKS_PER_VBLANK = 4560 * factor; /* Mode 1 */
-const int SCANLINES_PER_FRAME = 144 * factor;
-const int CLOCKS_PER_FRAME = (CLOCKS_PER_SCANLINE * SCANLINES_PER_FRAME) + CLOCKS_PER_VBLANK;
 
 void GPU::tick() {
 	Byte currentline = getScanline();
@@ -426,77 +349,6 @@ void GPU::tick() {
 		this->inc_en = false;
 	}
 
-	/*
-	Byte status;
-
-	switch (this->GpuMode) {
-	case GPU_MODE_HBLANK:
-		if (this->ScanLineCounter >= CLOCKS_PER_HBLANK) {
-			DrawScanLine();
-			renderDisplay(currentline);
-			IncScanline();
-			this->ScanLineCounter %= CLOCKS_PER_HBLANK;
-
-			if (getScanline() == 144) {
-				this->GpuMode = GPU_MODE_VBLANK;
-				setStatusBit(1, 0);
-				setStatusBit(0, 1);
-				this->cpu->RequestInterrupt(0);
-			} else {
-				this->GpuMode = GPU_MODE_OAM;
-				setStatusBit(1, 1);
-				setStatusBit(0, 0);
-			}
-		}
-		break;
-	case GPU_MODE_VBLANK:
-		if (this->ScanLineCounter >= CLOCKS_PER_SCANLINE) {
-			IncScanline();
-			this->ScanLineCounter %= CLOCKS_PER_SCANLINE;
-
-			if (getScanline() == 154) {
-				RenderSprites(this->memory->ReadByte(0xFF40));
-				renderDisplay(currentline);
-				resetScanline();
-				this->GpuMode = GPU_MODE_OAM;
-				setStatusBit(1, 1);
-				setStatusBit(0, 0);
-			}
-		}
-		break;
-	case GPU_MODE_OAM:
-		if (this->ScanLineCounter >= CLOCKS_PER_SCANLINE_OAM) {
-			this->ScanLineCounter %= CLOCKS_PER_SCANLINE_OAM;
-			setStatusBit(1, 1);
-			setStatusBit(0, 1);
-			this->GpuMode = GPU_MODE_VRAM;
-		}
-		break;
-	case GPU_MODE_VRAM:
-		status = this->memory->ReadByte(0xFF40);
-
-		if (this->ScanLineCounter >= CLOCKS_PER_SCANLINE_VRAM) {
-			this->ScanLineCounter %= CLOCKS_PER_SCANLINE_VRAM;
-			this->GpuMode = GPU_MODE_HBLANK;
-
-			bool coincidence = currentline == this->memory->ReadByte(0xFF45);
-
-			if ((testBit(status, 3)) || 
-				(testBit(status, 6) && coincidence)) {
-				this->cpu->RequestInterrupt(1);
-			}
-
-			setStatusBit(2, coincidence ? 0xFF : 0x00);
-			setStatusBit(1, 0);
-			setStatusBit(0, 0);
-		}
-		break;
-	default:
-		exit(10);
-		break;
-	}*/
-
-	
 	if (ScanLineCounter >= SCANLINECYCLES) {
 		currentline = getScanline();
 		ScanLineCounter -= SCANLINECYCLES;
@@ -519,7 +371,11 @@ void GPU::tick() {
 		else {
 			IncScanline();
 		}
-	}	
+	}
+}
+
+void GPU::renderDisplay(Byte currentline) {
+    this->window->renderLine(currentline);
 }
 
 void GPU::UpdateGraphics(int cycles) {
@@ -534,28 +390,9 @@ void GPU::UpdateGraphics(int cycles) {
 }
 
 void GPU::render() {
-	SDL_RenderPresent(renderer);
-
-	return;
+    this->window->render();
 }
 
-/**
- * @brief  saves the current SDL2 window to a bmp file.
- * @note   uses time() to get a unique name for each screenshot.
- * @retval None
- */
 void GPU::screenshot() {
-	int w, h;
-	time_t c;
-	time(&c);
-	stringstream ss;
-	string name;
-	ss << c;
-	name = ss.str() + ".bmp";
-	cout << "Your screenshot was saved as " << name << "." << endl;
-	SDL_GetRendererOutputSize(renderer, &w, &h);
-	SDL_Surface *shot = SDL_CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
-	SDL_RenderReadPixels(renderer, NULL, SDL_PIXELFORMAT_ARGB8888, shot->pixels, shot->pitch);
-	SDL_SaveBMP(shot, name.c_str());
-	SDL_FreeSurface(shot);
+    this->window->screenshot();
 }

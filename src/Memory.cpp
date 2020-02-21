@@ -670,7 +670,38 @@ void Memory::InitialiseMemoryBanking() {
 			break;
 	}
 
-	switch (this->MemoryBankingMode) {
+    int AmountRamBanks = 0;
+    cout << "RAM Size: ";
+    switch (this->rom.getMemory(0x0149)) {
+        case 0x00:
+            cout << "None" << endl;
+            break;
+        case 0x01:
+            AmountRamBanks = 1;
+            cout << "2 KBytes" << endl;
+            break;
+        case 0x02:
+            AmountRamBanks = 1;
+            cout << "8 Kbytes" << endl;
+            break;
+        case 0x03:
+            AmountRamBanks = 4;
+            cout << "32 KBytes(4 banks of 8KBytes each)" << endl;
+            break;
+        case 0x04:
+            AmountRamBanks = 16;
+            cout << "128 KBytes(16 banks of 8KBytes each)" << endl;
+            break;
+        case 0x05:
+            AmountRamBanks = 8;
+            cout << "64 KBytes(8 banks of 8KBytes each)" << endl;
+            break;
+    }
+
+    cout << "reserving 0x" << HEX16 << AmountRamBanks * 0x2000 << " for RamBankMemory." << endl;
+    this->ram.reserveRamBankMemory(AmountRamBanks);
+
+    switch (this->MemoryBankingMode) {
 		case 0x00:
 			cout << "Game uses no Memory Banking." << endl;
 			if ((this->mbc = new MBC(&rom, &ram)) == NULL) exit(3);
@@ -724,35 +755,4 @@ void Memory::InitialiseMemoryBanking() {
 		case 0x53: cout << "1.2MByte(80 banks)" << endl; break;
 		case 0x54: cout << "1.5MByte(96 banks)" << endl; break;
 	}
-
-	int AmountRamBanks = 0;
-	cout << "RAM Size: ";
-	switch (this->rom.getMemory(0x0149)) {
-		case 0x00: 
-			cout << "None" << endl; 
-			break;
-		case 0x01:
-			AmountRamBanks = 1;
-			cout << "2 KBytes" << endl; 
-			break;
-		case 0x02: 
-			AmountRamBanks = 1;
-			cout << "8 Kbytes" << endl; 
-			break;
-		case 0x03: 
-			AmountRamBanks = 4;
-			cout << "32 KBytes(4 banks of 8KBytes each)" << endl; 
-			break;
-		case 0x04:
-			AmountRamBanks = 16;
-			cout << "128 KBytes(16 banks of 8KBytes each)" << endl; 
-			break;
-		case 0x05: 
-			AmountRamBanks = 8;
-			cout << "64 KBytes(8 banks of 8KBytes each)" << endl; 
-			break;
-	}
-
-	cout << "reserving 0x" << HEX16 << AmountRamBanks * 0x2000 << " for RamBankMemory." << endl;
-	this->ram.reserveRamBankMemory(AmountRamBanks);	
 }
