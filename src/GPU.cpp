@@ -302,13 +302,13 @@ void GPU::RenderSprites(Byte lcdControl) {
 				colorBit		= flipXaxis ? 7 - tilePixel : tilePixel;
 				colorNum		= ((int)testBit(data2, colorBit) << 1) | (int)testBit(data1, colorBit);
 				colorAddress	= testBit(attributes, 4) ? 0xFF49 : 0xFF48;
-				color			= getColor(colorNum, colorAddress);
 
-				// pixels with color id 0 are transparent
-				if (!color) {
-					continue;
-				}
+                // pixels with color id 0 are transparent
+                if (!colorNum) {
+                    continue;
+                }
 
+				color = getColor(colorNum, colorAddress);
 				pixel = 7 - tilePixel + xPos;
 
 				if (!((scanline < 0) || (scanline > X_RES - 1) || (pixel < 0) || (pixel > Y_RES - 1))) {
