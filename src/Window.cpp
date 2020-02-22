@@ -15,6 +15,8 @@ void Window::reset() {
 
 Window::Window(class CPU* cpu) {
     this->cpu = cpu;
+    this->reset();
+
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         cout << "[Error] SDL coult not be initialised! SDL Error: " << SDL_GetError() << endl;
     }
@@ -49,6 +51,14 @@ Window::~Window() {
 void Window::set(int y, int x, int c) {
     if ((y >= 0 && y < Y_RES) && (x >= 0 && x < X_RES)) {
         this->display[y][x] = c;
+    }
+}
+
+Byte Window::get(int y, int x) {
+    if ((y >= 0 && y < Y_RES) && (x >= 0 && x < X_RES)) {
+        return this->display[y][x];
+    } else {
+        return 0xFF;
     }
 }
 

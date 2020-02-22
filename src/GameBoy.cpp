@@ -147,8 +147,8 @@ void GameBoy::run() {
 int main(int argc, char *argv[]) {
 	cout << "You are running Felix Weichselgartner's GameBoy-Classic-Emulator." << endl;
     //class GameBoy gameboy(argv[1]);
-	char game[] = "/run/media/felix/Datenfestplatte/Users/Felix/Studium/Programmieren/GameBoy/GameBoy-Classic-Emulator/build/Gelb.gb";//"Gelb.gb";
-    class GameBoy gameboy(game);
+	//char game[] = "/run/media/felix/Datenfestplatte/Users/Felix/Studium/Programmieren/GameBoy/GameBoy-Classic-Emulator/build/Gelb.gb";//"Gelb.gb";
+    class GameBoy gameboy(argv[1]);
 	(MODE) ? gameboy.tests(MODE) : gameboy.run();
 	cout << "Gameboy-Classic-Emulator closed." << endl;
     return 0;

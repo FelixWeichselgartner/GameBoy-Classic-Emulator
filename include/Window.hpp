@@ -62,6 +62,8 @@ public:
     ~Window();
 
     void set(int, int, int);
+    Byte get(int y, int x);
+
     void clearScreen();
     void renderLine(Byte);
     void render();

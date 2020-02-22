@@ -275,7 +275,7 @@ void GPU::RenderTiles(Byte lcdControl) {
 void GPU::RenderSprites(Byte lcdControl) {
 	Byte index, yPos, xPos, tileLocation, attributes;
 	Byte data1, data2, color;
-	bool flipXaxis, flipYaxis;
+	bool flipXaxis, flipYaxis, sprite_behind_background;
 	int scanline, ysize, line, colorBit, pixel, colorNum;
 	Word address, colorAddress;
 	const int maxSprites = 40, bytesPerSprite = 4;
@@ -290,6 +290,7 @@ void GPU::RenderSprites(Byte lcdControl) {
 		attributes		= this->memory->ReadByte(ADDR_OAM + index + 3);
 		flipXaxis		= testBit(attributes, 5);
 		flipYaxis		= testBit(attributes, 6);
+		sprite_behind_background = testBit(attributes, 7);
 		scanline		= getScanline();
 
 		if ((scanline >= yPos) && (scanline < (yPos + ysize))) {
@@ -311,7 +312,14 @@ void GPU::RenderSprites(Byte lcdControl) {
 				color = getColor(colorNum, colorAddress);
 				pixel = 7 - tilePixel + xPos;
 
-				if (!((scanline < 0) || (scanline > X_RES - 1) || (pixel < 0) || (pixel > Y_RES - 1))) {
+
+
+                if (!((scanline < 0) || (scanline >= Y_RES) || (pixel < 0) || (pixel >= X_RES))) {
+                    if (sprite_behind_background) {
+                        if (this->window->get(scanline, pixel) != WHITE) {
+                            continue;
+                        }
+                    }
 					this->window->set(scanline, pixel, color);
 				}
 			}
